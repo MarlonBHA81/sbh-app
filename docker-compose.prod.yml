@@ -1,0 +1,87 @@
+# Production stack: docker compose -f docker-compose.prod.yml up -d --build
+# Copy .env.prod.example to .env.prod and fill in secrets first.
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-sbh}
+      MYSQL_USER: ${DB_USERNAME:-sbh}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+
+  api:
+    build:
+      context: apps/api
+      dockerfile: Dockerfile
+      target: prod
+    restart: unless-stopped
+    env_file: .env.prod
+    volumes:
+      - media-storage:/app/storage/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    expose:
+      - "9000" # php-fpm
+      - "8080" # reverb
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${APP_URL}
+        NEXT_PUBLIC_REVERB_HOST: ${REVERB_PUBLIC_HOST}
+        NEXT_PUBLIC_REVERB_PORT: "443"
+        NEXT_PUBLIC_REVERB_SCHEME: https
+    restart: unless-stopped
+    expose:
+      - "3000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./apps/api/public:/app/public:ro
+      - certbot-certs:/etc/letsencrypt:ro
+      - certbot-www:/var/www/certbot:ro
+    depends_on:
+      - api
+      - web
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot-certs:/etc/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: sh -c "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done"
+
+volumes:
+  mysql-data:
+  redis-data:
+  media-storage:
+  certbot-certs:
+  certbot-www:

@@ -1,0 +1,141 @@
+# Development stack: docker compose up -d
+# API served by `php artisan serve` with hot reload, web by `next dev`.
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: sbh
+      MYSQL_USER: sbh
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-psecret"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025" # UI
+      - "1025:1025" # SMTP
+
+  api:
+    build:
+      context: apps/api
+      dockerfile: Dockerfile
+      target: dev
+    working_dir: /app
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    environment: &api-env
+      APP_ENV: local
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: sbh
+      DB_USERNAME: sbh
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: redis
+      BROADCAST_CONNECTION: reverb
+      REVERB_HOST: reverb
+      REVERB_PORT: "8080"
+      REVERB_SCHEME: http
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: "1025"
+      FRONTEND_URL: http://localhost:3000
+      SANCTUM_STATEFUL_DOMAINS: localhost:3000
+    volumes:
+      - ./apps/api:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  queue:
+    build:
+      context: apps/api
+      dockerfile: Dockerfile
+      target: dev
+    working_dir: /app
+    command: php artisan queue:work --tries=3 --backoff=3
+    environment: *api-env
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    build:
+      context: apps/api
+      dockerfile: Dockerfile
+      target: dev
+    working_dir: /app
+    command: php artisan schedule:work
+    environment: *api-env
+    volumes:
+      - ./apps/api:/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  reverb:
+    build:
+      context: apps/api
+      dockerfile: Dockerfile
+      target: dev
+    working_dir: /app
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    environment: *api-env
+    volumes:
+      - ./apps/api:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  web:
+    image: node:22-alpine
+    working_dir: /app/apps/web
+    command: sh -c "corepack enable && pnpm install && pnpm dev"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_REVERB_HOST: localhost
+      NEXT_PUBLIC_REVERB_PORT: "8080"
+      NEXT_PUBLIC_REVERB_SCHEME: http
+    volumes:
+      - .:/app
+      - web-node-modules:/app/node_modules
+    ports:
+      - "3000:3000"
+
+volumes:
+  mysql-data:
+  redis-data:
+  web-node-modules:
