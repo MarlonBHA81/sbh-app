@@ -9,6 +9,7 @@ use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Models\Profile;
 use App\Services\Posts\PostService;
+use App\Support\ViewerReactions;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -31,7 +32,11 @@ class PostController extends Controller
     {
         $this->ensureVisible($request, $post);
 
-        return new PostResource($post->load(PostService::EAGER));
+        $post->load(PostService::EAGER);
+
+        ViewerReactions::hydrate([$post], $request->attributes->get('activeProfile'));
+
+        return new PostResource($post);
     }
 
     public function update(UpdatePostRequest $request, Post $post, PostService $posts): PostResource

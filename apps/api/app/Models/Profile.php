@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Profile extends Model
@@ -77,6 +78,17 @@ class Profile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Absolute URL to the avatar, or null when none is set. Used in
+     * notification/actor payloads and lightweight search results.
+     */
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path === null
+            ? null
+            : Storage::disk('public')->url($this->avatar_path);
     }
 
     public function followers(): BelongsToMany

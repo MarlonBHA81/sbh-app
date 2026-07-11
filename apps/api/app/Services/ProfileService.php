@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\Follow;
 use App\Models\Profile;
 use App\Models\User;
+use App\Notifications\FollowAccepted;
+use App\Notifications\FollowRequested;
+use App\Notifications\NewFollower;
 use App\Support\Handles;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -82,7 +85,7 @@ class ProfileService
 
         $state = $target->is_private ? Follow::STATE_PENDING : Follow::STATE_ACCEPTED;
 
-        return DB::transaction(function () use ($actor, $target, $state) {
+        $follow = DB::transaction(function () use ($actor, $target, $state) {
             $follow = Follow::create([
                 'follower_profile_id' => $actor->id,
                 'followed_profile_id' => $target->id,
@@ -95,6 +98,16 @@ class ProfileService
 
             return $follow;
         });
+
+        if ($actor->user_id !== $target->user_id) {
+            $notification = $state === Follow::STATE_ACCEPTED
+                ? new NewFollower(actor: $actor, recipient: $target)
+                : new FollowRequested(actor: $actor, recipient: $target);
+
+            $target->user->notify($notification);
+        }
+
+        return $follow;
     }
 
     /**
@@ -128,13 +141,22 @@ class ProfileService
             return $follow;
         }
 
-        return DB::transaction(function () use ($follow) {
+        $follow = DB::transaction(function () use ($follow) {
             $follow->update(['state' => Follow::STATE_ACCEPTED]);
 
             $this->incrementFollowCounters($follow->follower, $follow->followed);
 
             return $follow;
         });
+
+        $follower = $follow->follower;
+        $followed = $follow->followed;
+
+        if ($follower->user_id !== $followed->user_id) {
+            $follower->user->notify(new FollowAccepted(actor: $followed, recipient: $follower));
+        }
+
+        return $follow;
     }
 
     public function declineFollowRequest(Follow $follow): void

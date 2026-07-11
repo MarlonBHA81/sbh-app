@@ -9,6 +9,7 @@ use App\Models\Follow;
 use App\Models\Post;
 use App\Models\Profile;
 use App\Services\Posts\PostService;
+use App\Support\ViewerReactions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -70,6 +71,8 @@ class ProfileController extends Controller
             ->orderByDesc('published_at')
             ->orderByDesc('id')
             ->cursorPaginate(20);
+
+        ViewerReactions::hydrate($posts->getCollection(), $viewer);
 
         return PostResource::collection($posts);
     }

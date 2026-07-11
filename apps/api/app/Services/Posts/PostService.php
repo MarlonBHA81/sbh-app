@@ -8,11 +8,15 @@ use App\Models\Post;
 use App\Models\Profile;
 use App\Models\Topic;
 use App\Models\User;
+use App\Notifications\PostQuoted;
+use App\Notifications\PostReposted;
+use App\Services\MentionService;
 use App\Support\Geohash;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class PostService
@@ -25,7 +29,10 @@ class PostService
     /** Maximum topics attachable to a single post. */
     public const MAX_TOPICS = 3;
 
-    public function __construct(private PostTypeRegistry $registry) {}
+    public function __construct(
+        private PostTypeRegistry $registry,
+        private MentionService $mentions,
+    ) {}
 
     /**
      * Create a post authored by the given profile from validated data.
@@ -210,7 +217,39 @@ class PostService
             ->whereIn('id', $post->topics()->pluck('topics.id'))
             ->increment('posts_count');
 
+        $this->mentions->syncForPost($post);
+
+        $this->notifyParentAuthor($post);
+
         RecomputePostScore::dispatch($post)->afterCommit();
+    }
+
+    /**
+     * Notify the parent post's author when this post reposts or quotes it.
+     */
+    private function notifyParentAuthor(Post $post): void
+    {
+        if (! in_array($post->type, [Post::TYPE_REPOST, Post::TYPE_QUOTE], true) || ! $post->parent) {
+            return;
+        }
+
+        $author = $post->profile;
+        $recipient = $post->parent->profile;
+
+        if ($recipient->user_id === $author->user_id) {
+            return; // never notify on self-action
+        }
+
+        $notification = $post->type === Post::TYPE_REPOST
+            ? new PostReposted(actor: $author, recipient: $recipient, post: $post->parent)
+            : new PostQuoted(
+                actor: $author,
+                recipient: $recipient,
+                post: $post->parent,
+                preview: $post->body === null ? null : Str::limit($post->body, 80, ''),
+            );
+
+        $recipient->user->notify($notification);
     }
 
     /**

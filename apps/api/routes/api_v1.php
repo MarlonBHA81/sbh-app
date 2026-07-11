@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\CommentController;
+use App\Http\Controllers\Api\V1\CommentReactionController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
@@ -12,8 +14,12 @@ use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MyPostController;
 use App\Http\Controllers\Api\V1\MyProfileController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PostController;
+use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ProfileSearchController;
+use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\TopicController;
 use Illuminate\Support\Facades\Route;
 
@@ -87,4 +93,37 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('feeds/for-you', [FeedController::class, 'forYou']);
     Route::get('feeds/nearby', [FeedController::class, 'nearby']);
     Route::get('feeds/topics/{slug}', [FeedController::class, 'topic']);
+
+    // Reactions & votes (write endpoints throttled by the 'engagement' limiter).
+    Route::middleware('throttle:engagement')->group(function () {
+        Route::post('posts/{post}/like', [PostReactionController::class, 'like']);
+        Route::delete('posts/{post}/like', [PostReactionController::class, 'unlike']);
+        Route::post('posts/{post}/vote', [PostReactionController::class, 'vote']);
+
+        Route::post('comments/{comment}/like', [CommentReactionController::class, 'like']);
+        Route::delete('comments/{comment}/like', [CommentReactionController::class, 'unlike']);
+        Route::post('comments/{comment}/vote', [CommentReactionController::class, 'vote']);
+
+        Route::patch('comments/{comment}', [CommentController::class, 'update']);
+        Route::delete('comments/{comment}', [CommentController::class, 'destroy']);
+    });
+
+    // Comments.
+    Route::get('posts/{post}/comments', [CommentController::class, 'index']);
+    Route::post('posts/{post}/comments', [CommentController::class, 'store'])->middleware('throttle:comments');
+    Route::get('comments/{comment}/replies', [CommentController::class, 'replies']);
+
+    // @mention typeahead.
+    Route::get('search/profiles', [ProfileSearchController::class, 'index']);
+
+    // Notifications (scoped to the active profile).
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::post('notifications/{id}/read', [NotificationController::class, 'read']);
+
+    // Web push subscriptions.
+    Route::get('me/push-subscriptions/public-key', [PushSubscriptionController::class, 'publicKey']);
+    Route::post('me/push-subscriptions', [PushSubscriptionController::class, 'store']);
+    Route::delete('me/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
 });

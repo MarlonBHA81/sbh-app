@@ -7,6 +7,7 @@ use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Models\Profile;
 use App\Services\Posts\PostService;
+use App\Support\ViewerReactions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Validation\Rule;
@@ -30,6 +31,8 @@ class MyPostController extends Controller
             ->with(PostService::EAGER)
             ->orderByDesc('id')
             ->cursorPaginate(20);
+
+        ViewerReactions::hydrate($posts->getCollection(), $profile);
 
         return PostResource::collection($posts);
     }
