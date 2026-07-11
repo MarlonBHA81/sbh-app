@@ -42,6 +42,7 @@ class ProfileResource extends JsonResource
         if ($isSelf) {
             // DM privacy is only ever surfaced to the profile's own account.
             $base['dm_privacy'] = $this->dm_privacy;
+            $base['share_location'] = (bool) $this->share_location;
         }
 
         if (! $viewable) {

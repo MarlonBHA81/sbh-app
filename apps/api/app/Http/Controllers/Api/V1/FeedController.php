@@ -47,6 +47,25 @@ class FeedController extends Controller
         ), $viewer);
     }
 
+    public function local(Request $request, FeedService $feeds): AnonymousResourceCollection
+    {
+        $validated = $request->validate([
+            'scope' => ['sometimes', 'in:city,country'],
+        ]);
+
+        $scope = $validated['scope'] ?? 'country';
+
+        $viewer = $this->activeProfile($request);
+
+        if ($scope === 'city') {
+            abort_if($viewer->city === null || $viewer->country_code === null, 422, 'Set your location first');
+        } else {
+            abort_if($viewer->country_code === null, 422, 'Set your location first');
+        }
+
+        return $this->present($feeds->local($viewer, $scope), $viewer);
+    }
+
     public function topic(Request $request, string $slug, FeedService $feeds): AnonymousResourceCollection
     {
         $topic = Topic::query()->where('slug', $slug)->firstOrFail();

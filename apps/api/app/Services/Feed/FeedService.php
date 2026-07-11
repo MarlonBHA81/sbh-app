@@ -135,6 +135,26 @@ class FeedService
     }
 
     /**
+     * Public posts geotagged to the viewer's own locale. Country scope matches
+     * on country_code; city scope additionally matches city (within the same
+     * country). Callers must ensure the viewer has the relevant fields set.
+     */
+    public function local(Profile $viewer, string $scope): CursorPaginator
+    {
+        return Post::query()
+            ->published()
+            ->where('visibility', Post::VISIBILITY_PUBLIC)
+            ->where('country_code', $viewer->country_code)
+            ->when($scope === 'city', fn (Builder $query) => $query->where('city', $viewer->city))
+            ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer))
+            ->tap(fn (Builder $query) => $this->applySafety($query, $viewer))
+            ->with(PostService::EAGER)
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->cursorPaginate(self::PER_PAGE);
+    }
+
+    /**
      * Public posts attached to the topic or any of its descendants.
      */
     public function topic(Profile $viewer, Topic $topic): CursorPaginator

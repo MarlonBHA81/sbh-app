@@ -46,6 +46,7 @@ class Profile extends Model
         'geohash',
         'country_code',
         'city',
+        'share_location',
         'is_private',
         'dm_privacy',
     ];
@@ -55,6 +56,7 @@ class Profile extends Model
         return [
             'is_private' => 'boolean',
             'is_verified' => 'boolean',
+            'share_location' => 'boolean',
             'lat' => 'decimal:7',
             'lng' => 'decimal:7',
             'followers_count' => 'integer',

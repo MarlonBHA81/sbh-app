@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\GamificationController;
+use App\Http\Controllers\Api\V1\GeoController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MessageController;
@@ -26,9 +27,11 @@ use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\PostInteractionController;
 use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ProfileLocationController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\StatusController;
 use App\Http\Controllers\Api\V1\TopicController;
 use App\Http\Controllers\Api\V1\UploadController;
@@ -80,6 +83,9 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::patch('me/profiles/{profile}', [MyProfileController::class, 'update']);
     Route::delete('me/profiles/{profile}', [MyProfileController::class, 'destroy']);
 
+    Route::post('me/profiles/{profile}/location', [ProfileLocationController::class, 'store']);
+    Route::delete('me/profiles/{profile}/location', [ProfileLocationController::class, 'destroy']);
+
     Route::get('me/follow-requests', [FollowRequestController::class, 'index']);
     Route::post('me/follow-requests/{follow}/accept', [FollowRequestController::class, 'accept']);
     Route::post('me/follow-requests/{follow}/decline', [FollowRequestController::class, 'decline']);
@@ -129,6 +135,7 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('feeds/following', [FeedController::class, 'following']);
     Route::get('feeds/for-you', [FeedController::class, 'forYou']);
     Route::get('feeds/nearby', [FeedController::class, 'nearby']);
+    Route::get('feeds/local', [FeedController::class, 'local']);
     Route::get('feeds/topics/{slug}', [FeedController::class, 'topic']);
 
     // Reactions & votes (write endpoints throttled by the 'engagement' limiter).
@@ -157,6 +164,13 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
     // @mention typeahead.
     Route::get('search/profiles', [ProfileSearchController::class, 'index']);
+
+    // Combined typeahead + full-text-ish post/geo search.
+    Route::get('search', [SearchController::class, 'index']);
+    Route::get('search/posts', [SearchController::class, 'posts']);
+
+    Route::get('geo/reverse', [GeoController::class, 'reverse'])->middleware('throttle:20,1');
+    Route::get('geo/nearby-users', [GeoController::class, 'nearbyUsers']);
 
     // Notifications (scoped to the active profile).
     Route::get('notifications', [NotificationController::class, 'index']);

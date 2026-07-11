@@ -53,4 +53,10 @@ return [
         'redirect' => env('TWITTER_REDIRECT_URI', env('APP_URL', 'http://localhost').'/api/v1/auth/twitter/callback'),
     ],
 
+    'nominatim' => [
+        'enabled' => env('NOMINATIM_ENABLED', true),
+        'base_url' => env('NOMINATIM_BASE_URL', 'https://nominatim.openstreetmap.org'),
+        'contact' => env('NOMINATIM_CONTACT'),
+    ],
+
 ];

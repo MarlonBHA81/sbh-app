@@ -54,3 +54,30 @@ Broadcast::channel('conversation.{ulid}', function ($user, string $ulid) {
         'avatar' => $profile->avatarUrl(),
     ];
 });
+
+// Nearby presence channel: keyed by a precision-4 geohash cell (~40 km). Any
+// authenticated, active profile may join; membership itself is the "active
+// now" signal, so no server-side events are emitted. The member payload is a
+// lite profile used to render the live roster.
+Broadcast::channel('nearby.{geohash}', function ($user, string $geohash) {
+    if (! preg_match('/^[0-9bcdefghjkmnpqrstuvwxyz]{4}$/', $geohash)) {
+        return false;
+    }
+
+    $profileUlid = request()->header('X-Profile-Id');
+
+    $profile = $profileUlid
+        ? $user->profiles()->where('ulid', $profileUlid)->first()
+        : $user->personalProfile;
+
+    if (! $profile) {
+        return false;
+    }
+
+    return [
+        'ulid' => $profile->ulid,
+        'handle' => $profile->handle,
+        'name' => $profile->name,
+        'avatar_url' => $profile->avatarUrl(),
+    ];
+});
