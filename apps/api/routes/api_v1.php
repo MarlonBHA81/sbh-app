@@ -8,7 +8,10 @@ use App\Http\Controllers\Api\V1\Auth\TokenController;
 use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\MeController;
+use App\Http\Controllers\Api\V1\MediaController;
+use App\Http\Controllers\Api\V1\MyPostController;
 use App\Http\Controllers\Api\V1\MyProfileController;
+use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,4 +61,16 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
     Route::post('profiles/{handle}/follow', [FollowController::class, 'store']);
     Route::delete('profiles/{handle}/follow', [FollowController::class, 'destroy']);
+
+    Route::post('media', [MediaController::class, 'store']);
+
+    Route::get('me/posts', [MyPostController::class, 'index']);
+
+    Route::post('posts', [PostController::class, 'store']);
+    Route::get('posts/{post}', [PostController::class, 'show']);
+    Route::patch('posts/{post}', [PostController::class, 'update']);
+    Route::delete('posts/{post}', [PostController::class, 'destroy']);
+    Route::post('posts/{post}/reveal', [PostController::class, 'reveal']);
+
+    Route::get('profiles/{handle}/posts', [ProfileController::class, 'posts']);
 });

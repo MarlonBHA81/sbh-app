@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Follow;
 use App\Models\Profile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -27,4 +28,15 @@ function userWithProfile(array $profileAttributes = [], array $userAttributes = 
     Profile::factory()->for($user)->create($profileAttributes);
 
     return $user->fresh();
+}
+
+/**
+ * Create an accepted follow between two profiles.
+ */
+function acceptedFollow(Profile $follower, Profile $followed): Follow
+{
+    return Follow::factory()->create([
+        'follower_profile_id' => $follower->id,
+        'followed_profile_id' => $followed->id,
+    ]);
 }

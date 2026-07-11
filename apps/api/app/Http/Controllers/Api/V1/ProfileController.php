@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\PostResource;
 use App\Http\Resources\ProfileResource;
 use App\Models\Follow;
+use App\Models\Post;
 use App\Models\Profile;
+use App\Services\Posts\PostService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -45,6 +48,30 @@ class ProfileController extends Controller
             ->cursorPaginate(20);
 
         return ProfileResource::collection($following);
+    }
+
+    public function posts(Request $request, string $handle): AnonymousResourceCollection
+    {
+        $profile = $this->resolveByHandle($handle);
+
+        $this->authorizeListAccess($request, $profile);
+
+        /** @var Profile|null $viewer */
+        $viewer = $request->attributes->get('activeProfile');
+
+        $seesFollowersOnly = ($viewer !== null && $viewer->user_id === $profile->user_id)
+            || $profile->isFollowedBy($viewer);
+
+        $posts = Post::query()
+            ->where('profile_id', $profile->id)
+            ->published()
+            ->when(! $seesFollowersOnly, fn ($query) => $query->where('visibility', Post::VISIBILITY_PUBLIC))
+            ->with(PostService::EAGER)
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->cursorPaginate(20);
+
+        return PostResource::collection($posts);
     }
 
     private function resolveByHandle(string $handle): Profile
