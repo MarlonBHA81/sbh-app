@@ -57,3 +57,64 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// --- Web push -------------------------------------------------------------
+
+interface PushPayload {
+  title?: string;
+  body?: string;
+  icon?: string;
+  data?: { url?: string };
+}
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  let payload: PushPayload = {};
+  try {
+    payload = event.data.json() as PushPayload;
+  } catch {
+    payload = { body: event.data.text() };
+  }
+
+  const title = payload.title ?? "SBH";
+  const url = payload.data?.url ?? "/notifications";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: payload.body ?? "",
+      icon: payload.icon ?? "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      data: { url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const data = (event.notification.data ?? {}) as { url?: string };
+  const targetUrl = data.url ?? "/notifications";
+
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+      for (const client of clientList) {
+        // Focus an existing tab and route it to the target.
+        if ("focus" in client) {
+          await client.focus();
+          if ("navigate" in client) {
+            try {
+              await client.navigate(targetUrl);
+            } catch {
+              // Cross-origin or unsupported — fall back to the open URL below.
+            }
+          }
+          return;
+        }
+      }
+      await self.clients.openWindow(targetUrl);
+    })(),
+  );
+});

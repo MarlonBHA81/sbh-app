@@ -1,10 +1,12 @@
+import Link from "next/link";
+
 import { cn } from "@/lib/utils";
 
 const TOKEN_RE = /(https?:\/\/[^\s<]+|@[a-z0-9_]{2,30}|#[\p{L}\p{N}_]{1,50})/giu;
 
 /**
- * Renders a post body with URLs linkified and @mentions / #hashtags
- * visually styled (styling only — mention/hashtag pages arrive later).
+ * Renders a post/comment body with URLs and @mentions linkified and #hashtags
+ * visually styled (hashtag pages arrive later).
  */
 export function PostBody({
   text,
@@ -37,7 +39,19 @@ export function PostBody({
             </a>
           );
         }
-        if (part.startsWith("@") || part.startsWith("#")) {
+        if (part.startsWith("@")) {
+          return (
+            <Link
+              key={i}
+              href={`/${part.slice(1)}`}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {part}
+            </Link>
+          );
+        }
+        if (part.startsWith("#")) {
           return (
             <span key={i} className="font-medium text-primary">
               {part}

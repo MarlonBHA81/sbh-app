@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { ComposerFab } from "@/components/composer/composer-fab";
 import { ComposerProvider } from "@/components/composer/composer-provider";
+import { NotificationsProvider } from "@/components/notifications/notifications-provider";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
 import { TopBar } from "@/components/shell/top-bar";
@@ -56,6 +57,7 @@ export default function AppLayout({
 
   return (
     <ComposerProvider>
+      <NotificationsProvider />
       <div className="mx-auto flex min-h-dvh w-full max-w-6xl">
         <SidebarNav />
         <div className="flex min-h-dvh w-full min-w-0 flex-1 flex-col">

@@ -10,11 +10,17 @@ import { AccountSwitcher } from "@/components/shell/account-switcher";
 import { NAV_ITEMS } from "@/components/shell/nav-items";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useNotificationsStore } from "@/lib/stores/notifications-store";
 import { cn } from "@/lib/utils";
+
+function formatBadge(count: number): string {
+  return count > 99 ? "99+" : String(count);
+}
 
 export function SidebarNav() {
   const pathname = usePathname();
   const activeProfile = useAuthStore((s) => s.activeProfile);
+  const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const { openComposer } = useComposer();
   const profileHref = activeProfile ? `/${activeProfile.handle}` : "/home";
 
@@ -29,6 +35,7 @@ export function SidebarNav() {
       <nav aria-label="Primary" className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
+          const showBadge = href === "/notifications" && unreadCount > 0;
           return (
             <Link
               key={href}
@@ -41,8 +48,18 @@ export function SidebarNav() {
                   : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
               )}
             >
-              <Icon className="size-5" aria-hidden />
+              <span className="relative">
+                <Icon className="size-5" aria-hidden />
+                {showBadge ? (
+                  <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
+                    {formatBadge(unreadCount)}
+                  </span>
+                ) : null}
+              </span>
               {label}
+              {showBadge ? (
+                <span className="sr-only">{unreadCount} unread</span>
+              ) : null}
             </Link>
           );
         })}

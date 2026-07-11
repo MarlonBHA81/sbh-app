@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  ArrowBigDown,
+  ArrowBigUp,
   BadgeCheck,
   Eye,
   EyeOff,
@@ -9,7 +11,8 @@ import {
   Repeat2,
 } from "lucide-react";
 import Link from "next/link";
-import { createElement, useState } from "react";
+import { useRouter } from "next/navigation";
+import { createElement, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useComposer } from "@/components/composer/composer-provider";
@@ -34,14 +37,72 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import * as api from "@/lib/api/client";
-import type { Post } from "@/lib/api/types";
+import type { Post, Vote } from "@/lib/api/types";
+import { applyVote, formatCount, formatNetVotes } from "@/lib/reactions";
 import { relativeTime } from "@/lib/time";
+import { cn } from "@/lib/utils";
 
 import { getPostRenderer, TYPE_BADGES } from "./registry";
 
-function formatCount(n: number): string {
-  if (n === 0) return "";
-  return Intl.NumberFormat("en", { notation: "compact" }).format(n);
+/** Absolute counts pushed from a live `ReactionUpdated` broadcast. */
+export interface LiveCounts {
+  likes_count: number;
+  upvotes_count: number;
+  downvotes_count: number;
+}
+
+function VotePair({
+  vote,
+  net,
+  onVote,
+}: {
+  vote: Vote;
+  net: number;
+  onVote: (value: Exclude<Vote, 0>) => void;
+}) {
+  return (
+    <div className="flex items-center rounded-lg text-muted-foreground">
+      <button
+        type="button"
+        aria-label="Upvote"
+        aria-pressed={vote === 1}
+        onClick={() => onVote(1)}
+        className={cn(
+          "flex min-h-11 items-center rounded-lg px-1.5 transition-colors hover:text-emerald-600",
+          vote === 1 && "text-emerald-600",
+        )}
+      >
+        <ArrowBigUp
+          className={cn("size-[19px]", vote === 1 && "fill-current")}
+          aria-hidden
+        />
+      </button>
+      <span
+        className={cn(
+          "min-w-4 text-center text-xs font-medium tabular-nums",
+          vote === 1 && "text-emerald-600",
+          vote === -1 && "text-red-600",
+        )}
+      >
+        {formatNetVotes(net)}
+      </span>
+      <button
+        type="button"
+        aria-label="Downvote"
+        aria-pressed={vote === -1}
+        onClick={() => onVote(-1)}
+        className={cn(
+          "flex min-h-11 items-center rounded-lg px-1.5 transition-colors hover:text-red-600",
+          vote === -1 && "text-red-600",
+        )}
+      >
+        <ArrowBigDown
+          className={cn("size-[19px]", vote === -1 && "fill-current")}
+          aria-hidden
+        />
+      </button>
+    </div>
+  );
 }
 
 function ActionButton({
@@ -49,38 +110,126 @@ function ActionButton({
   count,
   label,
   onClick,
+  className,
+  iconClassName,
+  active,
 }: {
   icon: typeof Heart;
   count: number;
   label: string;
   onClick?: () => void;
+  className?: string;
+  iconClassName?: string;
+  active?: boolean;
 }) {
   return (
     <button
       type="button"
       aria-label={label}
+      aria-pressed={active}
       onClick={onClick}
-      className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-lg px-2 text-muted-foreground transition-colors hover:text-foreground"
+      className={cn(
+        "flex min-h-11 min-w-11 items-center gap-1.5 rounded-lg px-2 text-muted-foreground transition-colors hover:text-foreground",
+        className,
+      )}
     >
-      <Icon className="size-[18px]" aria-hidden />
+      <Icon className={cn("size-[18px]", iconClassName)} aria-hidden />
       <span className="text-xs tabular-nums">{formatCount(count)}</span>
     </button>
   );
 }
 
-export function PostCard({ post }: { post: Post }) {
+export function PostCard({
+  post,
+  linkToDetail = true,
+  liveCounts = null,
+}: {
+  post: Post;
+  /** Whether the card navigates to the post detail page on click. */
+  linkToDetail?: boolean;
+  /** Absolute counts from a live broadcast (detail page only). */
+  liveCounts?: LiveCounts | null;
+}) {
+  const router = useRouter();
   const { openComposer, notifyPostsMutated } = useComposer();
   const [showSensitive, setShowSensitive] = useState(false);
   const [repostConfirmOpen, setRepostConfirmOpen] = useState(false);
   const [reposting, setReposting] = useState(false);
 
+  // Optimistic reaction state (seeded once from props; live counts are
+  // absolute overrides pushed via `liveCounts`).
+  const [liked, setLiked] = useState(post.liked);
+  const [likesCount, setLikesCount] = useState(post.likes_count);
+  const [vote, setVote] = useState<Vote>(post.my_vote);
+  const [upCount, setUpCount] = useState(post.upvotes_count);
+  const [downCount, setDownCount] = useState(post.downvotes_count);
+  const [heartPop, setHeartPop] = useState(false);
+  const [seenLive, setSeenLive] = useState<LiveCounts | null>(null);
+  const likeBusy = useRef(false);
+  const voteBusy = useRef(false);
+
+  // Live counts are authoritative server totals — apply (during render, guarded
+  // against re-applying the same broadcast) without touching the viewer's own
+  // liked/vote flags.
+  if (liveCounts && liveCounts !== seenLive) {
+    setSeenLive(liveCounts);
+    setLikesCount(liveCounts.likes_count);
+    setUpCount(liveCounts.upvotes_count);
+    setDownCount(liveCounts.downvotes_count);
+  }
+
   const content = createElement(getPostRenderer(post.type), { post });
   const badge = TYPE_BADGES[post.type];
   const timestamp = post.published_at ?? post.created_at;
+  const detailHref = `/p/${post.ulid}`;
   // Reposting a repost targets the original post.
   const repostTarget = post.type === "repost" ? (post.parent ?? post) : post;
 
   const hidden = post.sensitive && !showSensitive;
+
+  async function toggleLike() {
+    if (likeBusy.current) return;
+    likeBusy.current = true;
+    const previous = { liked, likesCount };
+    const nextLiked = !liked;
+    setLiked(nextLiked);
+    setLikesCount((c) => Math.max(0, c + (nextLiked ? 1 : -1)));
+    if (nextLiked) {
+      setHeartPop(true);
+      window.setTimeout(() => setHeartPop(false), 260);
+    }
+    try {
+      if (nextLiked) await api.post(`/api/v1/posts/${post.ulid}/like`);
+      else await api.del(`/api/v1/posts/${post.ulid}/like`);
+    } catch {
+      setLiked(previous.liked);
+      setLikesCount(previous.likesCount);
+    } finally {
+      likeBusy.current = false;
+    }
+  }
+
+  async function castVote(value: Exclude<Vote, 0>) {
+    if (voteBusy.current) return;
+    voteBusy.current = true;
+    const previous = { vote, upCount, downCount };
+    const result = applyVote(vote, value, {
+      upvotes_count: upCount,
+      downvotes_count: downCount,
+    });
+    setVote(result.vote);
+    setUpCount(result.counts.upvotes_count);
+    setDownCount(result.counts.downvotes_count);
+    try {
+      await api.post(`/api/v1/posts/${post.ulid}/vote`, { value: result.vote });
+    } catch {
+      setVote(previous.vote);
+      setUpCount(previous.upCount);
+      setDownCount(previous.downCount);
+    } finally {
+      voteBusy.current = false;
+    }
+  }
 
   async function repost() {
     if (reposting) return;
@@ -105,8 +254,25 @@ export function PostCard({ post }: { post: Post }) {
     }
   }
 
+  // Whole-card navigation to the detail page, ignoring clicks that land on
+  // interactive descendants (links, buttons, menu items, media) or during a
+  // text selection.
+  function handleCardClick(event: React.MouseEvent<HTMLElement>) {
+    if (!linkToDetail) return;
+    const target = event.target as HTMLElement;
+    if (target.closest("a,button,[role='menuitem'],[data-no-nav]")) return;
+    if (window.getSelection()?.toString()) return;
+    router.push(detailHref);
+  }
+
   return (
-    <article className="flex flex-col gap-3 rounded-xl border bg-card p-4 text-card-foreground">
+    <article
+      onClick={handleCardClick}
+      className={cn(
+        "flex flex-col gap-3 rounded-xl border bg-card p-4 text-card-foreground",
+        linkToDetail && "cursor-pointer transition-colors hover:bg-accent/30",
+      )}
+    >
       <header className="flex items-center gap-3">
         <Link
           href={`/${post.profile.handle}`}
@@ -132,7 +298,17 @@ export function PostCard({ post }: { post: Post }) {
           <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
             @{post.profile.handle}
             <span aria-hidden>·</span>
-            <time dateTime={timestamp}>{relativeTime(timestamp)}</time>
+            {linkToDetail ? (
+              <Link
+                href={detailHref}
+                className="hover:underline"
+                aria-label="View post"
+              >
+                <time dateTime={timestamp}>{relativeTime(timestamp)}</time>
+              </Link>
+            ) : (
+              <time dateTime={timestamp}>{relativeTime(timestamp)}</time>
+            )}
           </span>
         </div>
         {badge ? (
@@ -177,11 +353,29 @@ export function PostCard({ post }: { post: Post }) {
       ) : null}
 
       <footer className="-mx-2 -mb-2 flex items-center justify-between">
-        <ActionButton icon={Heart} count={post.likes_count} label="Likes" />
+        <ActionButton
+          icon={Heart}
+          count={likesCount}
+          label={liked ? "Unlike" : "Like"}
+          active={liked}
+          onClick={() => void toggleLike()}
+          className={cn(liked && "text-rose-500 hover:text-rose-500")}
+          iconClassName={cn(
+            "transition-transform",
+            liked && "fill-current",
+            heartPop && "scale-125",
+          )}
+        />
+        <VotePair
+          vote={vote}
+          net={upCount - downCount}
+          onVote={(value) => void castVote(value)}
+        />
         <ActionButton
           icon={MessageCircle}
           count={post.comments_count}
           label="Comments"
+          onClick={() => router.push(detailHref)}
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

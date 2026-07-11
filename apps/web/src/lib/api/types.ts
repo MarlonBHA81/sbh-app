@@ -105,6 +105,9 @@ export interface CheckinPayload {
   country_code?: string;
 }
 
+/** Reddit-style vote: 1 up, -1 down, 0 none. */
+export type Vote = 1 | -1 | 0;
+
 export interface Post {
   ulid: string;
   type: PostType;
@@ -117,12 +120,69 @@ export interface Post {
   comments_count: number;
   reposts_count: number;
   views_count: number;
+  upvotes_count: number;
+  downvotes_count: number;
+  /** Viewer state: has the active profile liked this post. */
+  liked: boolean;
+  /** Viewer state: the active profile's vote on this post. */
+  my_vote: Vote;
   published_at: string | null;
   scheduled_at: string | null;
   profile: Profile;
   media: Media[];
   parent: Post | null;
   topics?: PostTopic[];
+  created_at: string;
+}
+
+export interface Comment {
+  ulid: string;
+  /** "[deleted]" for tombstoned comments. */
+  body: string;
+  /** Nesting depth 0-3 (replies past depth 3 are disallowed). */
+  depth: number;
+  likes_count: number;
+  upvotes_count: number;
+  downvotes_count: number;
+  replies_count: number;
+  liked: boolean;
+  my_vote: Vote;
+  profile: Profile;
+  parent_comment_ulid: string | null;
+  created_at: string;
+  /** First 2 replies preloaded on top-level comments. */
+  replies?: Comment[];
+}
+
+export type NotificationType =
+  | "new_follower"
+  | "follow_requested"
+  | "follow_accepted"
+  | "post_liked"
+  | "post_commented"
+  | "comment_replied"
+  | "comment_liked"
+  | "mentioned"
+  | "post_reposted"
+  | "post_quoted";
+
+export interface NotificationActor {
+  ulid: string;
+  handle: string;
+  name: string;
+  avatar_url: string | null;
+}
+
+export interface AppNotification {
+  id: string;
+  type: NotificationType;
+  data: {
+    actor: NotificationActor;
+    post_ulid?: string;
+    comment_ulid?: string;
+    preview?: string;
+  };
+  read_at: string | null;
   created_at: string;
 }
 
