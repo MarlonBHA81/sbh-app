@@ -2,7 +2,7 @@
 
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { API_URL, getActiveProfileId } from "@/lib/api/client";
 
@@ -206,4 +206,142 @@ export function useEchoPrivate(
       }
     };
   }, [channel]);
+}
+
+/**
+ * Subscribe to named broadcast events on a *private* channel (as opposed to
+ * {@link useEchoPrivate}, which listens for Laravel notifications). `handlers`
+ * maps event name (e.g. ".ConversationBumped") to callback.
+ */
+export function useEchoPrivateEvents(
+  channel: string | null,
+  handlers: ChannelHandlers,
+): void {
+  const handlersRef = useRef(handlers);
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
+
+  useEffect(() => {
+    if (!channel) return;
+    const echo = createEcho();
+    if (!echo) return;
+
+    const events = Object.keys(handlersRef.current);
+    const bound = events.map((event) => ({
+      event,
+      fn: (payload: unknown) => handlersRef.current[event]?.(payload),
+    }));
+
+    try {
+      const ch = echo.private(channel);
+      for (const { event, fn } of bound) ch.listen(event, fn);
+    } catch {
+      return;
+    }
+
+    return () => {
+      try {
+        const ch = echo.private(channel);
+        for (const { event, fn } of bound) ch.stopListening(event, fn);
+      } catch {
+        // ignore teardown failures
+      }
+    };
+  }, [channel]);
+}
+
+type PresenceChannelRef = ReturnType<ReverbEcho["join"]>;
+
+/** Presence roster + client-whisper callbacks for {@link useEchoPresence}. */
+export interface PresenceCallbacks {
+  /** Current members when the subscription succeeds. */
+  onHere?: (members: unknown[]) => void;
+  /** A member joined the channel. */
+  onJoining?: (member: unknown) => void;
+  /** A member left the channel. */
+  onLeaving?: (member: unknown) => void;
+  /** Client-event (whisper) listeners keyed by event name (e.g. "typing"). */
+  whispers?: Record<string, (data: unknown) => void>;
+}
+
+/**
+ * Subscribe to a Reverb presence channel. `handlers` maps server broadcast
+ * event names (e.g. ".MessageSent") to callbacks; `callbacks` receives the
+ * presence roster and client whispers. Returns a `whisper` helper for sending
+ * client events (e.g. typing) — a no-op when realtime is unavailable.
+ *
+ * Like the other hooks here, everything degrades silently without Echo, and
+ * handlers/callbacks are read via refs so callers can pass inline closures.
+ */
+export function useEchoPresence(
+  channel: string | null,
+  handlers: ChannelHandlers,
+  callbacks?: PresenceCallbacks,
+): { whisper: (event: string, data: Record<string, unknown>) => void } {
+  const handlersRef = useRef(handlers);
+  const callbacksRef = useRef(callbacks);
+  const channelRef = useRef<PresenceChannelRef | null>(null);
+
+  // Keep the latest handlers/callbacks without re-subscribing every render.
+  useEffect(() => {
+    handlersRef.current = handlers;
+  });
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  });
+
+  useEffect(() => {
+    if (!channel) return;
+    const echo = createEcho();
+    if (!echo) return;
+
+    let ch: PresenceChannelRef;
+    try {
+      ch = echo.join(channel);
+      channelRef.current = ch;
+      ch.here((members: unknown[]) => callbacksRef.current?.onHere?.(members));
+      ch.joining((member: unknown) =>
+        callbacksRef.current?.onJoining?.(member),
+      );
+      ch.leaving((member: unknown) =>
+        callbacksRef.current?.onLeaving?.(member),
+      );
+      for (const event of Object.keys(handlersRef.current)) {
+        ch.listen(event, (payload: unknown) =>
+          handlersRef.current[event]?.(payload),
+        );
+      }
+      for (const event of Object.keys(callbacksRef.current?.whispers ?? {})) {
+        ch.listenForWhisper(event, (data: unknown) =>
+          callbacksRef.current?.whispers?.[event]?.(data),
+        );
+      }
+    } catch {
+      channelRef.current = null;
+      return;
+    }
+
+    return () => {
+      channelRef.current = null;
+      try {
+        echo.leave(channel);
+      } catch {
+        // ignore teardown failures
+      }
+    };
+  }, [channel]);
+
+  const whisper = useCallback(
+    (event: string, data: Record<string, unknown>) => {
+      try {
+        channelRef.current?.whisper(event, data);
+      } catch {
+        // realtime unavailable — whispers are best-effort
+      }
+    },
+    [],
+  );
+
+  return { whisper };
 }

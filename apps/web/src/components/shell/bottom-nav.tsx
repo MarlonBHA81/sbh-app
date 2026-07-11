@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { NAV_ITEMS } from "@/components/shell/nav-items";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useMessagesStore } from "@/lib/stores/messages-store";
 import { useNotificationsStore } from "@/lib/stores/notifications-store";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  const unreadMessages = useMessagesStore((s) => s.unreadTotal);
   const profileHref = activeProfile ? `/${activeProfile.handle}` : "/home";
   const profileActive = activeProfile
     ? pathname === `/${activeProfile.handle}`
@@ -30,13 +32,19 @@ export function BottomNav() {
       <div className="flex h-14">
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
-          const showBadge = href === "/notifications" && unreadCount > 0;
+          const badgeCount =
+            href === "/notifications"
+              ? unreadCount
+              : href === "/messages"
+                ? unreadMessages
+                : 0;
+          const showBadge = badgeCount > 0;
           return (
             <Link
               key={href}
               href={href}
               aria-label={
-                showBadge ? `${label} (${unreadCount} unread)` : label
+                showBadge ? `${label} (${badgeCount} unread)` : label
               }
               aria-current={active ? "page" : undefined}
               className={cn(
@@ -54,7 +62,7 @@ export function BottomNav() {
                 />
                 {showBadge ? (
                   <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
-                    {formatBadge(unreadCount)}
+                    {formatBadge(badgeCount)}
                   </span>
                 ) : null}
               </span>

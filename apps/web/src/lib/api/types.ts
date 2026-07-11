@@ -15,6 +15,9 @@ export type Relationship =
   | "self"
   | "blocked";
 
+/** Who may start a direct message with this profile. */
+export type DmPrivacy = "everyone" | "followers" | "no_one";
+
 export interface Profile {
   ulid: string;
   kind: ProfileKind;
@@ -35,6 +38,16 @@ export interface Profile {
   relationship: Relationship;
   /** Viewer has muted this profile (optional; absent on older payloads). */
   is_muted?: boolean;
+  /** Who may DM this profile (own-profile payloads / settings). */
+  dm_privacy?: DmPrivacy;
+}
+
+/** Trimmed profile shape embedded in messaging payloads. */
+export interface ProfileLite {
+  ulid: string;
+  handle: string;
+  name: string;
+  avatar_url: string | null;
 }
 
 /** Minimal topic shape attached to posts and used in pickers/chips. */
@@ -333,3 +346,63 @@ export interface AppStatus {
 }
 
 export type ApiValidationErrors = Record<string, string[]>;
+
+// --- Messaging (Milestone 7) ---------------------------------------------
+
+export type ConversationKind = "dm" | "group";
+export type ConversationRole = "owner" | "admin" | "member";
+
+export interface ConversationParticipant {
+  profile: ProfileLite;
+  role: ConversationRole;
+}
+
+/** Compact last-message summary shown in the conversation list. */
+export interface ConversationLastMessage {
+  ulid: string;
+  preview: string;
+  sender_handle: string;
+  created_at: string;
+  deleted: boolean;
+}
+
+export interface Conversation {
+  ulid: string;
+  kind: ConversationKind;
+  /** null for DMs (title is derived from the other participant). */
+  title: string | null;
+  avatar_path: string | null;
+  rules: string | null;
+  participants: ConversationParticipant[];
+  last_message: ConversationLastMessage | null;
+  unread_count: number;
+  my_role: ConversationRole;
+  created_at: string;
+}
+
+export interface MessageReaction {
+  emoji: string;
+  count: number;
+  reacted_by_me: boolean;
+}
+
+/** Quoted preview of the message being replied to. */
+export interface MessageReplyTo {
+  ulid: string;
+  /** Preview body; null when the original is hidden/deleted. */
+  body: string | null;
+  sender: ProfileLite;
+}
+
+export interface Message {
+  ulid: string;
+  /** null when hidden or deleted. */
+  body: string | null;
+  hidden?: boolean;
+  deleted?: boolean;
+  reply_to: MessageReplyTo | null;
+  reactions: MessageReaction[];
+  media: Media[];
+  profile: ProfileLite;
+  created_at: string;
+}

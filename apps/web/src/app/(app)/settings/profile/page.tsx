@@ -28,6 +28,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -39,7 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import * as api from "@/lib/api/client";
-import type { Profile } from "@/lib/api/types";
+import type { DmPrivacy, Profile } from "@/lib/api/types";
 import { BUSINESS_CATEGORIES } from "@/lib/categories";
 import { applyServerErrors, errorMessage } from "@/lib/forms";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
@@ -118,6 +120,84 @@ function ContentSettings() {
             aria-label="Show sensitive content"
           />
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const DM_PRIVACY_OPTIONS: { value: DmPrivacy; label: string; hint: string }[] = [
+  { value: "everyone", label: "Everyone", hint: "Anyone can message you" },
+  {
+    value: "followers",
+    label: "People I follow",
+    hint: "Only accounts you follow can start a chat",
+  },
+  { value: "no_one", label: "No one", hint: "Turn off new direct messages" },
+];
+
+function MessagingSettings() {
+  const activeProfile = useAuthStore((s) => s.activeProfile);
+  const updateActiveProfile = useAuthStore((s) => s.updateActiveProfile);
+  const [busy, setBusy] = useState(false);
+  const value: DmPrivacy = activeProfile?.dm_privacy ?? "everyone";
+
+  async function choose(next: DmPrivacy) {
+    if (busy || !activeProfile || next === value) return;
+    setBusy(true);
+    const previous = activeProfile;
+    // Optimistic: reflect the choice immediately.
+    updateActiveProfile({ ...activeProfile, dm_privacy: next });
+    try {
+      const res = await api.patch<{ data: Profile }>(
+        `/api/v1/me/profiles/${activeProfile.ulid}`,
+        { dm_privacy: next },
+      );
+      updateActiveProfile(res.data);
+    } catch (error) {
+      updateActiveProfile(previous);
+      toast.error(
+        error instanceof api.ApiError
+          ? error.message
+          : "Couldn't update messaging setting",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Messaging</CardTitle>
+        <CardDescription>Choose who can start a direct message.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <RadioGroup
+          value={value}
+          onValueChange={(next) => void choose(next as DmPrivacy)}
+          className="gap-2"
+        >
+          {DM_PRIVACY_OPTIONS.map((option) => (
+            <Label
+              key={option.value}
+              htmlFor={`dm-${option.value}`}
+              className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-[[data-state=checked]]:border-primary/50 has-[[data-state=checked]]:bg-accent/40"
+            >
+              <RadioGroupItem
+                id={`dm-${option.value}`}
+                value={option.value}
+                disabled={busy}
+                className="mt-0.5"
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium">{option.label}</span>
+                <span className="text-sm text-muted-foreground">
+                  {option.hint}
+                </span>
+              </span>
+            </Label>
+          ))}
+        </RadioGroup>
       </CardContent>
     </Card>
   );
@@ -371,6 +451,7 @@ export default function ProfileSettingsPage() {
         </CardContent>
       </Card>
       <ContentSettings />
+      <MessagingSettings />
       <PrivacySafetySettings />
       <PushSettings />
     </div>
