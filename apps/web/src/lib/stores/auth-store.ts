@@ -1,0 +1,150 @@
+import { createStore } from "zustand/vanilla";
+
+import * as api from "@/lib/api/client";
+import type { MeResponse, Profile, User } from "@/lib/api/types";
+
+const ACTIVE_PROFILE_KEY = "sbh.activeProfileId";
+
+export type AuthStatus = "loading" | "authed" | "guest";
+
+export interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+  handle?: string;
+}
+
+export interface CreateBusinessProfileInput {
+  name: string;
+  handle: string;
+  category: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  profiles: Profile[];
+  activeProfile: Profile | null;
+  status: AuthStatus;
+}
+
+export interface AuthActions {
+  fetchMe: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (input: RegisterInput) => Promise<void>;
+  logout: () => Promise<void>;
+  switchProfile: (ulid: string) => void;
+  createBusinessProfile: (
+    input: CreateBusinessProfileInput,
+  ) => Promise<Profile>;
+  /** Replace the active profile in place (e.g. after PATCHing it). */
+  updateActiveProfile: (profile: Profile) => void;
+}
+
+export type AuthStore = AuthState & AuthActions;
+
+function readPersistedProfileId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(ACTIVE_PROFILE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function persistProfileId(ulid: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (ulid === null) window.localStorage.removeItem(ACTIVE_PROFILE_KEY);
+    else window.localStorage.setItem(ACTIVE_PROFILE_KEY, ulid);
+  } catch {
+    // Storage unavailable (private mode etc.) — non-fatal.
+  }
+}
+
+export const defaultAuthState: AuthState = {
+  user: null,
+  profiles: [],
+  activeProfile: null,
+  status: "loading",
+};
+
+export function createAuthStore(initialState: AuthState = defaultAuthState) {
+  return createStore<AuthStore>()((set, getState) => ({
+    ...initialState,
+
+    fetchMe: async () => {
+      const persisted = readPersistedProfileId();
+      if (persisted) api.setActiveProfileId(persisted);
+      try {
+        const res = await api.get<MeResponse>("/api/v1/me");
+        const { user, profiles, active_profile } = res.data;
+        const active =
+          profiles.find((p) => p.ulid === persisted) ??
+          active_profile ??
+          profiles[0] ??
+          null;
+        api.setActiveProfileId(active?.ulid ?? null);
+        persistProfileId(active?.ulid ?? null);
+        set({ user, profiles, activeProfile: active, status: "authed" });
+      } catch {
+        api.setActiveProfileId(null);
+        set({ user: null, profiles: [], activeProfile: null, status: "guest" });
+      }
+    },
+
+    login: async (email, password) => {
+      await api.post("/api/v1/auth/login", { email, password });
+      await getState().fetchMe();
+    },
+
+    register: async (input) => {
+      await api.post("/api/v1/auth/register", input);
+      await getState().fetchMe();
+    },
+
+    logout: async () => {
+      try {
+        await api.post("/api/v1/auth/logout");
+      } catch {
+        // Even if the API call fails, drop local session state.
+      }
+      api.setActiveProfileId(null);
+      persistProfileId(null);
+      set({ user: null, profiles: [], activeProfile: null, status: "guest" });
+    },
+
+    switchProfile: (ulid) => {
+      const profile = getState().profiles.find((p) => p.ulid === ulid);
+      if (!profile) return;
+      api.setActiveProfileId(profile.ulid);
+      persistProfileId(profile.ulid);
+      set({ activeProfile: profile });
+    },
+
+    createBusinessProfile: async (input) => {
+      const res = await api.post<{ data: Profile }>("/api/v1/me/profiles", {
+        kind: "business",
+        ...input,
+      });
+      const created = res.data;
+      api.setActiveProfileId(created.ulid);
+      persistProfileId(created.ulid);
+      set((state) => ({
+        profiles: [...state.profiles, created],
+        activeProfile: created,
+      }));
+      return created;
+    },
+
+    updateActiveProfile: (profile) => {
+      set((state) => ({
+        activeProfile: profile,
+        profiles: state.profiles.map((p) =>
+          p.ulid === profile.ulid ? profile : p,
+        ),
+      }));
+    },
+  }));
+}
+
+export type AuthStoreApi = ReturnType<typeof createAuthStore>;
