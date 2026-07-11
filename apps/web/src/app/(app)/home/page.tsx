@@ -1,7 +1,6 @@
-import { Newspaper } from "lucide-react";
 import type { Metadata } from "next";
 
-import { EmptyState } from "@/components/empty-state";
+import { HomeFeed } from "@/components/posts/home-feed";
 
 export const metadata: Metadata = { title: "Home" };
 
@@ -9,11 +8,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-xl font-semibold tracking-tight">Home</h1>
-      <EmptyState
-        icon={Newspaper}
-        title="Your feed is coming in M3"
-        description="Follow other businesses and people in the meantime — posts from accounts you follow will show up here."
-      />
+      <HomeFeed />
     </div>
   );
 }

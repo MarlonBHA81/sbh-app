@@ -2,6 +2,7 @@
 
 import {
   Check,
+  FileClock,
   LogOut,
   Moon,
   Plus,
@@ -94,6 +95,13 @@ export function AccountSwitcher({
             Create business profile
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="min-h-11 gap-3"
+            onSelect={() => router.push("/drafts")}
+          >
+            <FileClock className="size-4" aria-hidden />
+            Drafts &amp; scheduled
+          </DropdownMenuItem>
           <DropdownMenuItem
             className="min-h-11 gap-3"
             onSelect={() => router.push("/settings/profile")}

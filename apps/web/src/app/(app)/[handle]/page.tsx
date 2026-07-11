@@ -14,7 +14,9 @@ import { useRouter } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { useComposer } from "@/components/composer/composer-provider";
 import { EmptyState } from "@/components/empty-state";
+import { PostList } from "@/components/posts/post-list";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,6 +56,7 @@ export default function ProfilePage({
   const { handle } = use(params);
   const router = useRouter();
   const status = useAuthStore((s) => s.status);
+  const { openComposer, mutationCount } = useComposer();
 
   const [state, setState] = useState<{
     handle: string;
@@ -302,13 +305,30 @@ export default function ProfilePage({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="posts" className="pt-2">
-            <EmptyState
-              icon={FileText}
-              title="No posts yet"
-              description={
-                isSelf
-                  ? "Posting arrives in M3 — your posts will show up here."
-                  : `@${profile.handle} hasn't posted yet.`
+            <PostList
+              buildUrl={(cursor) =>
+                `/api/v1/profiles/${encodeURIComponent(handle)}/posts${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`
+              }
+              refreshKey={`${handle}:${isSelf ? mutationCount : 0}`}
+              emptyState={
+                <EmptyState
+                  icon={FileText}
+                  title="No posts yet"
+                  description={
+                    isSelf
+                      ? "Share your first post — it'll show up here."
+                      : `@${profile.handle} hasn't posted yet.`
+                  }
+                >
+                  {isSelf ? (
+                    <Button
+                      className="mt-2 h-11"
+                      onClick={() => openComposer()}
+                    >
+                      Write a post
+                    </Button>
+                  ) : null}
+                </EmptyState>
               }
             />
           </TabsContent>

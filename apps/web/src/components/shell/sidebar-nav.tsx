@@ -1,9 +1,10 @@
 "use client";
 
-import { ChevronsUpDown } from "lucide-react";
+import { ChevronsUpDown, PenSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useComposer } from "@/components/composer/composer-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { AccountSwitcher } from "@/components/shell/account-switcher";
 import { NAV_ITEMS } from "@/components/shell/nav-items";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 export function SidebarNav() {
   const pathname = usePathname();
   const activeProfile = useAuthStore((s) => s.activeProfile);
+  const { openComposer } = useComposer();
   const profileHref = activeProfile ? `/${activeProfile.handle}` : "/home";
 
   return (
@@ -56,6 +58,14 @@ export function SidebarNav() {
           <ProfileAvatar profile={activeProfile} className="size-5" />
           Profile
         </Link>
+        <Button
+          type="button"
+          className="mt-3 h-11 gap-2"
+          onClick={() => openComposer()}
+        >
+          <PenSquare className="size-4" aria-hidden />
+          Post
+        </Button>
       </nav>
       <AccountSwitcher align="start">
         <Button

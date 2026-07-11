@@ -128,6 +128,72 @@ async function request<T>(
   return json as T;
 }
 
+/**
+ * POST multipart form data (file uploads) with upload progress.
+ * Uses XMLHttpRequest because fetch has no upload progress events.
+ */
+export async function postMultipart<T>(
+  path: string,
+  form: FormData,
+  onProgress?: (fraction: number) => void,
+  retried = false,
+): Promise<T> {
+  await ensureCsrf();
+
+  const result = await new Promise<{ status: number; text: string }>(
+    (resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", `${API_URL}${path}`);
+      xhr.withCredentials = true;
+      xhr.setRequestHeader("Accept", "application/json");
+      if (activeProfileId) xhr.setRequestHeader("X-Profile-Id", activeProfileId);
+      const token = readCookie("XSRF-TOKEN");
+      if (token) xhr.setRequestHeader("X-XSRF-TOKEN", token);
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable && onProgress) {
+          onProgress(event.loaded / event.total);
+        }
+      });
+      xhr.addEventListener("load", () =>
+        resolve({ status: xhr.status, text: xhr.responseText }),
+      );
+      xhr.addEventListener("error", () => reject(new Error("Network error")));
+      xhr.addEventListener("abort", () => reject(new Error("Upload aborted")));
+      xhr.send(form);
+    },
+  );
+
+  // Stale CSRF token: refresh the cookie and retry once.
+  if (result.status === 419 && !retried) {
+    await fetchCsrfCookie();
+    return postMultipart<T>(path, form, onProgress, true);
+  }
+
+  let json: unknown = null;
+  if (result.text) {
+    try {
+      json = JSON.parse(result.text);
+    } catch {
+      // Non-JSON body; leave json null.
+    }
+  }
+
+  if (result.status < 200 || result.status >= 300) {
+    const payload = (json ?? {}) as {
+      message?: string;
+      errors?: ApiValidationErrors;
+    } & Record<string, unknown>;
+    throw new ApiError(
+      result.status,
+      payload.message || "Upload failed",
+      payload.errors,
+      payload,
+    );
+  }
+
+  return json as T;
+}
+
 export function get<T>(path: string): Promise<T> {
   return request<T>("GET", path);
 }
