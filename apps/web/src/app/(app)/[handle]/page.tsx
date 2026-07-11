@@ -20,6 +20,8 @@ import { toast } from "sonner";
 
 import { useComposer } from "@/components/composer/composer-provider";
 import { EmptyState } from "@/components/empty-state";
+import { findRankBadge, RankChip } from "@/components/gamification/rank-chip";
+import { XpProgressCard } from "@/components/gamification/xp-progress-card";
 import { PostList } from "@/components/posts/post-list";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ReportDialog } from "@/components/safety/report-dialog";
@@ -268,6 +270,7 @@ export default function ProfilePage({
 
   const isSelf = profile.relationship === "self";
   const isBlocked = profile.relationship === "blocked";
+  const rankBadge = findRankBadge(profile);
   const muted = muteOverride ?? profile.is_muted ?? false;
   const isPrivateHidden =
     profile.is_private &&
@@ -450,6 +453,16 @@ export default function ProfilePage({
                   <span className="text-muted-foreground">Following</span>
                 </span>
               </div>
+              {rankBadge || profile.xp_total > 0 ? (
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  {rankBadge ? <RankChip badge={rankBadge} /> : null}
+                  {profile.xp_total > 0 ? (
+                    <span className="text-muted-foreground tabular-nums">
+                      {formatCount(profile.xp_total)} XP
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </>
           ) : null}
         </div>
@@ -526,7 +539,8 @@ export default function ProfilePage({
               }
             />
           </TabsContent>
-          <TabsContent value="about" className="pt-2">
+          <TabsContent value="about" className="flex flex-col gap-3 pt-2">
+            {isSelf ? <XpProgressCard /> : null}
             <Card>
               <CardContent className="flex flex-col gap-3 py-6 text-sm">
                 <p className="leading-relaxed">

@@ -4,6 +4,7 @@ import {
   MessageCircle,
   Quote,
   Repeat2,
+  Trophy,
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const ACTION_TEXT: Record<NotificationType, string> = {
   mentioned: "mentioned you",
   post_reposted: "reposted your post",
   post_quoted: "quoted your post",
+  rank_unlocked: "unlocked a new rank",
 };
 
 const ICONS: Record<NotificationType, LucideIcon> = {
@@ -34,10 +36,15 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   mentioned: AtSign,
   post_reposted: Repeat2,
   post_quoted: Quote,
+  rank_unlocked: Trophy,
 };
 
 /** Trailing action text, e.g. "liked your post". */
 export function notificationAction(notification: AppNotification): string {
+  if (notification.type === "rank_unlocked") {
+    const name = notification.data.rank?.name;
+    return name ? `You unlocked the ${name} rank` : "You unlocked a new rank";
+  }
   return ACTION_TEXT[notification.type] ?? "sent you a notification";
 }
 
@@ -48,6 +55,8 @@ export function notificationIcon(notification: AppNotification): LucideIcon {
 /** Where tapping a notification should navigate. */
 export function notificationHref(notification: AppNotification): string {
   const { data } = notification;
+  if (notification.type === "rank_unlocked") return "/leaderboard";
   if (data.post_ulid) return `/p/${data.post_ulid}`;
-  return `/${data.actor.handle}`;
+  if (data.actor) return `/${data.actor.handle}`;
+  return "/notifications";
 }

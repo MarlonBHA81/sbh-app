@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight, Trophy } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -233,6 +233,27 @@ export function DiscoverView() {
 
   return (
     <div className="flex flex-col gap-6">
+      <Link
+        href="/leaderboard"
+        className="flex items-center gap-3 rounded-xl border bg-accent/40 p-3 transition-colors hover:bg-accent/60"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-amber-600 dark:text-amber-400">
+          <Trophy className="size-5" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">
+            Community leaderboard
+          </span>
+          <span className="block text-xs text-muted-foreground">
+            See who&apos;s earning the most XP this week.
+          </span>
+        </span>
+        <ChevronRight
+          className="size-5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+      </Link>
+
       {myTopics.length > 0 ? (
         <section className="flex flex-col gap-2" aria-label="Your topics">
           <h2 className="text-sm font-semibold text-muted-foreground">

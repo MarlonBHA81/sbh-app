@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, PenSquare } from "lucide-react";
+import { ChevronsUpDown, PenSquare, Trophy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -71,6 +71,21 @@ export function SidebarNav() {
             </Link>
           );
         })}
+        <Link
+          href="/leaderboard"
+          aria-current={
+            pathname === "/leaderboard" ? "page" : undefined
+          }
+          className={cn(
+            "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+            pathname === "/leaderboard"
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+          )}
+        >
+          <Trophy className="size-5" aria-hidden />
+          Leaderboard
+        </Link>
         <Link
           href={profileHref}
           className={cn(

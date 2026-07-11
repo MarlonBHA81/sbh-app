@@ -5,11 +5,24 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 import * as api from "@/lib/api/client";
-import type { AppNotification } from "@/lib/api/types";
+import type { AppNotification, RankSummary } from "@/lib/api/types";
 import { useEchoPrivate } from "@/lib/echo";
 import { notificationAction, notificationHref } from "@/lib/notifications";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useGamificationStore } from "@/lib/stores/gamification-store";
 import { useNotificationsStore } from "@/lib/stores/notifications-store";
+
+/** Coerce a loosely-typed rank payload into a RankSummary, if valid. */
+function toRankSummary(value: unknown): RankSummary | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const r = value as Record<string, unknown>;
+  if (typeof r.key !== "string" || typeof r.name !== "string") return undefined;
+  return {
+    key: r.key,
+    name: r.name,
+    icon: typeof r.icon === "string" ? r.icon : null,
+  };
+}
 
 /** Best-effort coercion of an Echo notification broadcast into AppNotification. */
 function toAppNotification(payload: unknown): AppNotification | null {
@@ -18,7 +31,9 @@ function toAppNotification(payload: unknown): AppNotification | null {
   const type = p.type as AppNotification["type"] | undefined;
   const source = (p.data ?? p) as Record<string, unknown>;
   const actor = source.actor as AppNotification["data"]["actor"] | undefined;
-  if (!type || !actor) return null;
+  const rank = toRankSummary(source.rank);
+  // Every notification carries either an actor or (for rank_unlocked) a rank.
+  if (!type || (!actor && !rank)) return null;
 
   return {
     id:
@@ -35,6 +50,7 @@ function toAppNotification(payload: unknown): AppNotification | null {
           ? source.comment_ulid
           : undefined,
       preview: typeof source.preview === "string" ? source.preview : undefined,
+      rank,
     },
     read_at: typeof p.read_at === "string" ? p.read_at : null,
     created_at:
@@ -53,6 +69,7 @@ export function NotificationsProvider() {
   const activeUlid = useAuthStore((s) => s.activeProfile?.ulid ?? null);
   const setUnreadCount = useNotificationsStore((s) => s.setUnreadCount);
   const pushLive = useNotificationsStore((s) => s.pushLive);
+  const celebrateRank = useGamificationStore((s) => s.celebrateRank);
 
   // Sync the unread badge whenever the active profile changes.
   useEffect(() => {
@@ -78,6 +95,12 @@ export function NotificationsProvider() {
       if (!notification) return;
       pushLive(notification);
 
+      // Rank unlocks get a full-screen celebration instead of a plain toast.
+      if (notification.type === "rank_unlocked") {
+        if (notification.data.rank) celebrateRank(notification.data.rank);
+        return;
+      }
+
       const href = notificationHref(notification);
       toast.custom(
         (id) => (
@@ -91,7 +114,7 @@ export function NotificationsProvider() {
           >
             <span className="min-w-0 flex-1 truncate">
               <span className="font-semibold">
-                {notification.data.actor.name}
+                {notification.data.actor?.name}
               </span>{" "}
               {notificationAction(notification)}
             </span>

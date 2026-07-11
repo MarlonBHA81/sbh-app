@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, BellRing, X } from "lucide-react";
+import { Bell, BellRing, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import { createElement, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -109,6 +109,7 @@ function NotificationRow({
   const href = notificationHref(notification);
   const unread = notification.read_at == null;
   const { actor } = notification.data;
+  const isRank = notification.type === "rank_unlocked";
 
   return (
     <Link
@@ -122,20 +123,36 @@ function NotificationRow({
       )}
     >
       <div className="relative shrink-0">
-        <ProfileAvatar profile={actor} className="size-10" />
-        <span className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full bg-background">
-          {createElement(notificationIcon(notification), {
-            className: "size-3.5 text-muted-foreground",
-            "aria-hidden": true,
-          })}
-        </span>
+        {isRank || !actor ? (
+          <span className="flex size-10 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+            <Trophy className="size-5" aria-hidden />
+          </span>
+        ) : (
+          <>
+            <ProfileAvatar profile={actor} className="size-10" />
+            <span className="absolute -right-1 -bottom-1 flex size-5 items-center justify-center rounded-full bg-background">
+              {createElement(notificationIcon(notification), {
+                className: "size-3.5 text-muted-foreground",
+                "aria-hidden": true,
+              })}
+            </span>
+          </>
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm leading-snug">
-          <span className="font-semibold">{actor.name}</span>{" "}
-          <span className="text-muted-foreground">
-            {notificationAction(notification)}
-          </span>
+          {isRank || !actor ? (
+            <span className="font-semibold">
+              {notificationAction(notification)}
+            </span>
+          ) : (
+            <>
+              <span className="font-semibold">{actor.name}</span>{" "}
+              <span className="text-muted-foreground">
+                {notificationAction(notification)}
+              </span>
+            </>
+          )}
         </p>
         {notification.data.preview ? (
           <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">

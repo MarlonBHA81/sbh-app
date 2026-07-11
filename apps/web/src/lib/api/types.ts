@@ -7,6 +7,17 @@ export interface User {
   settings: Record<string, unknown> | null;
 }
 
+/**
+ * A badge attached to a profile (ProfileResource). Rank badges use
+ * `kind: "rank"`; other kinds (e.g. verification, achievements) may appear too.
+ */
+export interface ProfileBadge {
+  kind: string;
+  key: string;
+  name: string;
+  icon: string | null;
+}
+
 export type ProfileKind = "personal" | "business";
 export type Relationship =
   | "none"
@@ -34,7 +45,10 @@ export interface Profile {
   followers_count: number;
   following_count: number;
   posts_count: number;
-  badges: string[];
+  /** Lifetime experience points (gamification, Milestone 8). */
+  xp_total: number;
+  /** Profile badges; the rank surfaces here with `kind: "rank"`. */
+  badges: ProfileBadge[];
   relationship: Relationship;
   /** Viewer has muted this profile (optional; absent on older payloads). */
   is_muted?: boolean;
@@ -310,7 +324,8 @@ export type NotificationType =
   | "comment_liked"
   | "mentioned"
   | "post_reposted"
-  | "post_quoted";
+  | "post_quoted"
+  | "rank_unlocked";
 
 export interface NotificationActor {
   ulid: string;
@@ -323,10 +338,13 @@ export interface AppNotification {
   id: string;
   type: NotificationType;
   data: {
-    actor: NotificationActor;
+    /** Absent on actor-less notifications such as `rank_unlocked`. */
+    actor?: NotificationActor;
     post_ulid?: string;
     comment_ulid?: string;
     preview?: string;
+    /** Present on `rank_unlocked` notifications. */
+    rank?: RankSummary;
   };
   read_at: string | null;
   created_at: string;
@@ -405,4 +423,77 @@ export interface Message {
   media: Media[];
   profile: ProfileLite;
   created_at: string;
+}
+
+// --- Gamification (Milestone 8) ------------------------------------------
+
+/** A rank tier. `min_xp` is the XP threshold to reach it. */
+export interface Rank {
+  key: string;
+  name: string;
+  icon: string;
+  min_xp: number;
+}
+
+/** Compact rank shape used in `rank_unlocked` notification payloads. */
+export interface RankSummary {
+  key: string;
+  name: string;
+  icon: string | null;
+}
+
+/** The next rank plus the viewer's progress toward it (0-100). */
+export interface NextRank extends Rank {
+  progress_pct: number;
+}
+
+/** One earnable XP action with the viewer's daily progress against its cap. */
+export interface XpAction {
+  action_key: string;
+  label: string;
+  /** XP earned from this action so far today. */
+  earned_today: number;
+  /** Times this action has been counted today. */
+  times_today: number;
+  /** Maximum times this action counts per day. */
+  daily_cap: number;
+  /** XP awarded per occurrence. */
+  points: number;
+}
+
+/** GET /api/v1/me/xp — the viewer's XP standing and daily earning surface. */
+export interface XpSummary {
+  xp_total: number;
+  rank: Rank;
+  next_rank: NextRank | null;
+  today: XpAction[];
+}
+
+/** One row of the leaderboard. */
+export interface LeaderboardRow {
+  position: number;
+  profile: Profile;
+  xp: number;
+}
+
+/** The viewer's own standing (may be outside the returned page). */
+export interface LeaderboardViewer {
+  position: number;
+  xp: number;
+}
+
+/** GET /api/v1/gamification/leaderboard */
+export interface LeaderboardResponse {
+  data: LeaderboardRow[];
+  viewer: LeaderboardViewer | null;
+}
+
+export type LeaderboardPeriod = "weekly" | "all";
+
+/** Broadcast payload for the `.XpAwarded` private-channel event. */
+export interface XpAwardedEvent {
+  points: number;
+  action_key: string;
+  xp_total: number;
+  label: string;
 }
