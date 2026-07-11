@@ -54,6 +54,11 @@ export interface Profile {
   is_muted?: boolean;
   /** Who may DM this profile (own-profile payloads / settings). */
   dm_privacy?: DmPrivacy;
+  /**
+   * Whether this profile shares its (approximate) location on the map.
+   * Present on own-profile payloads only (Milestone 9).
+   */
+  share_location?: boolean;
 }
 
 /** Trimmed profile shape embedded in messaging payloads. */
@@ -497,3 +502,32 @@ export interface XpAwardedEvent {
   xp_total: number;
   label: string;
 }
+
+// --- Search, geo & local feeds (Milestone 9) -----------------------------
+
+/** GET /api/v1/search — combined people + topics for the global palette. */
+export interface SearchResults {
+  profiles: Profile[];
+  topics: Topic[];
+}
+
+/**
+ * A nearby, opted-in profile with its privacy-rounded coordinates and the
+ * distance from the viewer. Returned by GET /api/v1/geo/nearby-users.
+ */
+export interface NearbyUser extends Profile {
+  lat: number;
+  lng: number;
+  distance_km: number;
+}
+
+/** GET /api/v1/geo/reverse — reverse geocode of a coordinate (or null). */
+export interface ReverseGeocode {
+  country_code: string | null;
+  country: string | null;
+  city: string | null;
+  display_name: string | null;
+}
+
+/** Which local feed the Nearby tab is showing. */
+export type LocalScope = "radius" | "city" | "country";

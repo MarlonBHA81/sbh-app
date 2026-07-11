@@ -56,6 +56,8 @@ interface ListState {
   posts: Post[];
   nextCursor: string | null;
   phase: "loading" | "loaded" | "error";
+  /** The error from the initial load (for custom error rendering). */
+  error?: unknown;
 }
 
 /**
@@ -69,12 +71,18 @@ export function PostList({
   emptyState,
   refreshKey,
   renderItem,
+  renderError,
   ref,
 }: {
   buildUrl: (cursor: string | null) => string;
   emptyState: React.ReactNode;
   refreshKey?: unknown;
   renderItem?: (post: Post, helpers: PostListHelpers) => React.ReactNode;
+  /**
+   * Custom render for an initial-load failure (e.g. a 422 with a specific
+   * message). `retry` refetches page 1. Falls back to the default error card.
+   */
+  renderError?: (error: unknown, retry: () => void) => React.ReactNode;
   ref?: React.Ref<PostListHandle>;
 }) {
   const [retry, setRetry] = useState(0);
@@ -116,9 +124,9 @@ export function PostList({
           });
         }
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (!cancelled) {
-          setState({ key, posts: [], nextCursor: null, phase: "error" });
+          setState({ key, posts: [], nextCursor: null, phase: "error", error });
         }
       });
     return () => {
@@ -215,6 +223,11 @@ export function PostList({
   }
 
   if (state.phase === "error") {
+    if (renderError) {
+      return (
+        <>{renderError(state.error, () => setRetry((count) => count + 1))}</>
+      );
+    }
     return (
       <div className="rounded-xl border border-dashed px-6 py-10 text-center text-sm text-muted-foreground">
         Couldn&apos;t load posts.{" "}

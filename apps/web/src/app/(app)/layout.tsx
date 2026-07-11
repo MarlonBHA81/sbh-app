@@ -8,6 +8,7 @@ import { ComposerProvider } from "@/components/composer/composer-provider";
 import { GamificationProvider } from "@/components/gamification/gamification-provider";
 import { MessagesProvider } from "@/components/messages/messages-provider";
 import { NotificationsProvider } from "@/components/notifications/notifications-provider";
+import { SearchDialog } from "@/components/search/search-dialog";
 import { BottomNav } from "@/components/shell/bottom-nav";
 import { MaintenanceBanner } from "@/components/shell/maintenance-banner";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
@@ -79,6 +80,7 @@ export default function AppLayout({
         />
         <BottomNav />
         <ComposerFab />
+        <SearchDialog />
       </div>
     </ComposerProvider>
   );

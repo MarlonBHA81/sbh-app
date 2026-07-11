@@ -1,6 +1,10 @@
 import { create } from "zustand";
 
+import type { LocalScope } from "@/lib/api/types";
+
 const GEO_KEY = "sbh.geo";
+
+const LOCAL_SCOPES: readonly LocalScope[] = ["radius", "city", "country"];
 
 export const DEFAULT_RADIUS_KM = 25;
 export const MIN_RADIUS_KM = 1;
@@ -22,17 +26,25 @@ export interface GeoStore {
   coords: GeoCoords | null;
   status: GeoStatus;
   radiusKm: number;
+  /** Which local feed the Nearby tab shows (radius | city | country). */
+  scope: LocalScope;
   requestLocation: () => void;
   setRadiusKm: (radiusKm: number) => void;
+  setScope: (scope: LocalScope) => void;
 }
 
 interface PersistedGeo {
   coords: GeoCoords | null;
   radiusKm: number;
+  scope: LocalScope;
 }
 
 function readPersisted(): PersistedGeo {
-  const fallback: PersistedGeo = { coords: null, radiusKm: DEFAULT_RADIUS_KM };
+  const fallback: PersistedGeo = {
+    coords: null,
+    radiusKm: DEFAULT_RADIUS_KM,
+    scope: "radius",
+  };
   if (typeof window === "undefined") return fallback;
   try {
     const raw = window.sessionStorage.getItem(GEO_KEY);
@@ -48,7 +60,11 @@ function readPersisted(): PersistedGeo {
       typeof parsed.radiusKm === "number"
         ? Math.min(MAX_RADIUS_KM, Math.max(MIN_RADIUS_KM, parsed.radiusKm))
         : DEFAULT_RADIUS_KM;
-    return { coords, radiusKm };
+    const scope =
+      parsed.scope && LOCAL_SCOPES.includes(parsed.scope)
+        ? parsed.scope
+        : "radius";
+    return { coords, radiusKm, scope };
   } catch {
     return fallback;
   }
@@ -63,6 +79,11 @@ function persist(geo: PersistedGeo): void {
   }
 }
 
+function snapshot(get: () => GeoStore): PersistedGeo {
+  const s = get();
+  return { coords: s.coords, radiusKm: s.radiusKm, scope: s.scope };
+}
+
 const initial = readPersisted();
 
 /**
@@ -73,6 +94,7 @@ export const useGeoStore = create<GeoStore>()((set, get) => ({
   coords: initial.coords,
   status: initial.coords ? "granted" : "idle",
   radiusKm: initial.radiusKm,
+  scope: initial.scope,
 
   requestLocation: () => {
     if (get().status === "requesting") return;
@@ -88,7 +110,7 @@ export const useGeoStore = create<GeoStore>()((set, get) => ({
           lng: position.coords.longitude,
         };
         set({ coords, status: "granted" });
-        persist({ coords, radiusKm: get().radiusKm });
+        persist({ ...snapshot(get), coords });
       },
       (error) => {
         set({
@@ -107,6 +129,11 @@ export const useGeoStore = create<GeoStore>()((set, get) => ({
       Math.max(MIN_RADIUS_KM, Math.round(radiusKm)),
     );
     set({ radiusKm: clamped });
-    persist({ coords: get().coords, radiusKm: clamped });
+    persist({ ...snapshot(get), radiusKm: clamped });
+  },
+
+  setScope: (scope) => {
+    set({ scope });
+    persist({ ...snapshot(get), scope });
   },
 }));

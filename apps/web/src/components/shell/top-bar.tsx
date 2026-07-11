@@ -4,6 +4,7 @@ import { Gauge } from "lucide-react";
 import Link from "next/link";
 
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { SearchTrigger } from "@/components/search/search-trigger";
 import { AccountSwitcher } from "@/components/shell/account-switcher";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,16 +29,19 @@ export function TopBar() {
           Data saver
         </Badge>
       ) : null}
-      <AccountSwitcher>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-11 rounded-full"
-          aria-label="Switch account"
-        >
-          <ProfileAvatar profile={activeProfile} className="size-8" />
-        </Button>
-      </AccountSwitcher>
+      <div className="flex items-center gap-1">
+        <SearchTrigger variant="icon" />
+        <AccountSwitcher>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-11 rounded-full"
+            aria-label="Switch account"
+          >
+            <ProfileAvatar profile={activeProfile} className="size-8" />
+          </Button>
+        </AccountSwitcher>
+      </div>
     </header>
   );
 }

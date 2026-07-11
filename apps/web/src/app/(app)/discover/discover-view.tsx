@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, Trophy } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin, Trophy } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -246,6 +246,25 @@ export function DiscoverView() {
           </span>
           <span className="block text-xs text-muted-foreground">
             See who&apos;s earning the most XP this week.
+          </span>
+        </span>
+        <ChevronRight
+          className="size-5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+      </Link>
+
+      <Link
+        href="/map"
+        className="flex items-center gap-3 rounded-xl border bg-accent/40 p-3 transition-colors hover:bg-accent/60"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-emerald-600 dark:text-emerald-400">
+          <MapPin className="size-5" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">Who&apos;s nearby</span>
+          <span className="block text-xs text-muted-foreground">
+            Explore people and businesses around you on the map.
           </span>
         </span>
         <ChevronRight

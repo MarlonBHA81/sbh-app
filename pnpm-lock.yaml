@@ -46,6 +46,9 @@ importers:
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      pigeon-maps:
+        specifier: ^0.22.1
+        version: 0.22.1(react@19.2.4)
       pusher-js:
         specifier: ^8.5.0
         version: 8.5.0
@@ -103,7 +106,7 @@ importers:
         version: 16.2.10(@typescript-eslint/parser@8.63.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       serwist:
         specifier: ^9.5.11
-        version: 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
+        version: 9.5.11(browserslist@4.28.5)(typescript@5.9.3)
       tailwindcss:
         specifier: ^4
         version: 4.3.2
@@ -2764,6 +2767,11 @@ packages:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
 
+  pigeon-maps@0.22.1:
+    resolution: {integrity: sha512-mVWxgpIyhAekITeJvDGlFAo/Ytm6Fg7prpDiAuQ0Z6cJ/LwpnS8F0sF+0TDqyJu7C/DDHupkstFTNoIRqhdP5A==}
+    peerDependencies:
+      react: '*'
+
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
@@ -4445,6 +4453,10 @@ snapshots:
     optionalDependencies:
       browserslist: 4.28.2
 
+  '@serwist/utils@9.5.11(browserslist@4.28.5)':
+    optionalDependencies:
+      browserslist: 4.28.5
+
   '@serwist/webpack-plugin@9.5.11(browserslist@4.28.2)(typescript@5.9.3)':
     dependencies:
       '@serwist/build': 9.5.11(browserslist@4.28.2)(typescript@5.9.3)
@@ -6079,6 +6091,10 @@ snapshots:
 
   picomatch@4.0.5: {}
 
+  pigeon-maps@0.22.1(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+
   possible-typed-array-names@1.1.0: {}
 
   postcss@8.4.31:
@@ -6365,6 +6381,15 @@ snapshots:
   serwist@9.5.11(browserslist@4.28.2)(typescript@5.9.3):
     dependencies:
       '@serwist/utils': 9.5.11(browserslist@4.28.2)
+      idb: 8.0.3
+    optionalDependencies:
+      typescript: 5.9.3
+    transitivePeerDependencies:
+      - browserslist
+
+  serwist@9.5.11(browserslist@4.28.5)(typescript@5.9.3):
+    dependencies:
+      '@serwist/utils': 9.5.11(browserslist@4.28.5)
       idb: 8.0.3
     optionalDependencies:
       typescript: 5.9.3

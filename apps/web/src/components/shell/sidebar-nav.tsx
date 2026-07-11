@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { useComposer } from "@/components/composer/composer-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { SearchTrigger } from "@/components/search/search-trigger";
 import { AccountSwitcher } from "@/components/shell/account-switcher";
 import { NAV_ITEMS } from "@/components/shell/nav-items";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,9 @@ export function SidebarNav() {
         </span>
         <span className="text-xl font-semibold tracking-tight">SBH</span>
       </Link>
+      <div className="mb-2 px-1">
+        <SearchTrigger variant="bar" />
+      </div>
       <nav aria-label="Primary" className="flex flex-1 flex-col gap-1">
         {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);

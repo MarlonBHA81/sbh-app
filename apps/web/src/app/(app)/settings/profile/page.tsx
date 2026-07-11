@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Ban, ChevronRight, CircleAlert, VolumeX } from "lucide-react";
+import { Ban, ChevronRight, CircleAlert, MapPin, VolumeX } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -45,6 +45,7 @@ import type { DmPrivacy, Profile } from "@/lib/api/types";
 import { BUSINESS_CATEGORIES } from "@/lib/categories";
 import { applyServerErrors, errorMessage } from "@/lib/forms";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useLocationSharing } from "@/lib/use-location-sharing";
 
 const schema = z.object({
   name: z.string().min(2, "Enter a name"),
@@ -204,15 +205,40 @@ function MessagingSettings() {
 }
 
 function PrivacySafetySettings() {
+  const { sharing, busy, enable, disable } = useLocationSharing();
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Privacy &amp; safety</CardTitle>
         <CardDescription>
-          Manage the accounts you&apos;ve blocked or muted.
+          Manage location sharing and the accounts you&apos;ve blocked or muted.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
+        <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border p-4">
+          <div className="flex items-start gap-3">
+            <MapPin
+              className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+              aria-hidden
+            />
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Location sharing</p>
+              <p className="text-sm text-muted-foreground">
+                Appear on the nearby map. Only your approximate location is
+                shared, never your exact position.
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={sharing}
+            disabled={busy}
+            onCheckedChange={(checked) =>
+              void (checked ? enable() : disable())
+            }
+            aria-label="Location sharing"
+          />
+        </div>
         <Link
           href="/settings/blocked"
           className="flex min-h-11 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/40"
