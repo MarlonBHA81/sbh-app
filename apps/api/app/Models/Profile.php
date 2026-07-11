@@ -24,6 +24,12 @@ class Profile extends Model
 
     public const KIND_BUSINESS = 'business';
 
+    public const DM_PRIVACY_EVERYONE = 'everyone';
+
+    public const DM_PRIVACY_FOLLOWERS = 'followers';
+
+    public const DM_PRIVACY_NO_ONE = 'no_one';
+
     protected $fillable = [
         'user_id',
         'kind',
@@ -41,6 +47,7 @@ class Profile extends Model
         'country_code',
         'city',
         'is_private',
+        'dm_privacy',
     ];
 
     protected function casts(): array

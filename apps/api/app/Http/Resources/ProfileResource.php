@@ -37,6 +37,13 @@ class ProfileResource extends JsonResource
                 && in_array($this->id, app(SafetyService::class)->mutedProfileIds($viewer), true),
         ];
 
+        $isSelf = $viewer !== null && $viewer->user_id === $this->user_id;
+
+        if ($isSelf) {
+            // DM privacy is only ever surfaced to the profile's own account.
+            $base['dm_privacy'] = $this->dm_privacy;
+        }
+
         if (! $viewable) {
             return $base + ['limited' => true];
         }

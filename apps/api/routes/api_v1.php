@@ -8,11 +8,15 @@ use App\Http\Controllers\Api\V1\Auth\TokenController;
 use App\Http\Controllers\Api\V1\BlockController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
+use App\Http\Controllers\Api\V1\ConversationController;
+use App\Http\Controllers\Api\V1\ConversationParticipantController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
+use App\Http\Controllers\Api\V1\MessageController;
+use App\Http\Controllers\Api\V1\MessageReactionController;
 use App\Http\Controllers\Api\V1\MuteController;
 use App\Http\Controllers\Api\V1\MyPostController;
 use App\Http\Controllers\Api\V1\MyProfileController;
@@ -158,4 +162,26 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/push-subscriptions/public-key', [PushSubscriptionController::class, 'publicKey']);
     Route::post('me/push-subscriptions', [PushSubscriptionController::class, 'store']);
     Route::delete('me/push-subscriptions', [PushSubscriptionController::class, 'destroy']);
+
+    // Messaging: conversations, messages, reactions, read receipts.
+    Route::get('conversations', [ConversationController::class, 'index']);
+    Route::post('conversations', [ConversationController::class, 'store']);
+    Route::get('conversations/{conversation}', [ConversationController::class, 'show']);
+    Route::patch('conversations/{conversation}', [ConversationController::class, 'update']);
+
+    Route::get('conversations/{conversation}/messages', [MessageController::class, 'index']);
+    Route::post('conversations/{conversation}/messages', [MessageController::class, 'store'])
+        ->middleware('throttle:messages');
+
+    Route::post('conversations/{conversation}/read', [ConversationController::class, 'read']);
+
+    Route::post('conversations/{conversation}/participants', [ConversationParticipantController::class, 'store']);
+    Route::delete('conversations/{conversation}/participants/{profile}', [ConversationParticipantController::class, 'destroy']);
+    Route::post('conversations/{conversation}/participants/{profile}/role', [ConversationParticipantController::class, 'updateRole']);
+
+    Route::delete('messages/{message}', [MessageController::class, 'destroy']);
+    Route::post('messages/{message}/reactions', [MessageReactionController::class, 'store']);
+    Route::delete('messages/{message}/reactions', [MessageReactionController::class, 'destroy']);
+
+    Route::get('me/unread-messages-count', [ConversationController::class, 'unreadCount']);
 });
