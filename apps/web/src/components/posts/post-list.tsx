@@ -12,6 +12,7 @@ import { PostCard } from "@/components/post-types/post-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import type { Paginated, Post } from "@/lib/api/types";
+import { useModerationStore } from "@/lib/stores/moderation-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 
 /** In low data mode, ask for smaller pages (the backend may ignore it). */
@@ -78,6 +79,7 @@ export function PostList({
 }) {
   const [retry, setRetry] = useState(0);
   const key = `${String(refreshKey)}#${retry}`;
+  const hiddenProfileUlids = useModerationStore((s) => s.hiddenProfileUlids);
 
   const [state, setState] = useState<ListState>({
     key,
@@ -227,13 +229,19 @@ export function PostList({
     );
   }
 
-  if (state.posts.length === 0) {
+  // Live-remove posts from authors the viewer just blocked/muted (no refetch).
+  const visiblePosts =
+    hiddenProfileUlids.size === 0
+      ? state.posts
+      : state.posts.filter((p) => !hiddenProfileUlids.has(p.profile.ulid));
+
+  if (visiblePosts.length === 0) {
     return <>{emptyState}</>;
   }
 
   return (
     <div className="flex flex-col gap-3">
-      {state.posts.map((post) =>
+      {visiblePosts.map((post) =>
         renderItem ? (
           <div key={post.ulid}>{renderItem(post, helpers)}</div>
         ) : (

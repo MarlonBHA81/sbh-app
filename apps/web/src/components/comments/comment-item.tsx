@@ -4,8 +4,10 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   BadgeCheck,
+  Flag,
   Heart,
   MessageSquare,
+  MoreHorizontal,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +16,7 @@ import { toast } from "sonner";
 
 import { PostBody } from "@/components/post-types/post-body";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { ReportDialog } from "@/components/safety/report-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +27,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import * as api from "@/lib/api/client";
 import type { Comment, Paginated, Vote } from "@/lib/api/types";
 import { applyVote, formatCount, formatNetVotes } from "@/lib/reactions";
@@ -62,6 +71,7 @@ export function CommentItem({
   const [tombstoned, setTombstoned] = useState(isTombstone(comment));
   const [replyOpen, setReplyOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   const [replies, setReplies] = useState<Comment[]>(comment.replies ?? []);
   const [repliesCount, setRepliesCount] = useState(comment.replies_count);
@@ -74,6 +84,9 @@ export function CommentItem({
     !tombstoned &&
     activeUlid !== null &&
     (comment.profile.ulid === activeUlid || postAuthorUlid === activeUlid);
+  const canReport =
+    !tombstoned && activeUlid !== null && comment.profile.ulid !== activeUlid;
+  const hasMenu = canReport || canDelete;
 
   const hasMore = fetchedReplies
     ? repliesCursor !== null
@@ -280,15 +293,39 @@ export function CommentItem({
                 </button>
               ) : null}
 
-              {canDelete ? (
-                <button
-                  type="button"
-                  aria-label="Delete comment"
-                  onClick={() => setDeleteOpen(true)}
-                  className="flex min-h-9 items-center gap-1 rounded-md px-1.5 text-xs transition-colors hover:text-destructive"
-                >
-                  <Trash2 className="size-4" aria-hidden />
-                </button>
+              {hasMenu ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Comment options"
+                      className="flex min-h-9 items-center gap-1 rounded-md px-1.5 text-xs transition-colors hover:text-foreground"
+                    >
+                      <MoreHorizontal className="size-4" aria-hidden />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-44">
+                    {canReport ? (
+                      <DropdownMenuItem
+                        className="min-h-11 gap-3"
+                        onSelect={() => setReportOpen(true)}
+                      >
+                        <Flag className="size-4" aria-hidden />
+                        Report comment
+                      </DropdownMenuItem>
+                    ) : null}
+                    {canDelete ? (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        className="min-h-11 gap-3"
+                        onSelect={() => setDeleteOpen(true)}
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                        Delete comment
+                      </DropdownMenuItem>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               ) : null}
             </div>
           )}
@@ -357,6 +394,14 @@ export function CommentItem({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ReportDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        reportableType="comment"
+        reportableUlid={comment.ulid}
+        contextLabel={`@${comment.profile.handle}'s comment`}
+      />
     </div>
   );
 }

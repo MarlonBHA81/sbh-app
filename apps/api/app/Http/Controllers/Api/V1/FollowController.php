@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use App\Services\ProfileService;
+use App\Services\SafetyService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -15,6 +16,9 @@ class FollowController extends Controller
     {
         $target = $this->resolveByHandle($handle);
         $actor = $this->activeProfile($request);
+
+        // A block in either direction hides the target entirely.
+        abort_if(app(SafetyService::class)->isBlockedBetween($actor, $target), 404);
 
         $follow = $profiles->follow($actor, $target);
 

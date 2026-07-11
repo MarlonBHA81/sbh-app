@@ -2,12 +2,16 @@
 
 import {
   BadgeCheck,
+  Ban,
   FileText,
+  Flag,
   Globe,
   Lock,
   MapPin,
+  MoreHorizontal,
   Tag,
   UserX,
+  VolumeX,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,13 +22,38 @@ import { useComposer } from "@/components/composer/composer-provider";
 import { EmptyState } from "@/components/empty-state";
 import { PostList } from "@/components/posts/post-list";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { ReportDialog } from "@/components/safety/report-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as api from "@/lib/api/client";
 import type { Profile } from "@/lib/api/types";
+import {
+  blockProfile,
+  muteProfile,
+  unblockProfile,
+  unmuteProfile,
+} from "@/lib/safety";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useModerationStore } from "@/lib/stores/moderation-store";
 
 function ProfileSkeleton() {
   return (
@@ -57,6 +86,8 @@ export default function ProfilePage({
   const router = useRouter();
   const status = useAuthStore((s) => s.status);
   const { openComposer, mutationCount } = useComposer();
+  const hideProfile = useModerationStore((s) => s.hideProfile);
+  const unhideProfile = useModerationStore((s) => s.unhideProfile);
 
   const [state, setState] = useState<{
     handle: string;
@@ -64,10 +95,17 @@ export default function ProfilePage({
     phase: "loading" | "loaded" | "error";
   }>({ handle, profile: null, phase: "loading" });
   const [followBusy, setFollowBusy] = useState(false);
+  const [modBusy, setModBusy] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
+  // Optimistic mute state (backend may not expose is_muted on the payload).
+  const [muteOverride, setMuteOverride] = useState<boolean | null>(null);
 
   // Reset while rendering when navigating between profiles (no effect needed).
   if (state.handle !== handle) {
     setState({ handle, profile: null, phase: "loading" });
+    setMuteOverride(null);
   }
 
   useEffect(() => {
@@ -87,7 +125,7 @@ export default function ProfilePage({
     return () => {
       cancelled = true;
     };
-  }, [handle]);
+  }, [handle, reloadKey]);
 
   const profile = state.profile;
   const loading = state.phase === "loading";
@@ -149,6 +187,69 @@ export default function ProfilePage({
     }
   }
 
+  async function toggleMute() {
+    if (!profile || modBusy) return;
+    const nextMuted = !(muteOverride ?? profile.is_muted ?? false);
+    setMuteOverride(nextMuted);
+    setModBusy(true);
+    try {
+      if (nextMuted) {
+        await muteProfile(handle);
+        hideProfile(profile.ulid);
+        toast.success(`Muted @${handle}`);
+      } else {
+        await unmuteProfile(handle);
+        unhideProfile(profile.ulid);
+        toast.success(`Unmuted @${handle}`);
+      }
+    } catch (error) {
+      setMuteOverride(!nextMuted);
+      toast.error(
+        error instanceof api.ApiError ? error.message : "Couldn't update mute",
+      );
+    } finally {
+      setModBusy(false);
+    }
+  }
+
+  async function confirmBlock() {
+    if (!profile || modBusy) return;
+    setModBusy(true);
+    const previous = profile;
+    setProfile({ ...profile, relationship: "blocked" });
+    try {
+      await blockProfile(handle);
+      hideProfile(profile.ulid);
+      toast.success(`Blocked @${handle}`);
+      setBlockConfirmOpen(false);
+    } catch (error) {
+      setProfile(previous);
+      toast.error(
+        error instanceof api.ApiError ? error.message : "Couldn't block",
+      );
+    } finally {
+      setModBusy(false);
+    }
+  }
+
+  async function unblock() {
+    if (!profile || modBusy) return;
+    setModBusy(true);
+    try {
+      await unblockProfile(handle);
+      unhideProfile(profile.ulid);
+      toast.success(`Unblocked @${handle}`);
+      // Refetch so the profile + posts come back with a fresh relationship.
+      setReloadKey((k) => k + 1);
+    } catch (error) {
+      toast.error(
+        error instanceof api.ApiError ? error.message : "Couldn't unblock",
+      );
+    } finally {
+      setModBusy(false);
+    }
+  }
+
   if (loading) return <ProfileSkeleton />;
 
   if (notFound || !profile) {
@@ -166,6 +267,8 @@ export default function ProfilePage({
   }
 
   const isSelf = profile.relationship === "self";
+  const isBlocked = profile.relationship === "blocked";
+  const muted = muteOverride ?? profile.is_muted ?? false;
   const isPrivateHidden =
     profile.is_private &&
     profile.relationship !== "following" &&
@@ -205,14 +308,84 @@ export default function ProfilePage({
                 <Link href="/settings/profile">Edit profile</Link>
               </Button>
             ) : (
-              <Button
-                variant={followVariant}
-                className="h-11 min-w-28"
-                disabled={followBusy}
-                onClick={() => void toggleFollow()}
-              >
-                {followLabel}
-              </Button>
+              <div className="flex items-center gap-2">
+                {isBlocked ? (
+                  <Button
+                    variant="outline"
+                    className="h-11 min-w-28"
+                    disabled={modBusy}
+                    onClick={() => void unblock()}
+                  >
+                    {modBusy ? "Working…" : "Unblock"}
+                  </Button>
+                ) : (
+                  <Button
+                    variant={followVariant}
+                    className="h-11 min-w-28"
+                    disabled={followBusy}
+                    onClick={() => void toggleFollow()}
+                  >
+                    {followLabel}
+                  </Button>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-11 shrink-0"
+                      aria-label={`More options for @${handle}`}
+                    >
+                      <MoreHorizontal className="size-5" aria-hidden />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem
+                      className="min-h-11 gap-3"
+                      onSelect={() => setReportOpen(true)}
+                    >
+                      <Flag className="size-4" aria-hidden />
+                      Report @{handle}
+                    </DropdownMenuItem>
+                    {!isBlocked ? (
+                      <DropdownMenuItem
+                        className="min-h-11 gap-3"
+                        disabled={modBusy}
+                        onSelect={(event) => {
+                          event.preventDefault();
+                          void toggleMute();
+                        }}
+                      >
+                        <VolumeX className="size-4" aria-hidden />
+                        {muted ? `Unmute @${handle}` : `Mute @${handle}`}
+                      </DropdownMenuItem>
+                    ) : null}
+                    <DropdownMenuSeparator />
+                    {isBlocked ? (
+                      <DropdownMenuItem
+                        className="min-h-11 gap-3"
+                        disabled={modBusy}
+                        onSelect={(event) => {
+                          event.preventDefault();
+                          void unblock();
+                        }}
+                      >
+                        <Ban className="size-4" aria-hidden />
+                        Unblock @{handle}
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        className="min-h-11 gap-3"
+                        onSelect={() => setBlockConfirmOpen(true)}
+                      >
+                        <Ban className="size-4" aria-hidden />
+                        Block @{handle}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
           <div className="flex flex-col gap-0.5">
@@ -227,10 +400,10 @@ export default function ProfilePage({
             </h1>
             <p className="text-sm text-muted-foreground">@{profile.handle}</p>
           </div>
-          {!isPrivateHidden && profile.bio ? (
+          {!isPrivateHidden && !isBlocked && profile.bio ? (
             <p className="text-sm leading-relaxed">{profile.bio}</p>
           ) : null}
-          {!isPrivateHidden ? (
+          {!isPrivateHidden && !isBlocked ? (
             <>
               <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                 {profile.category ? (
@@ -282,7 +455,28 @@ export default function ProfilePage({
         </div>
       </div>
 
-      {isPrivateHidden ? (
+      {isBlocked ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+              <Ban className="size-6 text-muted-foreground" aria-hidden />
+            </div>
+            <p className="font-semibold">You blocked @{profile.handle}</p>
+            <p className="max-w-xs text-sm text-muted-foreground">
+              They can&apos;t follow you or see your posts, and you won&apos;t
+              see theirs. Unblock to restore their profile.
+            </p>
+            <Button
+              variant="outline"
+              className="mt-1 h-11"
+              disabled={modBusy}
+              onClick={() => void unblock()}
+            >
+              {modBusy ? "Working…" : "Unblock"}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : isPrivateHidden ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
             <div className="flex size-12 items-center justify-center rounded-full bg-muted">
@@ -374,6 +568,40 @@ export default function ProfilePage({
           </TabsContent>
         </Tabs>
       )}
+
+      <ReportDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        reportableType="profile"
+        reportableUlid={profile.ulid}
+        contextLabel={`@${profile.handle}`}
+      />
+
+      <AlertDialog open={blockConfirmOpen} onOpenChange={setBlockConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block @{profile.handle}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They won&apos;t be able to follow you or see your posts, and you
+              won&apos;t see theirs. Any follow between you will be removed. You
+              can unblock them any time.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="h-11 bg-destructive text-white hover:bg-destructive/90"
+              disabled={modBusy}
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmBlock();
+              }}
+            >
+              {modBusy ? "Blocking…" : "Block"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

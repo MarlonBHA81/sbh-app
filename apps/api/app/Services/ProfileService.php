@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Follow;
 use App\Models\Profile;
+use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\FollowAccepted;
 use App\Notifications\FollowRequested;
@@ -27,9 +28,11 @@ class ProfileService
 
     public function createBusinessProfile(User $user, array $data): Profile
     {
-        if ($user->businessProfiles()->count() >= self::MAX_BUSINESS_PROFILES) {
+        $max = (int) Setting::get('max_business_profiles', self::MAX_BUSINESS_PROFILES);
+
+        if ($user->businessProfiles()->count() >= $max) {
             throw ValidationException::withMessages([
-                'kind' => ['You may create at most '.self::MAX_BUSINESS_PROFILES.' business profiles.'],
+                'kind' => ['You may create at most '.$max.' business profiles.'],
             ]);
         }
 

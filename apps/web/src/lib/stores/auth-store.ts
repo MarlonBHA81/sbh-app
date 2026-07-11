@@ -2,6 +2,7 @@ import { createStore } from "zustand/vanilla";
 
 import * as api from "@/lib/api/client";
 import type { MeResponse, Profile, User } from "@/lib/api/types";
+import { useModerationStore } from "@/lib/stores/moderation-store";
 
 const ACTIVE_PROFILE_KEY = "sbh.activeProfileId";
 
@@ -38,6 +39,8 @@ export interface AuthActions {
   ) => Promise<Profile>;
   /** Replace the active profile in place (e.g. after PATCHing it). */
   updateActiveProfile: (profile: Profile) => void;
+  /** Merge keys into the current user's settings JSON (e.g. show_sensitive). */
+  updateUserSettings: (settings: Record<string, unknown>) => void;
 }
 
 export type AuthStore = AuthState & AuthActions;
@@ -110,6 +113,7 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
       }
       api.setActiveProfileId(null);
       persistProfileId(null);
+      useModerationStore.getState().reset();
       set({ user: null, profiles: [], activeProfile: null, status: "guest" });
     },
 
@@ -118,6 +122,8 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
       if (!profile) return;
       api.setActiveProfileId(profile.ulid);
       persistProfileId(profile.ulid);
+      // Hidden (blocked/muted) sets are per-viewing-profile — clear on switch.
+      useModerationStore.getState().reset();
       set({ activeProfile: profile });
     },
 
@@ -143,6 +149,19 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
           p.ulid === profile.ulid ? profile : p,
         ),
       }));
+    },
+
+    updateUserSettings: (settings) => {
+      set((state) =>
+        state.user
+          ? {
+              user: {
+                ...state.user,
+                settings: { ...(state.user.settings ?? {}), ...settings },
+              },
+            }
+          : state,
+      );
     },
   }));
 }

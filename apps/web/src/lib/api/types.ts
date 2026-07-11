@@ -8,7 +8,12 @@ export interface User {
 }
 
 export type ProfileKind = "personal" | "business";
-export type Relationship = "none" | "following" | "pending" | "self";
+export type Relationship =
+  | "none"
+  | "following"
+  | "pending"
+  | "self"
+  | "blocked";
 
 export interface Profile {
   ulid: string;
@@ -28,6 +33,8 @@ export interface Profile {
   posts_count: number;
   badges: string[];
   relationship: Relationship;
+  /** Viewer has muted this profile (optional; absent on older payloads). */
+  is_muted?: boolean;
 }
 
 /** Minimal topic shape attached to posts and used in pickers/chips. */
@@ -318,6 +325,11 @@ export interface MeResponse {
     profiles: Profile[];
     active_profile: Profile;
   };
+}
+
+export interface AppStatus {
+  maintenance_message: string | null;
+  registration_open: boolean;
 }
 
 export type ApiValidationErrors = Record<string, string[]>;

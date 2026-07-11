@@ -8,6 +8,7 @@ use App\Models\Comment;
 use App\Models\Post;
 use App\Models\Profile;
 use App\Services\Engagement\CommentService;
+use App\Services\SafetyService;
 use App\Support\ViewerReactions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -20,7 +21,7 @@ class CommentController extends Controller
 
     private const PRELOADED_REPLIES = 2;
 
-    public function __construct(private CommentService $comments) {}
+    public function __construct(private CommentService $comments, private SafetyService $safety) {}
 
     /**
      * Top-level comments (newest first) with the first replies preloaded.
@@ -32,13 +33,18 @@ class CommentController extends Controller
 
         abort_unless($post->isVisibleTo($viewer), 404);
 
+        $excluded = $viewer ? $this->safety->blockedProfileIds($viewer) : [];
+
         $comments = $post->comments()
             ->withTrashed()
             ->whereNull('parent_comment_id')
             ->where(fn ($query) => $query->whereNull('deleted_at')->orWhere('replies_count', '>', 0))
+            ->when($excluded !== [], fn ($query) => $query->whereNotIn('profile_id', $excluded))
             ->with([
                 'profile',
-                'replies' => fn ($query) => $query->with('profile')->limit(self::PRELOADED_REPLIES),
+                'replies' => fn ($query) => $query->with('profile')
+                    ->when($excluded !== [], fn ($q) => $q->whereNotIn('profile_id', $excluded))
+                    ->limit(self::PRELOADED_REPLIES),
             ])
             ->orderByDesc('id')
             ->cursorPaginate(self::PER_PAGE);
@@ -72,8 +78,11 @@ class CommentController extends Controller
 
         abort_unless($comment->post->isVisibleTo($viewer), 404);
 
+        $excluded = $viewer ? $this->safety->blockedProfileIds($viewer) : [];
+
         $replies = $comment->replies()
             ->with('profile')
+            ->when($excluded !== [], fn ($query) => $query->whereNotIn('profile_id', $excluded))
             ->orderBy('id')
             ->cursorPaginate(self::PER_PAGE);
 

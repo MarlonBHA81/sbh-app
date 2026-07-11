@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasViewerReactionState;
+use App\Services\SafetyService;
 use Database\Factories\PostFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -199,6 +200,11 @@ class Post extends Model
 
         if ($viewer !== null && $viewer->user_id === $author->user_id) {
             return true;
+        }
+
+        // A block in either direction hides the post from the viewer.
+        if (app(SafetyService::class)->isBlockedBetween($viewer, $author)) {
+            return false;
         }
 
         if (! $this->isPublished()) {

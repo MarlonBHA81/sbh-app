@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\BlockController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
 use App\Http\Controllers\Api\V1\FeedController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
+use App\Http\Controllers\Api\V1\MuteController;
 use App\Http\Controllers\Api\V1\MyPostController;
 use App\Http\Controllers\Api\V1\MyProfileController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -21,6 +23,8 @@ use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\PushSubscriptionController;
+use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\StatusController;
 use App\Http\Controllers\Api\V1\TopicController;
 use App\Http\Controllers\Api\V1\UploadController;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +53,9 @@ Route::prefix('auth')->group(function () {
     });
 });
 
+// Public status flags (maintenance banner, registration toggle).
+Route::get('status', StatusController::class);
+
 // Public profile routes (viewer resolved when authenticated).
 Route::middleware('profile.active')->group(function () {
     Route::get('profiles/{handle}', [ProfileController::class, 'show']);
@@ -74,6 +81,17 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
     Route::post('profiles/{handle}/follow', [FollowController::class, 'store']);
     Route::delete('profiles/{handle}/follow', [FollowController::class, 'destroy']);
+
+    // Safety: blocks, mutes, reports.
+    Route::get('me/blocks', [BlockController::class, 'index']);
+    Route::post('profiles/{handle}/block', [BlockController::class, 'store']);
+    Route::delete('profiles/{handle}/block', [BlockController::class, 'destroy']);
+
+    Route::get('me/mutes', [MuteController::class, 'index']);
+    Route::post('profiles/{handle}/mute', [MuteController::class, 'store']);
+    Route::delete('profiles/{handle}/mute', [MuteController::class, 'destroy']);
+
+    Route::post('reports', [ReportController::class, 'store'])->middleware('throttle:reports');
 
     Route::post('media', [MediaController::class, 'store']);
     Route::get('media/{media}', [MediaController::class, 'show']);

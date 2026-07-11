@@ -37,12 +37,20 @@ class Topic extends Model
     {
         static::creating(function (Topic $topic) {
             if ($topic->path === null) {
-                $parent = $topic->parent_id !== null ? self::query()->find($topic->parent_id) : null;
-
-                $topic->path = $parent ? $parent->path.'/'.$topic->slug : $topic->slug;
-                $topic->depth = $parent ? $parent->depth + 1 : 0;
+                $topic->syncPath();
             }
         });
+    }
+
+    /**
+     * Recompute the materialized path and depth from the current parent.
+     */
+    public function syncPath(): void
+    {
+        $parent = $this->parent_id !== null ? self::query()->find($this->parent_id) : null;
+
+        $this->path = $parent ? $parent->path.'/'.$this->slug : $this->slug;
+        $this->depth = $parent ? $parent->depth + 1 : 0;
     }
 
     public function parent(): BelongsTo

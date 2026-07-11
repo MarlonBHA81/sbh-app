@@ -1,8 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert } from "lucide-react";
-import { useEffect } from "react";
+import { Ban, ChevronRight, CircleAlert, VolumeX } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -65,6 +66,101 @@ function valuesFromProfile(profile: Profile): Values {
     location: profile.location ?? "",
     is_private: profile.is_private,
   };
+}
+
+function ContentSettings() {
+  const showSensitive = useAuthStore((s) =>
+    Boolean(s.user?.settings?.show_sensitive),
+  );
+  const currentSettings = useAuthStore((s) => s.user?.settings ?? null);
+  const updateUserSettings = useAuthStore((s) => s.updateUserSettings);
+  const [busy, setBusy] = useState(false);
+
+  async function toggle(next: boolean) {
+    if (busy) return;
+    setBusy(true);
+    // Optimistic: flip the auth-store user immediately.
+    updateUserSettings({ show_sensitive: next });
+    try {
+      await api.patch("/api/v1/me", {
+        settings: { ...(currentSettings ?? {}), show_sensitive: next },
+      });
+    } catch (error) {
+      updateUserSettings({ show_sensitive: !next });
+      toast.error(
+        error instanceof api.ApiError
+          ? error.message
+          : "Couldn't update setting",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Content</CardTitle>
+        <CardDescription>Control what you see in your feeds.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border p-4">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Show sensitive content</p>
+            <p className="text-sm text-muted-foreground">
+              Show posts marked as sensitive without a warning overlay.
+            </p>
+          </div>
+          <Switch
+            checked={showSensitive}
+            disabled={busy}
+            onCheckedChange={(checked) => void toggle(checked)}
+            aria-label="Show sensitive content"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PrivacySafetySettings() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Privacy &amp; safety</CardTitle>
+        <CardDescription>
+          Manage the accounts you&apos;ve blocked or muted.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-2">
+        <Link
+          href="/settings/blocked"
+          className="flex min-h-11 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/40"
+        >
+          <Ban className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="flex-1 text-sm font-medium">Blocked accounts</span>
+          <ChevronRight
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+        </Link>
+        <Link
+          href="/settings/muted"
+          className="flex min-h-11 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/40"
+        >
+          <VolumeX
+            className="size-5 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+          <span className="flex-1 text-sm font-medium">Muted accounts</span>
+          <ChevronRight
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+        </Link>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function ProfileSettingsPage() {
@@ -274,6 +370,8 @@ export default function ProfileSettingsPage() {
           </Form>
         </CardContent>
       </Card>
+      <ContentSettings />
+      <PrivacySafetySettings />
       <PushSettings />
     </div>
   );

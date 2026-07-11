@@ -8,6 +8,7 @@ use App\Models\Profile;
 use App\Models\Topic;
 use App\Models\TopicFollow;
 use App\Services\Posts\PostService;
+use App\Services\SafetyService;
 use App\Support\Geohash;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Cache;
 
 class FeedService
 {
+    public function __construct(private SafetyService $safety) {}
+
     public const PER_PAGE = 20;
 
     /** For-you candidates must have been published within this window. */
@@ -39,6 +42,7 @@ class FeedService
         return Post::query()
             ->published()
             ->whereIn('profile_id', $authorIds)
+            ->tap(fn (Builder $query) => $this->applySafety($query, $viewer))
             ->with(PostService::EAGER)
             ->orderByDesc('published_at')
             ->orderByDesc('id')
@@ -82,6 +86,7 @@ class FeedService
                 }
             })
             ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer, $followedProfileIds))
+            ->tap(fn (Builder $query) => $this->applySafety($query, $viewer))
             ->when($seen !== [], fn (Builder $query) => $query->whereNotIn('ulid', $seen))
             ->with(PostService::EAGER)
             ->orderByDesc('score')
@@ -122,6 +127,7 @@ class FeedService
             // any number below any text, which would defeat the comparison.
             ->whereRaw("{$haversine} <= cast(? as real)", [$lat, $lng, $lat, $radiusKm])
             ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer))
+            ->tap(fn (Builder $query) => $this->applySafety($query, $viewer))
             ->with(PostService::EAGER)
             ->orderByDesc('published_at')
             ->orderByDesc('id')
@@ -140,6 +146,7 @@ class FeedService
             ->where('visibility', Post::VISIBILITY_PUBLIC)
             ->whereHas('topics', fn ($topics) => $topics->whereIn('topics.id', $topicIds))
             ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer))
+            ->tap(fn (Builder $query) => $this->applySafety($query, $viewer))
             ->with(PostService::EAGER)
             ->orderByDesc('published_at')
             ->orderByDesc('id')
@@ -163,6 +170,16 @@ class FeedService
                 ->whereHas('profile', fn ($profile) => $profile->where('is_private', false))
                 ->orWhereIn('profile_id', $allowed);
         });
+    }
+
+    /**
+     * Exclude authors the viewer has blocked (either direction) or muted.
+     */
+    private function applySafety(Builder $query, Profile $viewer): Builder
+    {
+        $excluded = $this->safety->feedExcludedProfileIds($viewer);
+
+        return $query->when($excluded !== [], fn (Builder $q) => $q->whereNotIn('profile_id', $excluded));
     }
 
     /**

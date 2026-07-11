@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Profile;
+use App\Services\SafetyService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -19,15 +20,21 @@ class ProfileResource extends JsonResource
         $relationship = $this->relationshipStateFor($viewer);
         $viewable = $this->isViewableBy($viewer);
 
+        // A block in either direction hides the profile. We surface it as a
+        // private/unavailable shape and never leak that a block exists.
+        $blocked = app(SafetyService::class)->isBlockedBetween($viewer, $this->resource);
+
         $base = [
             'ulid' => $this->ulid,
             'kind' => $this->kind,
             'handle' => $this->handle,
             'name' => $this->name,
-            'avatar_path' => $this->avatar_path,
-            'is_private' => $this->is_private,
+            'avatar_path' => $blocked ? null : $this->avatar_path,
+            'is_private' => $blocked ? true : $this->is_private,
             'is_verified' => $this->is_verified,
             'relationship' => $relationship,
+            'is_muted' => $viewer !== null
+                && in_array($this->id, app(SafetyService::class)->mutedProfileIds($viewer), true),
         ];
 
         if (! $viewable) {

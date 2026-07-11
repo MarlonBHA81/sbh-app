@@ -7,6 +7,7 @@ import { ComposerFab } from "@/components/composer/composer-fab";
 import { ComposerProvider } from "@/components/composer/composer-provider";
 import { NotificationsProvider } from "@/components/notifications/notifications-provider";
 import { BottomNav } from "@/components/shell/bottom-nav";
+import { MaintenanceBanner } from "@/components/shell/maintenance-banner";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
 import { TopBar } from "@/components/shell/top-bar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -58,6 +59,7 @@ export default function AppLayout({
   return (
     <ComposerProvider>
       <NotificationsProvider />
+      <MaintenanceBanner />
       <div className="mx-auto flex min-h-dvh w-full max-w-6xl">
         <SidebarNav />
         <div className="flex min-h-dvh w-full min-w-0 flex-1 flex-col">

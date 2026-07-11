@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\ProfileResource;
 use App\Http\Resources\UserResource;
+use App\Models\Setting;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,12 @@ class RegisterController extends Controller
 {
     public function __invoke(RegisterRequest $request, AuthService $auth): JsonResponse
     {
+        if (! Setting::get('registration_open', true)) {
+            return response()->json([
+                'message' => 'Registration is currently closed.',
+            ], 403);
+        }
+
         $user = $auth->register($request->validated());
 
         Auth::guard('web')->login($user);

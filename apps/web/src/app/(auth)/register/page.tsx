@@ -1,9 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -28,6 +29,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import * as api from "@/lib/api/client";
+import type { AppStatus } from "@/lib/api/types";
 import { applyServerErrors, errorMessage } from "@/lib/forms";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 
@@ -50,6 +54,27 @@ type Values = z.infer<typeof schema>;
 export default function RegisterPage() {
   const register = useAuthStore((s) => s.register);
   const router = useRouter();
+  // "checking" while we fetch /status; failures fall back to "open".
+  const [registration, setRegistration] = useState<
+    "checking" | "open" | "closed"
+  >("checking");
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<{ data: AppStatus }>("/api/v1/status")
+      .then((res) => {
+        if (!cancelled) {
+          setRegistration(res.data.registration_open ? "open" : "closed");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setRegistration("open");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -74,6 +99,49 @@ export default function RegisterPage() {
   }
 
   const rootError = form.formState.errors.root?.message;
+
+  if (registration === "checking") {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-56" />
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
+          <Skeleton className="h-11 w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (registration === "closed") {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader className="items-center text-center">
+          <div className="mb-1 flex size-12 items-center justify-center rounded-full bg-muted">
+            <Lock className="size-6 text-muted-foreground" aria-hidden />
+          </div>
+          <CardTitle>Registration is temporarily closed</CardTitle>
+          <CardDescription>
+            We&apos;re not accepting new accounts right now. Please check back
+            soon.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="justify-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="ml-1 font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            Sign in
+          </Link>
+        </CardFooter>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-sm">

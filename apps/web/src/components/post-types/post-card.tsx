@@ -4,11 +4,17 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   BadgeCheck,
+  Ban,
   Eye,
   EyeOff,
+  Flag,
   Heart,
+  Link2,
   MessageCircle,
+  MoreHorizontal,
   Repeat2,
+  Trash2,
+  VolumeX,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,6 +23,7 @@ import { toast } from "sonner";
 
 import { useComposer } from "@/components/composer/composer-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { ReportDialog } from "@/components/safety/report-dialog";
 import { TopicChip } from "@/components/topics/topic-chip";
 import {
   AlertDialog,
@@ -34,11 +41,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import * as api from "@/lib/api/client";
 import type { Post, Vote } from "@/lib/api/types";
 import { applyVote, formatCount, formatNetVotes } from "@/lib/reactions";
+import { blockProfile, muteProfile } from "@/lib/safety";
+import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useModerationStore } from "@/lib/stores/moderation-store";
 import { relativeTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
@@ -152,9 +163,20 @@ export function PostCard({
 }) {
   const router = useRouter();
   const { openComposer, notifyPostsMutated } = useComposer();
+  const activeUlid = useAuthStore((s) => s.activeProfile?.ulid ?? null);
+  const showSensitivePref = useAuthStore((s) =>
+    Boolean(s.user?.settings?.show_sensitive),
+  );
+  const hideProfile = useModerationStore((s) => s.hideProfile);
   const [showSensitive, setShowSensitive] = useState(false);
   const [repostConfirmOpen, setRepostConfirmOpen] = useState(false);
   const [reposting, setReposting] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [muteConfirmOpen, setMuteConfirmOpen] = useState(false);
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [moderating, setModerating] = useState(false);
+  const [deleted, setDeleted] = useState(false);
 
   // Optimistic reaction state (seeded once from props; live counts are
   // absolute overrides pushed via `liveCounts`).
@@ -188,7 +210,77 @@ export function PostCard({
   // Reposting a repost targets the original post.
   const repostTarget = post.type === "repost" ? (post.parent ?? post) : post;
 
-  const hidden = post.sensitive && !showSensitive;
+  const isOwnPost = activeUlid !== null && post.profile.ulid === activeUlid;
+  const hidden = post.sensitive && !showSensitive && !showSensitivePref;
+  const postUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${detailHref}`
+      : detailHref;
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(postUrl);
+      toast.success("Link copied");
+    } catch {
+      toast.error("Couldn't copy the link");
+    }
+  }
+
+  async function confirmMute() {
+    if (moderating) return;
+    setModerating(true);
+    try {
+      await muteProfile(post.profile.handle);
+      hideProfile(post.profile.ulid);
+      toast.success(`Muted @${post.profile.handle}`);
+      setMuteConfirmOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof api.ApiError ? error.message : "Couldn't mute",
+      );
+    } finally {
+      setModerating(false);
+    }
+  }
+
+  async function confirmBlock() {
+    if (moderating) return;
+    setModerating(true);
+    try {
+      await blockProfile(post.profile.handle);
+      hideProfile(post.profile.ulid);
+      toast.success(`Blocked @${post.profile.handle}`);
+      setBlockConfirmOpen(false);
+    } catch (error) {
+      toast.error(
+        error instanceof api.ApiError ? error.message : "Couldn't block",
+      );
+    } finally {
+      setModerating(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (moderating) return;
+    setModerating(true);
+    try {
+      await api.del(`/api/v1/posts/${post.ulid}`);
+      toast.success("Post deleted");
+      setDeleteConfirmOpen(false);
+      if (linkToDetail) {
+        setDeleted(true);
+        notifyPostsMutated();
+      } else {
+        router.push("/home");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof api.ApiError ? error.message : "Couldn't delete",
+      );
+    } finally {
+      setModerating(false);
+    }
+  }
 
   async function toggleLike() {
     if (likeBusy.current) return;
@@ -268,6 +360,8 @@ export function PostCard({
     router.push(detailHref);
   }
 
+  if (deleted) return null;
+
   return (
     <article
       onClick={handleCardClick}
@@ -319,6 +413,65 @@ export function PostCard({
             {badge}
           </Badge>
         ) : null}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="More options"
+              className="-mr-2 flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <MoreHorizontal className="size-5" aria-hidden />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem
+              className="min-h-11 gap-3"
+              onSelect={() => void copyLink()}
+            >
+              <Link2 className="size-4" aria-hidden />
+              Copy link
+            </DropdownMenuItem>
+            {isOwnPost ? (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="min-h-11 gap-3"
+                  onSelect={() => setDeleteConfirmOpen(true)}
+                >
+                  <Trash2 className="size-4" aria-hidden />
+                  Delete post
+                </DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem
+                  className="min-h-11 gap-3"
+                  onSelect={() => setReportOpen(true)}
+                >
+                  <Flag className="size-4" aria-hidden />
+                  Report post
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="min-h-11 gap-3"
+                  onSelect={() => setMuteConfirmOpen(true)}
+                >
+                  <VolumeX className="size-4" aria-hidden />
+                  Mute @{post.profile.handle}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="min-h-11 gap-3"
+                  onSelect={() => setBlockConfirmOpen(true)}
+                >
+                  <Ban className="size-4" aria-hidden />
+                  Block @{post.profile.handle}
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {hidden ? (
@@ -433,6 +586,88 @@ export function PostCard({
               }}
             >
               {reposting ? "Reposting…" : "Repost"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <ReportDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        reportableType="post"
+        reportableUlid={post.ulid}
+        contextLabel={`@${post.profile.handle}'s post`}
+      />
+
+      <AlertDialog open={muteConfirmOpen} onOpenChange={setMuteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mute @{post.profile.handle}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You won&apos;t see their posts in your feeds. They won&apos;t be
+              notified, and you can unmute them any time from Settings.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="h-11"
+              disabled={moderating}
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmMute();
+              }}
+            >
+              {moderating ? "Muting…" : "Mute"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={blockConfirmOpen} onOpenChange={setBlockConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block @{post.profile.handle}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They won&apos;t be able to follow you or see your posts, and you
+              won&apos;t see theirs. Any follow between you will be removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="h-11 bg-destructive text-white hover:bg-destructive/90"
+              disabled={moderating}
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmBlock();
+              }}
+            >
+              {moderating ? "Blocking…" : "Block"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This can&apos;t be undone. Your post will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-11">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="h-11 bg-destructive text-white hover:bg-destructive/90"
+              disabled={moderating}
+              onClick={(event) => {
+                event.preventDefault();
+                void confirmDelete();
+              }}
+            >
+              {moderating ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

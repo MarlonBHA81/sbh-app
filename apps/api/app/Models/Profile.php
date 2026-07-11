@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\SafetyService;
 use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -151,7 +152,11 @@ class Profile extends Model
 
     /**
      * Relationship state of the given viewer profile toward this profile:
-     * none|following|pending|self.
+     * none|following|pending|self|blocked.
+     *
+     * When the viewer blocked this profile we surface 'blocked'. When this
+     * profile blocked the viewer we deliberately return 'none' so the block
+     * is not revealed to the person who was blocked.
      */
     public function relationshipStateFor(?Profile $viewer): string
     {
@@ -161,6 +166,10 @@ class Profile extends Model
 
         if ($viewer->id === $this->id) {
             return 'self';
+        }
+
+        if (app(SafetyService::class)->viewerBlocked($viewer, $this)) {
+            return 'blocked';
         }
 
         $state = Follow::query()
@@ -180,6 +189,11 @@ class Profile extends Model
      */
     public function isViewableBy(?Profile $viewer): bool
     {
+        // A block in either direction hides the full profile from the viewer.
+        if (app(SafetyService::class)->isBlockedBetween($viewer, $this)) {
+            return false;
+        }
+
         if (! $this->is_private) {
             return true;
         }
