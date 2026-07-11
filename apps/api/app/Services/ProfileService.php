@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\FollowAccepted;
 use App\Notifications\FollowRequested;
 use App\Notifications\NewFollower;
+use App\Services\Gamification\GamificationService;
 use App\Support\Handles;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,8 @@ use Illuminate\Validation\ValidationException;
 class ProfileService
 {
     public const MAX_BUSINESS_PROFILES = 3;
+
+    public function __construct(private GamificationService $gamification) {}
 
     public function createPersonalProfile(User $user, ?string $handle = null): Profile
     {
@@ -108,6 +111,11 @@ class ProfileService
                 : new FollowRequested(actor: $actor, recipient: $target);
 
             $target->user->notify($notification);
+
+            if ($state === Follow::STATE_ACCEPTED) {
+                // Instant-accept (public target): award the followed profile.
+                $this->gamification->award($target, GamificationService::FOLLOWER_GAINED, $actor);
+            }
         }
 
         return $follow;
@@ -157,6 +165,9 @@ class ProfileService
 
         if ($follower->user_id !== $followed->user_id) {
             $follower->user->notify(new FollowAccepted(actor: $followed, recipient: $follower));
+
+            // Request-accept (private target): award the followed profile.
+            $this->gamification->award($followed, GamificationService::FOLLOWER_GAINED, $follower);
         }
 
         return $follow;

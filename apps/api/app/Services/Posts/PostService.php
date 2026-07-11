@@ -10,6 +10,7 @@ use App\Models\Topic;
 use App\Models\User;
 use App\Notifications\PostQuoted;
 use App\Notifications\PostReposted;
+use App\Services\Gamification\GamificationService;
 use App\Services\MentionService;
 use App\Support\Geohash;
 use Illuminate\Support\Arr;
@@ -40,6 +41,7 @@ class PostService
     public function __construct(
         private PostTypeRegistry $registry,
         private MentionService $mentions,
+        private GamificationService $gamification,
     ) {}
 
     /**
@@ -300,6 +302,8 @@ class PostService
         $this->mentions->syncForPost($post);
 
         $this->notifyParentAuthor($post);
+
+        $this->gamification->award($post->profile, GamificationService::POST_PUBLISHED, $post);
 
         RecomputePostScore::dispatch($post)->afterCommit();
     }

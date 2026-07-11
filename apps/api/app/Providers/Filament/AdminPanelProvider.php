@@ -6,6 +6,7 @@ use App\Filament\Widgets\LatestSignups;
 use App\Filament\Widgets\SignupsChart;
 use App\Filament\Widgets\StatsOverview;
 use App\Filament\Widgets\TopProfiles;
+use App\Filament\Widgets\XpLeaderboard;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -46,6 +47,7 @@ class AdminPanelProvider extends PanelProvider
                 SignupsChart::class,
                 LatestSignups::class,
                 TopProfiles::class,
+                XpLeaderboard::class,
             ])
             ->middleware([
                 EncryptCookies::class,

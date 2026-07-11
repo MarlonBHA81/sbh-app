@@ -124,6 +124,16 @@ class Profile extends Model
             ->withPivot('awarded_at');
     }
 
+    public function rank(): BelongsTo
+    {
+        return $this->belongsTo(Rank::class);
+    }
+
+    public function xpLedger(): HasMany
+    {
+        return $this->hasMany(XpLedgerEntry::class);
+    }
+
     public function scopePersonal(Builder $query): Builder
     {
         return $query->where('kind', self::KIND_PERSONAL);

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\ConversationParticipantController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
+use App\Http\Controllers\Api\V1\GamificationController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MessageController;
@@ -115,6 +116,11 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('posts/{post}/reveal', [PostController::class, 'reveal']);
 
     Route::get('profiles/{handle}/posts', [ProfileController::class, 'posts']);
+
+    // Gamification: XP, ranks and leaderboards.
+    Route::get('me/xp', [GamificationController::class, 'xp']);
+    Route::get('gamification/leaderboard', [GamificationController::class, 'leaderboard']);
+    Route::get('gamification/ranks', [GamificationController::class, 'ranks']);
 
     Route::get('me/topics', [TopicController::class, 'mine']);
     Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);

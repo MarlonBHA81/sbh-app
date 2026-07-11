@@ -9,6 +9,7 @@ use App\Models\Post;
 use App\Models\Profile;
 use App\Notifications\CommentReplied;
 use App\Notifications\PostCommented;
+use App\Services\Gamification\GamificationService;
 use App\Services\MentionService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,7 +17,10 @@ use Illuminate\Validation\ValidationException;
 
 class CommentService
 {
-    public function __construct(private MentionService $mentions) {}
+    public function __construct(
+        private MentionService $mentions,
+        private GamificationService $gamification,
+    ) {}
 
     /**
      * Create a comment (or reply) authored by $author on $post.
@@ -78,6 +82,8 @@ class CommentService
         $this->mentions->syncForComment($comment);
 
         $this->notify($author, $post, $parent, $comment);
+
+        $this->gamification->award($author, GamificationService::COMMENT_CREATED, $comment);
 
         CommentAdded::dispatch($comment);
 

@@ -24,27 +24,8 @@ class BadgeSeeder extends Seeder
                 'icon' => 'briefcase',
                 'kind' => 'category',
             ],
-            [
-                'key' => 'rank_newbie',
-                'name' => 'Newbie',
-                'description' => 'Just getting started.',
-                'icon' => 'sprout',
-                'kind' => 'rank',
-            ],
-            [
-                'key' => 'rank_expert',
-                'name' => 'Expert',
-                'description' => 'A seasoned member of the community.',
-                'icon' => 'star',
-                'kind' => 'rank',
-            ],
-            [
-                'key' => 'rank_legend',
-                'name' => 'Legend',
-                'description' => 'A legendary member of the community.',
-                'icon' => 'crown',
-                'kind' => 'rank',
-            ],
+            // Rank badges (kind 'rank') are owned by RankSeeder so they stay in
+            // sync with their ranks.
         ];
 
         foreach ($badges as $badge) {

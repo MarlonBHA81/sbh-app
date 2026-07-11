@@ -8,11 +8,14 @@ use App\Models\PollOption;
 use App\Models\PollVote;
 use App\Models\Post;
 use App\Models\Profile;
+use App\Services\Gamification\GamificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class PollVoteService
 {
+    public function __construct(private GamificationService $gamification) {}
+
     /**
      * Cast (or switch) the viewer's vote on a poll and return the fresh poll.
      */
@@ -63,6 +66,9 @@ class PollVoteService
         });
 
         $poll = $poll->fresh(['options', 'post']);
+
+        // Subject-bound to the post so re-votes on the same poll award once.
+        $this->gamification->award($voter, GamificationService::POLL_VOTE_CAST, $post);
 
         PollVoteTallied::dispatch($poll);
 

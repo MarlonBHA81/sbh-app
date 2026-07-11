@@ -10,6 +10,7 @@ use App\Models\Profile;
 use App\Models\Reaction;
 use App\Notifications\CommentLiked;
 use App\Notifications\PostLiked;
+use App\Services\Gamification\GamificationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,6 +21,8 @@ use Illuminate\Support\Str;
  */
 class ReactionService
 {
+    public function __construct(private GamificationService $gamification) {}
+
     /**
      * Idempotent like. Returns true when a new like was created.
      */
@@ -48,6 +51,7 @@ class ReactionService
             $reactable->refresh();
             $this->afterChange($reactable);
             $this->notifyLike($actor, $reactable);
+            $this->awardEngagement($actor, $reactable, GamificationService::LIKE_RECEIVED);
         }
 
         return $created;
@@ -141,7 +145,35 @@ class ReactionService
         if ($changed) {
             $reactable->refresh();
             $this->afterChange($reactable);
+
+            if ($value === 1) {
+                $this->awardEngagement($actor, $reactable, GamificationService::UPVOTE_RECEIVED);
+            }
         }
+    }
+
+    /**
+     * Award XP to a post's author when it receives a like/upvote. Skipped for
+     * comments (no XP) and for self-actions.
+     *
+     * The award is subject-bound to the reacting profile so that a given actor
+     * can only ever grant the author this XP once (mirroring follower_gained).
+     * Unlike/relike therefore never farms XP, and the daily cap bounds the
+     * number of distinct reactors that count per day.
+     */
+    private function awardEngagement(Profile $actor, Post|Comment $reactable, string $actionKey): void
+    {
+        if (! $reactable instanceof Post) {
+            return;
+        }
+
+        $author = $reactable->profile;
+
+        if ($author->user_id === $actor->user_id) {
+            return; // no XP for reacting to your own post
+        }
+
+        $this->gamification->award($author, $actionKey, $actor);
     }
 
     private function decrement(Model $reactable, string $column): void

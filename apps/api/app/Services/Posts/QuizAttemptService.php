@@ -6,10 +6,13 @@ use App\Models\Post;
 use App\Models\Profile;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
+use App\Services\Gamification\GamificationService;
 use Illuminate\Support\Facades\DB;
 
 class QuizAttemptService
 {
+    public function __construct(private GamificationService $gamification) {}
+
     /**
      * Record the viewer's single attempt at a quiz and return it with score.
      *
@@ -46,7 +49,7 @@ class QuizAttemptService
 
         $score = $total > 0 ? (int) round($correct / $total * 100) : 0;
 
-        return DB::transaction(function () use ($quiz, $profile, $normalised, $score) {
+        $attempt = DB::transaction(function () use ($quiz, $profile, $normalised, $score) {
             $attempt = QuizAttempt::create([
                 'quiz_id' => $quiz->id,
                 'profile_id' => $profile->id,
@@ -58,5 +61,10 @@ class QuizAttemptService
 
             return $attempt;
         });
+
+        // Only one attempt per quiz is allowed, so subject-bind to the post.
+        $this->gamification->award($profile, GamificationService::QUIZ_COMPLETED, $post);
+
+        return $attempt;
     }
 }
