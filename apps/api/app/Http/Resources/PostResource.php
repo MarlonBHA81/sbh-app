@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Post;
+use App\Models\Profile;
 use App\Services\Posts\PostTypeRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -13,6 +14,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PostResource extends JsonResource
 {
     public function toArray(Request $request): array
+    {
+        return array_merge($this->baseArray($request), $this->satelliteArray($request));
+    }
+
+    private function baseArray(Request $request): array
     {
         return [
             'ulid' => $this->ulid,
@@ -47,6 +53,24 @@ class PostResource extends JsonResource
             'parent' => $this->whenLoaded('parent', fn () => $this->parent ? new self($this->parent) : null),
             'created_at' => $this->created_at?->toISOString(),
         ];
+    }
+
+    /**
+     * Satellite fragment (poll/quiz/event/job) contributed by the type handler,
+     * with viewer-specific state hydrated ahead of time by ViewerSatelliteState.
+     */
+    private function satelliteArray(Request $request): array
+    {
+        $handler = app(PostTypeRegistry::class)->handler($this->type);
+
+        if ($handler === null) {
+            return [];
+        }
+
+        /** @var Profile|null $viewer */
+        $viewer = $request->attributes->get('activeProfile');
+
+        return $handler->present($this->resource, $viewer);
     }
 
     /**

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -36,6 +37,22 @@ class Post extends Model
     public const TYPE_MAGNIFIER = 'magnifier';
 
     public const TYPE_SECRET = 'secret';
+
+    public const TYPE_VIDEO = 'video';
+
+    public const TYPE_AUDIO = 'audio';
+
+    public const TYPE_BLOG = 'blog';
+
+    public const TYPE_POLL = 'poll';
+
+    public const TYPE_QUIZ = 'quiz';
+
+    public const TYPE_EVENT = 'event';
+
+    public const TYPE_JOB = 'job';
+
+    public const TYPE_PORTFOLIO = 'portfolio';
 
     protected $fillable = [
         'profile_id',
@@ -109,6 +126,26 @@ class Post extends Model
     public function topics(): BelongsToMany
     {
         return $this->belongsToMany(Topic::class, 'post_topic');
+    }
+
+    public function poll(): HasOne
+    {
+        return $this->hasOne(Poll::class);
+    }
+
+    public function quiz(): HasOne
+    {
+        return $this->hasOne(Quiz::class);
+    }
+
+    public function event(): HasOne
+    {
+        return $this->hasOne(Event::class);
+    }
+
+    public function jobListing(): HasOne
+    {
+        return $this->hasOne(JobListing::class);
     }
 
     public function comments(): HasMany

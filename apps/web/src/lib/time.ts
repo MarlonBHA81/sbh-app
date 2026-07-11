@@ -33,6 +33,15 @@ export function formatLocalDateTime(iso: string): string {
   }).format(new Date(iso));
 }
 
+/** Seconds → "m:ss" (e.g. 95 → "1:35"), used for media duration chips. */
+export function formatDuration(seconds: number | null | undefined): string {
+  if (!seconds || seconds < 0) return "0:00";
+  const total = Math.round(seconds);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 /** ISO string → value for an <input type="datetime-local"> in local time. */
 export function isoToDatetimeLocal(iso: string): string {
   const date = new Date(iso);

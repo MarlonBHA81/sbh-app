@@ -23,8 +23,16 @@ class PostService
 {
     public const DEFAULT_TIMEZONE = 'Africa/Johannesburg';
 
-    /** Relations eager-loaded on every post returned to a resource. */
-    public const EAGER = ['profile', 'media', 'topics', 'parent.profile', 'parent.media'];
+    /**
+     * Relations eager-loaded on every post returned to a resource. The
+     * satellite relations (poll/quiz/event/job) are HasOne/HasMany and load in
+     * a fixed number of queries regardless of page size, so a mixed-type feed
+     * never triggers N+1 lookups.
+     */
+    public const EAGER = [
+        'profile', 'media', 'topics', 'parent.profile', 'parent.media',
+        'poll.options', 'quiz.questions', 'event', 'jobListing',
+    ];
 
     /** Maximum topics attachable to a single post. */
     public const MAX_TOPICS = 3;
@@ -52,6 +60,8 @@ class PostService
         }
 
         $media = $this->resolveMedia($author, $data['media_ids'] ?? []);
+
+        $this->ensureMediaType($type, $media);
 
         $payload = $data['payload'] ?? null;
 
@@ -94,7 +104,13 @@ class PostService
                 $post->topics()->attach($topics->pluck('id')->all());
             }
 
+            if ($handler = $this->registry->handler($type)) {
+                $handler->createSatellite($post, $payload ?? []);
+                $post->load($handler->eagerLoad());
+            }
+
             if ($post->isPublished()) {
+                $this->ensureReadyForPublish($post);
                 $this->handlePublished($post);
             }
 
@@ -129,6 +145,12 @@ class PostService
 
             if (array_key_exists('media_ids', $data)) {
                 $this->replaceMedia($post, $data['media_ids'] ?? []);
+                $this->ensureMediaType($post->type, $post->media()->get());
+            }
+
+            // Satellite rows are only mutable while the post is still a draft.
+            if (array_key_exists('payload', $data) && ($handler = $this->registry->handler($post->type))) {
+                $handler->updateSatellite($post, $data['payload'] ?? []);
             }
 
             if (isset($data['scheduled_at'])) {
@@ -145,6 +167,7 @@ class PostService
             $post->save();
 
             if ($post->isPublished()) {
+                $this->ensureReadyForPublish($post);
                 $this->handlePublished($post);
             }
         });
@@ -159,6 +182,13 @@ class PostService
     {
         DB::transaction(function () use ($post) {
             $wasPublished = $post->isPublished();
+
+            // Posts are soft-deleted, so satellite rows are hard-deleted here
+            // (their child tables cascade via FK).
+            $post->poll()->delete();
+            $post->quiz()->delete();
+            $post->event()->delete();
+            $post->jobListing()->delete();
 
             $post->delete();
 
@@ -191,6 +221,8 @@ class PostService
         }
 
         DB::transaction(function () use ($post) {
+            $this->ensureReadyForPublish($post);
+
             $post->forceFill([
                 'status' => Post::STATUS_PUBLISHED,
                 'published_at' => now(),
@@ -200,6 +232,54 @@ class PostService
         });
 
         return $post;
+    }
+
+    /**
+     * Guard rules that must hold before a post may go live.
+     *
+     * - No attached media may still be processing (video/audio transcode).
+     * - An event's start time must be in the future.
+     */
+    private function ensureReadyForPublish(Post $post): void
+    {
+        if ($post->media()->where('status', Media::STATUS_PROCESSING)->exists()) {
+            throw ValidationException::withMessages([
+                'media_ids' => ['Attached media is still processing and cannot be published yet.'],
+            ]);
+        }
+
+        if ($post->type === Post::TYPE_EVENT) {
+            $post->loadMissing('event');
+
+            if ($post->event && $post->event->starts_at !== null && $post->event->starts_at->isPast()) {
+                throw ValidationException::withMessages([
+                    'payload.starts_at' => ['The event must start in the future.'],
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Ensure every attached media item matches the type constraint declared by
+     * the post type (video/audio/image), if any.
+     *
+     * @param  Collection<int, Media>  $media
+     */
+    private function ensureMediaType(string $type, Collection $media): void
+    {
+        $expected = $this->registry->mediaType($type);
+
+        if ($expected === null) {
+            return;
+        }
+
+        foreach ($media as $item) {
+            if ($item->type !== $expected) {
+                throw ValidationException::withMessages([
+                    'media_ids' => ["This post type requires {$expected} media."],
+                ]);
+            }
+        }
     }
 
     /**

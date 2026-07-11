@@ -8,6 +8,7 @@ use App\Models\Profile;
 use App\Models\Topic;
 use App\Services\Feed\FeedService;
 use App\Support\ViewerReactions;
+use App\Support\ViewerSatelliteState;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -58,6 +59,7 @@ class FeedController extends Controller
     private function present(CursorPaginator $posts, ?Profile $viewer): AnonymousResourceCollection
     {
         ViewerReactions::hydrate($posts->getCollection(), $viewer);
+        ViewerSatelliteState::hydrate($posts->getCollection(), $viewer);
 
         return PostResource::collection($posts);
     }

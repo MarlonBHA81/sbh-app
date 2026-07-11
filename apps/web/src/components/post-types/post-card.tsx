@@ -178,7 +178,10 @@ export function PostCard({
     setDownCount(liveCounts.downvotes_count);
   }
 
-  const content = createElement(getPostRenderer(post.type), { post });
+  const content = createElement(getPostRenderer(post.type), {
+    post,
+    detail: !linkToDetail,
+  });
   const badge = TYPE_BADGES[post.type];
   const timestamp = post.published_at ?? post.created_at;
   const detailHref = `/p/${post.ulid}`;

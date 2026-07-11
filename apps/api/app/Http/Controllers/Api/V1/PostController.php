@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\Profile;
 use App\Services\Posts\PostService;
 use App\Support\ViewerReactions;
+use App\Support\ViewerSatelliteState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -34,7 +35,9 @@ class PostController extends Controller
 
         $post->load(PostService::EAGER);
 
-        ViewerReactions::hydrate([$post], $request->attributes->get('activeProfile'));
+        $viewer = $request->attributes->get('activeProfile');
+        ViewerReactions::hydrate([$post], $viewer);
+        ViewerSatelliteState::hydrate([$post], $viewer);
 
         return new PostResource($post);
     }

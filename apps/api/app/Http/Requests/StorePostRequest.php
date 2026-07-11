@@ -9,6 +9,7 @@ use App\Services\Posts\PostService;
 use App\Services\Posts\PostTypeRegistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StorePostRequest extends FormRequest
 {
@@ -64,7 +65,12 @@ class StorePostRequest extends FormRequest
         $rules['body'] = $registry->bodyRules($type);
 
         if ($payloadRules = $registry->payloadRules($type)) {
-            $rules['payload'] = ['required', 'array'];
+            // The payload object is only required when at least one of its keys
+            // is itself required (e.g. audio's optional title => payload optional).
+            $payloadRequired = collect($payloadRules)
+                ->contains(fn ($keyRules) => in_array('required', (array) $keyRules, true));
+
+            $rules['payload'] = [$payloadRequired ? 'required' : 'sometimes', 'array'];
 
             foreach ($payloadRules as $key => $keyRules) {
                 $rules["payload.{$key}"] = $keyRules;
@@ -91,5 +97,25 @@ class StorePostRequest extends FormRequest
             : ['prohibited'];
 
         return $rules;
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $registry = app(PostTypeRegistry::class);
+        $type = (string) $this->input('type');
+
+        if (! $registry->has($type) || ! ($check = $registry->payloadValidator($type))) {
+            return;
+        }
+
+        $validator->after(function (Validator $validator) use ($check) {
+            if ($validator->errors()->isNotEmpty()) {
+                return; // shape already invalid; skip cross-field checks
+            }
+
+            $check((array) $this->input('payload', []), function (string $key, string $message) use ($validator) {
+                $validator->errors()->add($key, $message);
+            });
+        });
     }
 }

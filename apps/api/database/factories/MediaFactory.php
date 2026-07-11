@@ -32,4 +32,31 @@ class MediaFactory extends Factory
             'status' => Media::STATUS_READY,
         ];
     }
+
+    public function video(): static
+    {
+        return $this->state(fn () => [
+            'type' => Media::TYPE_VIDEO,
+            'mime' => 'video/mp4',
+            'path' => 'media/test/'.Str::ulid().'.mp4',
+            'thumb_path' => null,
+        ]);
+    }
+
+    public function audio(): static
+    {
+        return $this->state(fn () => [
+            'type' => Media::TYPE_AUDIO,
+            'mime' => 'audio/mpeg',
+            'path' => 'media/test/'.Str::ulid().'.mp3',
+            'thumb_path' => null,
+            'width' => null,
+            'height' => null,
+        ]);
+    }
+
+    public function processing(): static
+    {
+        return $this->state(fn () => ['status' => Media::STATUS_PROCESSING]);
+    }
 }

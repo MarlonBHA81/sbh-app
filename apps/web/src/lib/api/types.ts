@@ -61,18 +61,34 @@ export type PostType =
   | "typewriter"
   | "magnifier"
   | "secret"
-  | "checkin";
+  | "checkin"
+  | "video"
+  | "audio"
+  | "blog"
+  | "poll"
+  | "quiz"
+  | "event"
+  | "job"
+  | "portfolio";
 
 export type PostVisibility = "public" | "followers";
 export type PostStatus = "draft" | "scheduled" | "published";
 
+/** Processing lifecycle for chunk-uploaded media (video/audio). */
+export type MediaStatus = "processing" | "ready" | "failed";
+export type MediaType = "image" | "video" | "audio";
+
 export interface Media {
   ulid: string;
   url: string;
+  /** Poster for video / cover for audio; may be null while processing. */
   thumb_url: string;
   width: number;
   height: number;
-  type: "image";
+  type: MediaType;
+  /** Present on chunk-uploaded media; absent (ready) for images. */
+  status?: MediaStatus;
+  duration_seconds?: number | null;
 }
 
 export interface LinkPayload {
@@ -105,6 +121,111 @@ export interface CheckinPayload {
   country_code?: string;
 }
 
+/** Audio posts carry an optional title in the payload. */
+export interface AudioPayload {
+  title?: string;
+}
+
+/** Portfolio posts: a title, optional description and 1-10 image media. */
+export interface PortfolioPayload {
+  title: string;
+  description?: string;
+}
+
+/** Minimal Tiptap document JSON (whitelisted node/mark tree). */
+export interface TiptapMark {
+  type: string;
+  attrs?: Record<string, unknown> | null;
+}
+
+export interface TiptapNode {
+  type: string;
+  attrs?: Record<string, unknown> | null;
+  content?: TiptapNode[];
+  marks?: TiptapMark[];
+  text?: string;
+}
+
+export interface TiptapDoc {
+  type: "doc";
+  content?: TiptapNode[];
+}
+
+export interface BlogPayload {
+  title: string;
+  doc: TiptapDoc;
+  excerpt?: string;
+}
+
+/** Poll satellite attached to poll posts. */
+export interface PollOption {
+  id: number | string;
+  label: string;
+  votes_count: number;
+  percent: number;
+}
+
+export interface Poll {
+  question?: string | null;
+  ends_at: string | null;
+  votes_count: number;
+  viewer_option_id: number | string | null;
+  options: PollOption[];
+}
+
+/** Quiz satellite. `correct_index` is only present once the viewer attempts. */
+export interface QuizQuestion {
+  id?: number | string;
+  question: string;
+  options: string[];
+  correct_index?: number;
+}
+
+export interface QuizAttempt {
+  score_pct: number;
+  answers: number[];
+}
+
+export interface Quiz {
+  attempts_count: number;
+  viewer_attempt: QuizAttempt | null;
+  questions: QuizQuestion[];
+}
+
+export type EventRsvp = "going" | "interested";
+
+/** Event satellite. Named `PostEvent` to avoid clashing with the DOM `Event`. */
+export interface PostEvent {
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  venue: string | null;
+  going_count: number;
+  interested_count: number;
+  viewer_rsvp: EventRsvp | null;
+}
+
+export type EmploymentType =
+  | "full_time"
+  | "part_time"
+  | "contract"
+  | "freelance"
+  | "internship";
+
+/** Job satellite. */
+export interface PostJob {
+  title: string;
+  company: string;
+  location: string;
+  employment_type: EmploymentType;
+  salary_min: number | null;
+  salary_max: number | null;
+  currency: string;
+  apply_url: string;
+  expires_at: string | null;
+  is_expired: boolean;
+}
+
 /** Reddit-style vote: 1 up, -1 down, 0 none. */
 export type Vote = 1 | -1 | 0;
 
@@ -132,6 +253,11 @@ export interface Post {
   media: Media[];
   parent: Post | null;
   topics?: PostTopic[];
+  /** Satellite data present on the corresponding post type. */
+  poll?: Poll | null;
+  quiz?: Quiz | null;
+  event?: PostEvent | null;
+  job?: PostJob | null;
   created_at: string;
 }
 

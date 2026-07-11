@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Services\Engagement\ReactionService;
 use App\Services\Posts\PostService;
 use App\Support\ViewerReactions;
+use App\Support\ViewerSatelliteState;
 use Illuminate\Http\Request;
 
 class PostReactionController extends Controller
@@ -61,6 +62,7 @@ class PostReactionController extends Controller
         $post = $post->fresh()->load(PostService::EAGER);
 
         ViewerReactions::hydrate([$post], $actor);
+        ViewerSatelliteState::hydrate([$post], $actor);
 
         return new PostResource($post);
     }

@@ -53,4 +53,23 @@ class MediaService
             'status' => Media::STATUS_READY,
         ]);
     }
+
+    /**
+     * Generate a WebP thumbnail for a video from an extracted poster frame and
+     * store it alongside the media on its disk. Returns the stored thumb path.
+     */
+    public function storeThumbFromFrame(Media $media, string $framePath): string
+    {
+        $encoder = new WebpEncoder(quality: config('media.webp_quality'));
+
+        $thumb = Image::decodePath($framePath)
+            ->scaleDown(width: config('media.thumb_width'))
+            ->encode($encoder);
+
+        $thumbPath = 'media/'.$media->profile->ulid.'/'.$media->ulid.'_thumb.webp';
+
+        Storage::disk($media->disk)->put($thumbPath, (string) $thumb);
+
+        return $thumbPath;
+    }
 }

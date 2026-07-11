@@ -2,6 +2,7 @@
 
 namespace App\Services\Posts;
 
+use App\Rules\TiptapDocument;
 use InvalidArgumentException;
 
 /**
@@ -33,6 +34,13 @@ class PostTypeRegistry
         'max_media' => 0,
         'requires_parent' => false,
         'hidden_payload' => false,
+        // Constrain attached media to a single Media::TYPE_* (null = any).
+        'media_type' => null,
+        // FQCN of a PostTypeHandler owning satellite rows (null = none).
+        'handler' => null,
+        // Optional closure(array $payload, Closure $fail): void for cross-field
+        // payload checks that plain rules can't express.
+        'payload_validator' => null,
     ];
 
     /** @var array<string, array<string, mixed>> */
@@ -119,6 +127,48 @@ class PostTypeRegistry
         return $this->has($type) && $this->get($type)['hidden_payload'];
     }
 
+    public function mediaType(string $type): ?string
+    {
+        return $this->get($type)['media_type'];
+    }
+
+    /**
+     * Resolve the satellite handler for a type, or null if it has none.
+     */
+    public function handler(string $type): ?PostTypeHandler
+    {
+        $class = $this->has($type) ? $this->get($type)['handler'] : null;
+
+        return $class === null ? null : app($class);
+    }
+
+    /**
+     * @return callable|null
+     */
+    public function payloadValidator(string $type)
+    {
+        return $this->get($type)['payload_validator'];
+    }
+
+    /**
+     * Every satellite eager-load path across all registered types. Included in
+     * PostService::EAGER so mixed feeds resolve satellites without N+1 queries.
+     *
+     * @return list<string>
+     */
+    public function satelliteEagerLoads(): array
+    {
+        $paths = [];
+
+        foreach ($this->types() as $type) {
+            if ($handler = $this->handler($type)) {
+                $paths = array_merge($paths, $handler->eagerLoad());
+            }
+        }
+
+        return array_values(array_unique($paths));
+    }
+
     private function registerDefaultTypes(): void
     {
         $this->register('text', [
@@ -173,6 +223,103 @@ class PostTypeRegistry
             'payload_rules' => [
                 'place_name' => ['required', 'string', 'max:255'],
             ],
+        ]);
+
+        $this->registerMilestone5Types();
+    }
+
+    private function registerMilestone5Types(): void
+    {
+        $this->register('video', [
+            'body_rules' => ['nullable', 'string', 'max:5000'], // caption
+            'min_media' => 1,
+            'max_media' => 1,
+            'media_type' => 'video',
+        ]);
+
+        $this->register('audio', [
+            'payload_rules' => [
+                'title' => ['nullable', 'string', 'max:120'],
+            ],
+            'min_media' => 1,
+            'max_media' => 1,
+            'media_type' => 'audio',
+        ]);
+
+        $this->register('blog', [
+            'payload_rules' => [
+                'title' => ['required', 'string', 'max:120'],
+                'doc' => ['required', 'array', new TiptapDocument],
+                'excerpt' => ['nullable', 'string', 'max:300'],
+            ],
+        ]);
+
+        $this->register('poll', [
+            'body_rules' => ['nullable', 'string', 'max:5000'], // question text
+            'payload_rules' => [
+                'options' => ['required', 'array', 'min:2', 'max:6'],
+                'options.*' => ['required', 'string', 'max:80'],
+                'duration_hours' => ['nullable', 'integer', 'min:1', 'max:168'],
+            ],
+            'handler' => Handlers\PollHandler::class,
+        ]);
+
+        $this->register('quiz', [
+            'payload_rules' => [
+                'questions' => ['required', 'array', 'min:1', 'max:10'],
+                'questions.*.question' => ['required', 'string', 'max:255'],
+                'questions.*.options' => ['required', 'array', 'min:2', 'max:4'],
+                'questions.*.options.*' => ['required', 'string', 'max:255'],
+                'questions.*.correct_index' => ['required', 'integer', 'min:0', 'max:3'],
+            ],
+            'handler' => Handlers\QuizHandler::class,
+            'payload_validator' => function (array $payload, \Closure $fail): void {
+                foreach ($payload['questions'] ?? [] as $i => $question) {
+                    $count = is_array($question['options'] ?? null) ? count($question['options']) : 0;
+                    $index = $question['correct_index'] ?? null;
+
+                    if (is_int($index) && $index >= $count) {
+                        $fail("payload.questions.{$i}.correct_index", 'The correct answer must reference one of the options.');
+                    }
+                }
+            },
+        ]);
+
+        $this->register('event', [
+            'payload_rules' => [
+                'title' => ['required', 'string', 'max:255'],
+                'starts_at' => ['required', 'date'],
+                'ends_at' => ['nullable', 'date', 'after:payload.starts_at'],
+                'venue' => ['nullable', 'string', 'max:255'],
+            ],
+            'max_media' => 1,
+            'media_type' => 'image',
+            'handler' => Handlers\EventHandler::class,
+        ]);
+
+        $this->register('job', [
+            'payload_rules' => [
+                'title' => ['required', 'string', 'max:255'],
+                'company' => ['nullable', 'string', 'max:255'],
+                'location' => ['nullable', 'string', 'max:255'],
+                'employment_type' => ['required', 'string', 'in:full_time,part_time,contract,freelance,internship'],
+                'salary_min' => ['nullable', 'integer', 'min:0'],
+                'salary_max' => ['nullable', 'integer', 'min:0', 'gte:payload.salary_min'],
+                'currency' => ['nullable', 'string', 'size:3'],
+                'apply_url' => ['nullable', 'url', 'max:2048'],
+                'expires_at' => ['nullable', 'date'],
+            ],
+            'handler' => Handlers\JobHandler::class,
+        ]);
+
+        $this->register('portfolio', [
+            'payload_rules' => [
+                'title' => ['required', 'string', 'max:255'],
+                'description' => ['nullable', 'string', 'max:5000'],
+            ],
+            'min_media' => 1,
+            'max_media' => 10,
+            'media_type' => 'image',
         ]);
     }
 }

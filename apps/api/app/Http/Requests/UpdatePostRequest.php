@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Services\Posts\PostTypeRegistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdatePostRequest extends FormRequest
 {
@@ -77,5 +78,27 @@ class UpdatePostRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        /** @var Post $post */
+        $post = $this->route('post');
+        $registry = app(PostTypeRegistry::class);
+        $check = $registry->payloadValidator($post->type);
+
+        if (! $check || ! $this->has('payload')) {
+            return;
+        }
+
+        $validator->after(function (Validator $validator) use ($check) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $check((array) $this->input('payload', []), function (string $key, string $message) use ($validator) {
+                $validator->errors()->add($key, $message);
+            });
+        });
     }
 }

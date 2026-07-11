@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\Profile;
 use App\Services\Posts\PostService;
 use App\Support\ViewerReactions;
+use App\Support\ViewerSatelliteState;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -73,6 +74,7 @@ class ProfileController extends Controller
             ->cursorPaginate(20);
 
         ViewerReactions::hydrate($posts->getCollection(), $viewer);
+        ViewerSatelliteState::hydrate($posts->getCollection(), $viewer);
 
         return PostResource::collection($posts);
     }

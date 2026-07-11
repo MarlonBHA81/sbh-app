@@ -32,6 +32,14 @@ const TYPE_LABELS: Record<PostType, string> = {
   magnifier: "Magnifier",
   secret: "Secret",
   checkin: "Check-in",
+  video: "Video",
+  audio: "Audio",
+  blog: "Blog",
+  poll: "Poll",
+  quiz: "Quiz",
+  event: "Event",
+  job: "Job",
+  portfolio: "Portfolio",
 };
 
 function snippet(post: Post): string {

@@ -16,11 +16,13 @@ use App\Http\Controllers\Api\V1\MyPostController;
 use App\Http\Controllers\Api\V1\MyProfileController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PostController;
+use App\Http\Controllers\Api\V1\PostInteractionController;
 use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\TopicController;
+use App\Http\Controllers\Api\V1\UploadController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -74,6 +76,13 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('profiles/{handle}/follow', [FollowController::class, 'destroy']);
 
     Route::post('media', [MediaController::class, 'store']);
+    Route::get('media/{media}', [MediaController::class, 'show']);
+
+    // Chunked video/audio uploads.
+    Route::post('uploads', [UploadController::class, 'store']);
+    Route::put('uploads/{upload}/chunks/{index}', [UploadController::class, 'chunk'])->whereNumber('index');
+    Route::post('uploads/{upload}/complete', [UploadController::class, 'complete']);
+    Route::delete('uploads/{upload}', [UploadController::class, 'destroy']);
 
     Route::get('me/posts', [MyPostController::class, 'index']);
 
@@ -99,6 +108,11 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
         Route::post('posts/{post}/like', [PostReactionController::class, 'like']);
         Route::delete('posts/{post}/like', [PostReactionController::class, 'unlike']);
         Route::post('posts/{post}/vote', [PostReactionController::class, 'vote']);
+
+        // Satellite interactions (poll vote, quiz attempt, event RSVP).
+        Route::post('posts/{post}/poll-vote', [PostInteractionController::class, 'pollVote']);
+        Route::post('posts/{post}/quiz-attempt', [PostInteractionController::class, 'quizAttempt']);
+        Route::post('posts/{post}/rsvp', [PostInteractionController::class, 'rsvp']);
 
         Route::post('comments/{comment}/like', [CommentReactionController::class, 'like']);
         Route::delete('comments/{comment}/like', [CommentReactionController::class, 'unlike']);
