@@ -6,8 +6,8 @@ export const metadata: Metadata = { title: "Home" };
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold tracking-tight">Home</h1>
+    <div className="flex flex-col gap-2">
+      <h1 className="sr-only">Home</h1>
       <HomeFeed />
     </div>
   );

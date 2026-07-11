@@ -1,11 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 import { PostCard } from "@/components/post-types/post-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import type { Paginated, Post } from "@/lib/api/types";
+import { useSettingsStore } from "@/lib/stores/settings-store";
+
+/** In low data mode, ask for smaller pages (the backend may ignore it). */
+function withListParams(url: string): string {
+  if (!useSettingsStore.getState().lowData) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}limit=10`;
+}
 
 export function PostSkeleton() {
   return (
@@ -28,6 +41,14 @@ export interface PostListHelpers {
   replace: (post: Post) => void;
 }
 
+export interface PostListHandle {
+  /**
+   * Refetch page 1 and replace the list in place, keeping the current
+   * content visible while the request is in flight (pull-to-refresh).
+   */
+  refresh: () => Promise<void>;
+}
+
 interface ListState {
   /** Identity of the currently loaded list (refreshKey + retry counter). */
   key: string;
@@ -47,11 +68,13 @@ export function PostList({
   emptyState,
   refreshKey,
   renderItem,
+  ref,
 }: {
   buildUrl: (cursor: string | null) => string;
   emptyState: React.ReactNode;
   refreshKey?: unknown;
   renderItem?: (post: Post, helpers: PostListHelpers) => React.ReactNode;
+  ref?: React.Ref<PostListHandle>;
 }) {
   const [retry, setRetry] = useState(0);
   const key = `${String(refreshKey)}#${retry}`;
@@ -80,7 +103,7 @@ export function PostList({
   useEffect(() => {
     let cancelled = false;
     api
-      .get<Paginated<Post>>(buildUrlRef.current(null))
+      .get<Paginated<Post>>(withListParams(buildUrlRef.current(null)))
       .then((res) => {
         if (!cancelled) {
           setState({
@@ -108,7 +131,7 @@ export function PostList({
     setLoadingMore(true);
     try {
       const res = await api.get<Paginated<Post>>(
-        buildUrlRef.current(nextCursor),
+        withListParams(buildUrlRef.current(nextCursor)),
       );
       setState((prev) => {
         if (prev.key !== key) return prev;
@@ -125,6 +148,33 @@ export function PostList({
       setLoadingMore(false);
     }
   }, [nextCursor, loadingMore, key]);
+
+  const refreshingRef = useRef(false);
+  const refresh = useCallback(async () => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    try {
+      const res = await api.get<Paginated<Post>>(
+        withListParams(buildUrlRef.current(null)),
+      );
+      setState((prev) =>
+        prev.key !== key
+          ? prev
+          : {
+              key,
+              posts: res.data,
+              nextCursor: res.meta.next_cursor,
+              phase: "loaded",
+            },
+      );
+    } catch {
+      // Keep the current list on failure.
+    } finally {
+      refreshingRef.current = false;
+    }
+  }, [key]);
+
+  useImperativeHandle(ref, () => ({ refresh }), [refresh]);
 
   useEffect(() => {
     const node = sentinelRef.current;

@@ -12,6 +12,7 @@ export interface SavePostInput {
   payload?: Record<string, unknown>;
   media_ids?: string[];
   parent_post_id?: string;
+  topic_ids?: number[];
   visibility: PostVisibility;
   status: PostStatus;
   scheduled_at?: string;

@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Media, Post } from "@/lib/api/types";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
 
 import { PostBody } from "./post-body";
@@ -49,10 +51,18 @@ function GridImage({
 
 export function ImagePost({ post }: { post: Post }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const lowData = useSettingsStore((s) => s.lowData);
+  // In low data mode, full-res loads only after an explicit tap (per image).
+  const [fullRequested, setFullRequested] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  );
   const media = post.media;
   if (media.length === 0) return post.body ? <PostBody text={post.body} /> : null;
 
   const single = media.length === 1;
+  const openItem = openIndex !== null ? (media[openIndex] ?? null) : null;
+  const showFull =
+    openItem !== null && (!lowData || fullRequested.has(openItem.ulid));
 
   return (
     <div className="flex flex-col gap-2">
@@ -98,15 +108,31 @@ export function ImagePost({ post }: { post: Post }) {
           onClick={(event) => event.stopPropagation()}
         >
           <DialogTitle className="sr-only">Image</DialogTitle>
-          {openIndex !== null && media[openIndex] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={media[openIndex].url}
-              alt=""
-              width={media[openIndex].width}
-              height={media[openIndex].height}
-              className="max-h-[85dvh] w-full rounded-lg object-contain"
-            />
+          {openItem ? (
+            <div className="flex flex-col items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={showFull ? openItem.url : openItem.thumb_url}
+                alt=""
+                width={openItem.width}
+                height={openItem.height}
+                className="max-h-[85dvh] w-full rounded-lg object-contain"
+              />
+              {!showFull ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="h-11"
+                  onClick={() =>
+                    setFullRequested((prev) =>
+                      new Set(prev).add(openItem.ulid),
+                    )
+                  }
+                >
+                  Load full image
+                </Button>
+              ) : null}
+            </div>
           ) : null}
         </DialogContent>
       </Dialog>

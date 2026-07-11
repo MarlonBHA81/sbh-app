@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 import { useComposer } from "@/components/composer/composer-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { TopicChip } from "@/components/topics/topic-chip";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -166,6 +167,14 @@ export function PostCard({ post }: { post: Post }) {
       ) : (
         content
       )}
+
+      {post.topics && post.topics.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {post.topics.map((topic) => (
+            <TopicChip key={topic.id} topic={topic} />
+          ))}
+        </div>
+      ) : null}
 
       <footer className="-mx-2 -mb-2 flex items-center justify-between">
         <ActionButton icon={Heart} count={post.likes_count} label="Likes" />

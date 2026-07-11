@@ -30,6 +30,21 @@ export interface Profile {
   relationship: Relationship;
 }
 
+/** Minimal topic shape attached to posts and used in pickers/chips. */
+export interface PostTopic {
+  id: number;
+  slug: string;
+  name: string;
+  icon: string | null;
+}
+
+export interface Topic extends PostTopic {
+  description?: string | null;
+  followers_count: number;
+  is_following?: boolean;
+  children: Topic[];
+}
+
 export interface Paginated<T> {
   data: T[];
   meta: {
@@ -107,6 +122,7 @@ export interface Post {
   profile: Profile;
   media: Media[];
   parent: Post | null;
+  topics?: PostTopic[];
   created_at: string;
 }
 

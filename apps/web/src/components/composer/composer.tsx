@@ -43,6 +43,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type {
   Media,
   Post,
+  PostTopic,
   PostType,
   PostVisibility,
   TypewriterSpeed,
@@ -51,6 +52,7 @@ import { formatLocalDateTime, isoToDatetimeLocal } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
 import { PhotoPicker } from "./photo-picker";
+import { TopicPicker } from "./topic-picker";
 import { useSavePost, type SavePostInput } from "./use-save-post";
 
 const MAX_BODY = 500;
@@ -138,6 +140,7 @@ export function Composer({
   const [magImages, setMagImages] = useState<Media[]>(
     editPost?.type === "magnifier" ? editPost.media : [],
   );
+  const [topics, setTopics] = useState<PostTopic[]>(editPost?.topics ?? []);
   const [visibility, setVisibility] = useState<PostVisibility>(
     editPost?.visibility ?? "public",
   );
@@ -223,6 +226,11 @@ export function Composer({
       case "quote":
         if (!editing && parent) input.parent_post_id = parent.ulid;
         break;
+    }
+
+    // Always send when editing so clearing every topic persists too.
+    if (topics.length > 0 || editing) {
+      input.topic_ids = topics.map((topic) => topic.id);
     }
 
     if (status === "scheduled" && scheduledLocal) {
@@ -421,6 +429,8 @@ export function Composer({
       >
         {activeText.length}/{MAX_BODY}
       </p>
+
+      <TopicPicker value={topics} onChange={setTopics} />
 
       <div className="flex flex-wrap items-center gap-3">
         <Select

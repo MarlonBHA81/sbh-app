@@ -3,6 +3,7 @@
 import {
   Check,
   FileClock,
+  Gauge,
   LogOut,
   Moon,
   Plus,
@@ -25,7 +26,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useSettingsStore } from "@/lib/stores/settings-store";
 
 export function AccountSwitcher({
   children,
@@ -40,6 +43,8 @@ export function AccountSwitcher({
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
+  const lowData = useSettingsStore((s) => s.lowData);
+  const setLowData = useSettingsStore((s) => s.setLowData);
   const [createOpen, setCreateOpen] = useState(false);
 
   function handleSwitch(ulid: string) {
@@ -108,6 +113,22 @@ export function AccountSwitcher({
           >
             <Settings className="size-4" aria-hidden />
             Profile settings
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="min-h-11 gap-3"
+            onSelect={(event) => {
+              event.preventDefault();
+              setLowData(!lowData);
+            }}
+          >
+            <Gauge className="size-4" aria-hidden />
+            Low data mode
+            <Switch
+              checked={lowData}
+              aria-hidden
+              tabIndex={-1}
+              className="pointer-events-none ml-auto"
+            />
           </DropdownMenuItem>
           <DropdownMenuItem
             className="min-h-11 gap-3"
