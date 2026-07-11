@@ -1,0 +1,209 @@
+<?php
+
+namespace App\Services\Feed;
+
+use App\Models\Follow;
+use App\Models\Post;
+use App\Models\Profile;
+use App\Models\Topic;
+use App\Models\TopicFollow;
+use App\Services\Posts\PostService;
+use App\Support\Geohash;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+
+class FeedService
+{
+    public const PER_PAGE = 20;
+
+    /** For-you candidates must have been published within this window. */
+    private const FRESH_DAYS = 7;
+
+    /** How many globally top-scored posts are mixed into for-you. */
+    private const GLOBAL_TOP = 100;
+
+    /** Maximum ulids remembered per profile in the seen set. */
+    private const SEEN_CAP = 500;
+
+    private const SEEN_TTL_HOURS = 24;
+
+    /**
+     * Posts from accepted follows of the viewer, plus the viewer's own.
+     */
+    public function following(Profile $viewer): CursorPaginator
+    {
+        $authorIds = $this->acceptedFollowingIds($viewer)->push($viewer->id);
+
+        return Post::query()
+            ->published()
+            ->whereIn('profile_id', $authorIds)
+            ->with(PostService::EAGER)
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->cursorPaginate(self::PER_PAGE);
+    }
+
+    /**
+     * Score-ranked mix of posts from followed topics, followed profiles and
+     * the global top — fresh (< 7 days), public posts only. Posts already
+     * served to this profile within 24h are excluded via the seen set.
+     */
+    public function forYou(Profile $viewer): CursorPaginator
+    {
+        $followedProfileIds = $this->acceptedFollowingIds($viewer);
+        $followedTopicIds = TopicFollow::query()
+            ->where('profile_id', $viewer->id)
+            ->pluck('topic_id');
+
+        $fresh = fn (Builder $query) => $query
+            ->published()
+            ->where('visibility', Post::VISIBILITY_PUBLIC)
+            ->where('published_at', '>=', now()->subDays(self::FRESH_DAYS));
+
+        $globalTopIds = Post::query()
+            ->tap($fresh)
+            ->orderByDesc('score')
+            ->limit(self::GLOBAL_TOP)
+            ->pluck('id');
+
+        $seen = $this->seen($viewer);
+
+        $paginator = Post::query()
+            ->tap($fresh)
+            ->where(function (Builder $query) use ($followedTopicIds, $followedProfileIds, $viewer, $globalTopIds) {
+                $query
+                    ->whereIn('profile_id', $followedProfileIds->collect()->push($viewer->id))
+                    ->orWhereIn('id', $globalTopIds);
+
+                if ($followedTopicIds->isNotEmpty()) {
+                    $query->orWhereHas('topics', fn ($topics) => $topics->whereIn('topics.id', $followedTopicIds));
+                }
+            })
+            ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer, $followedProfileIds))
+            ->when($seen !== [], fn (Builder $query) => $query->whereNotIn('ulid', $seen))
+            ->with(PostService::EAGER)
+            ->orderByDesc('score')
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->cursorPaginate(self::PER_PAGE);
+
+        $this->markSeen($viewer, array_map(fn (Post $post) => $post->ulid, $paginator->items()));
+
+        return $paginator;
+    }
+
+    /**
+     * Public posts near a point: geohash prefix scan narrowed by a precise
+     * haversine distance filter, newest first.
+     */
+    public function nearby(Profile $viewer, float $lat, float $lng, float $radiusKm): CursorPaginator
+    {
+        $prefixes = Geohash::coverRadius($lat, $lng, $radiusKm);
+
+        // Standard haversine (spherical law of cosines) guarded against
+        // floating point drift pushing acos() out of [-1, 1]. Works on
+        // both SQLite (math functions) and MySQL.
+        $haversine = '(6371 * acos(min(1.0, max(-1.0,'
+            .' cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?))'
+            .' + sin(radians(?)) * sin(radians(lat))))))';
+
+        return Post::query()
+            ->published()
+            ->where('visibility', Post::VISIBILITY_PUBLIC)
+            ->whereNotNull('geohash')
+            ->where(function (Builder $query) use ($prefixes) {
+                foreach ($prefixes as $prefix) {
+                    $query->orWhere('geohash', 'like', $prefix.'%');
+                }
+            })
+            // cast(? as real): PDO binds the radius as text and SQLite ranks
+            // any number below any text, which would defeat the comparison.
+            ->whereRaw("{$haversine} <= cast(? as real)", [$lat, $lng, $lat, $radiusKm])
+            ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer))
+            ->with(PostService::EAGER)
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->cursorPaginate(self::PER_PAGE);
+    }
+
+    /**
+     * Public posts attached to the topic or any of its descendants.
+     */
+    public function topic(Profile $viewer, Topic $topic): CursorPaginator
+    {
+        $topicIds = $topic->selfAndDescendantIds();
+
+        return Post::query()
+            ->published()
+            ->where('visibility', Post::VISIBILITY_PUBLIC)
+            ->whereHas('topics', fn ($topics) => $topics->whereIn('topics.id', $topicIds))
+            ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer))
+            ->with(PostService::EAGER)
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->cursorPaginate(self::PER_PAGE);
+    }
+
+    /**
+     * Posts from private profiles only appear to accepted followers (or the
+     * author). Applied on top of the public-visibility filter.
+     *
+     * @param  Collection<int, int>|null  $followedProfileIds
+     */
+    private function applyAuthorPrivacy(Builder $query, Profile $viewer, ?Collection $followedProfileIds = null): Builder
+    {
+        $allowed = ($followedProfileIds ?? $this->acceptedFollowingIds($viewer))
+            ->collect()
+            ->push($viewer->id);
+
+        return $query->where(function (Builder $inner) use ($allowed) {
+            $inner
+                ->whereHas('profile', fn ($profile) => $profile->where('is_private', false))
+                ->orWhereIn('profile_id', $allowed);
+        });
+    }
+
+    /**
+     * @return Collection<int, int>
+     */
+    private function acceptedFollowingIds(Profile $viewer): Collection
+    {
+        return Follow::query()
+            ->where('follower_profile_id', $viewer->id)
+            ->where('state', Follow::STATE_ACCEPTED)
+            ->pluck('followed_profile_id');
+    }
+
+    /**
+     * Ulids recently served to this profile in the for-you feed. Stored as
+     * a plain capped array so it works on any cache store.
+     *
+     * @return list<string>
+     */
+    private function seen(Profile $viewer): array
+    {
+        return Cache::get($this->seenKey($viewer), []);
+    }
+
+    /**
+     * @param  list<string>  $ulids
+     */
+    private function markSeen(Profile $viewer, array $ulids): void
+    {
+        if ($ulids === []) {
+            return;
+        }
+
+        $seen = array_values(array_unique([...$this->seen($viewer), ...$ulids]));
+        $seen = array_slice($seen, -self::SEEN_CAP);
+
+        Cache::put($this->seenKey($viewer), $seen, now()->addHours(self::SEEN_TTL_HOURS));
+    }
+
+    private function seenKey(Profile $viewer): string
+    {
+        return "seen:{$viewer->ulid}";
+    }
+}

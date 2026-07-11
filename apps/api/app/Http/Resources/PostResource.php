@@ -36,6 +36,12 @@ class PostResource extends JsonResource
             'scheduled_at' => $this->scheduled_at?->toISOString(),
             'profile' => new ProfileResource($this->whenLoaded('profile')),
             'media' => MediaResource::collection($this->whenLoaded('media')),
+            'topics' => $this->whenLoaded('topics', fn () => $this->topics->map(fn ($topic) => [
+                'id' => $topic->id,
+                'slug' => $topic->slug,
+                'name' => $topic->name,
+                'icon' => $topic->icon,
+            ])->all()),
             'parent' => $this->whenLoaded('parent', fn () => $this->parent ? new self($this->parent) : null),
             'created_at' => $this->created_at?->toISOString(),
         ];

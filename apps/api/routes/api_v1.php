@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\MeController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Api\V1\MyPostController;
 use App\Http\Controllers\Api\V1\MyProfileController;
 use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\TopicController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,6 +46,9 @@ Route::middleware('profile.active')->group(function () {
     Route::get('profiles/{handle}', [ProfileController::class, 'show']);
     Route::get('profiles/{handle}/followers', [ProfileController::class, 'followers']);
     Route::get('profiles/{handle}/following', [ProfileController::class, 'following']);
+
+    Route::get('topics/tree', [TopicController::class, 'tree']);
+    Route::get('topics/{slug}', [TopicController::class, 'show']);
 });
 
 Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(function () {
@@ -73,4 +78,13 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('posts/{post}/reveal', [PostController::class, 'reveal']);
 
     Route::get('profiles/{handle}/posts', [ProfileController::class, 'posts']);
+
+    Route::get('me/topics', [TopicController::class, 'mine']);
+    Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);
+    Route::delete('topics/{slug}/follow', [TopicController::class, 'unfollow']);
+
+    Route::get('feeds/following', [FeedController::class, 'following']);
+    Route::get('feeds/for-you', [FeedController::class, 'forYou']);
+    Route::get('feeds/nearby', [FeedController::class, 'nearby']);
+    Route::get('feeds/topics/{slug}', [FeedController::class, 'topic']);
 });

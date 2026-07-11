@@ -4,6 +4,8 @@ namespace App\Http\Requests;
 
 use App\Http\Requests\Concerns\ValidatesScheduledAt;
 use App\Models\Post;
+use App\Models\Topic;
+use App\Services\Posts\PostService;
 use App\Services\Posts\PostTypeRegistry;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -37,6 +39,19 @@ class StorePostRequest extends FormRequest
             'lng' => ['nullable', 'numeric', 'between:-180,180', 'required_with:lat'],
             'city' => ['nullable', 'string', 'max:255'],
             'country_code' => ['nullable', 'string', 'size:2'],
+            'topic_ids' => ['sometimes', 'array', 'max:'.PostService::MAX_TOPICS],
+            'topic_ids.*' => [
+                'required',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $exists = is_numeric($value)
+                        ? Topic::query()->whereKey((int) $value)->exists()
+                        : (is_string($value) && Topic::query()->where('slug', $value)->exists());
+
+                    if (! $exists) {
+                        $fail('The selected topic does not exist.');
+                    }
+                },
+            ],
         ];
 
         $type = (string) $this->input('type');

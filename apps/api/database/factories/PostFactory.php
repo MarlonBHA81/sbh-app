@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Post;
 use App\Models\Profile;
+use App\Support\Geohash;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -39,6 +40,15 @@ class PostFactory extends Factory
             'status' => Post::STATUS_SCHEDULED,
             'scheduled_at' => $at ?? now()->addHour(),
             'published_at' => null,
+        ]);
+    }
+
+    public function located(float $lat, float $lng): static
+    {
+        return $this->state(fn () => [
+            'lat' => $lat,
+            'lng' => $lng,
+            'geohash' => Geohash::encode($lat, $lng),
         ]);
     }
 

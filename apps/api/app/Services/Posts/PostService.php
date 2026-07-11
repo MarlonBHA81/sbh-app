@@ -2,10 +2,13 @@
 
 namespace App\Services\Posts;
 
+use App\Jobs\RecomputePostScore;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\Profile;
+use App\Models\Topic;
 use App\Models\User;
+use App\Support\Geohash;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -17,7 +20,10 @@ class PostService
     public const DEFAULT_TIMEZONE = 'Africa/Johannesburg';
 
     /** Relations eager-loaded on every post returned to a resource. */
-    public const EAGER = ['profile', 'media', 'parent.profile', 'parent.media'];
+    public const EAGER = ['profile', 'media', 'topics', 'parent.profile', 'parent.media'];
+
+    /** Maximum topics attachable to a single post. */
+    public const MAX_TOPICS = 3;
 
     public function __construct(private PostTypeRegistry $registry) {}
 
@@ -50,7 +56,9 @@ class PostService
 
         $status = $data['status'] ?? Post::STATUS_PUBLISHED;
 
-        $post = DB::transaction(function () use ($user, $author, $data, $type, $parent, $media, $payload, $status) {
+        $topics = $this->resolveTopics($data['topic_ids'] ?? []);
+
+        $post = DB::transaction(function () use ($user, $author, $data, $type, $parent, $media, $payload, $status, $topics) {
             $post = Post::create([
                 'profile_id' => $author->id,
                 'type' => $type,
@@ -65,12 +73,19 @@ class PostService
                 'sensitive' => $data['sensitive'] ?? false,
                 'lat' => $data['lat'] ?? null,
                 'lng' => $data['lng'] ?? null,
+                'geohash' => isset($data['lat'], $data['lng'])
+                    ? Geohash::encode((float) $data['lat'], (float) $data['lng'])
+                    : null,
                 'city' => $data['city'] ?? null,
                 'country_code' => isset($data['country_code']) ? strtoupper($data['country_code']) : null,
                 'parent_post_id' => $parent?->id,
             ]);
 
             $this->attachMedia($post, $media);
+
+            if ($topics->isNotEmpty()) {
+                $post->topics()->attach($topics->pluck('id')->all());
+            }
 
             if ($post->isPublished()) {
                 $this->handlePublished($post);
@@ -98,6 +113,12 @@ class PostService
             $post->fill(Arr::only($data, [
                 'body', 'payload', 'sensitive', 'visibility', 'lat', 'lng', 'city', 'country_code',
             ]));
+
+            if (array_key_exists('lat', $data) || array_key_exists('lng', $data)) {
+                $post->geohash = $post->lat !== null && $post->lng !== null
+                    ? Geohash::encode((float) $post->lat, (float) $post->lng)
+                    : null;
+            }
 
             if (array_key_exists('media_ids', $data)) {
                 $this->replaceMedia($post, $data['media_ids'] ?? []);
@@ -145,6 +166,11 @@ class PostService
             if ($post->isRepost() && $post->parent && $post->parent->reposts_count > 0) {
                 $post->parent->decrement('reposts_count');
             }
+
+            Topic::query()
+                ->whereIn('id', $post->topics()->pluck('topics.id'))
+                ->where('posts_count', '>', 0)
+                ->decrement('posts_count');
         });
     }
 
@@ -179,6 +205,50 @@ class PostService
         if ($post->isRepost() && $post->parent) {
             $post->parent->increment('reposts_count');
         }
+
+        Topic::query()
+            ->whereIn('id', $post->topics()->pluck('topics.id'))
+            ->increment('posts_count');
+
+        RecomputePostScore::dispatch($post)->afterCommit();
+    }
+
+    /**
+     * Resolve topic ids or slugs into distinct Topic models (max 3).
+     *
+     * @param  list<int|string>  $idsOrSlugs
+     * @return Collection<int, Topic>
+     */
+    private function resolveTopics(array $idsOrSlugs): Collection
+    {
+        if ($idsOrSlugs === []) {
+            return collect();
+        }
+
+        $topics = collect($idsOrSlugs)
+            ->map(function ($idOrSlug) {
+                $topic = is_numeric($idOrSlug)
+                    ? Topic::query()->find((int) $idOrSlug)
+                    : Topic::query()->where('slug', $idOrSlug)->first();
+
+                if (! $topic) {
+                    throw ValidationException::withMessages([
+                        'topic_ids' => ['One or more topics do not exist.'],
+                    ]);
+                }
+
+                return $topic;
+            })
+            ->unique('id')
+            ->values();
+
+        if ($topics->count() > self::MAX_TOPICS) {
+            throw ValidationException::withMessages([
+                'topic_ids' => ['A post may have at most '.self::MAX_TOPICS.' topics.'],
+            ]);
+        }
+
+        return $topics;
     }
 
     /**
