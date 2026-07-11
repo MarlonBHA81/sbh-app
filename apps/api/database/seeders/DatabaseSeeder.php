@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             RankSeeder::class,
             XpActionSeeder::class,
             TopicSeeder::class,
+            BusinessCategorySeeder::class,
             SettingSeeder::class,
         ]);
     }

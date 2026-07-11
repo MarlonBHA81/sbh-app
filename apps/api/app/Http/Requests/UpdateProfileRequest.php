@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Profile;
 use App\Support\Handles;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -24,8 +25,18 @@ class UpdateProfileRequest extends FormRequest
     {
         $profile = $this->route('profile');
 
+        // A business category may only be attached to a business profile.
+        $isBusiness = $profile instanceof Profile && $profile->isBusiness();
+
         return [
             'name' => ['sometimes', 'string', 'max:255'],
+            'business_category_id' => [
+                'sometimes',
+                'nullable',
+                Rule::prohibitedIf(! $isBusiness),
+                'integer',
+                Rule::exists('business_categories', 'id'),
+            ],
             'handle' => [
                 'sometimes',
                 'string',

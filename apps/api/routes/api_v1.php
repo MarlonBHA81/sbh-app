@@ -6,6 +6,11 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
 use App\Http\Controllers\Api\V1\BlockController;
+use App\Http\Controllers\Api\V1\BusinessCategoryController;
+use App\Http\Controllers\Api\V1\BusinessDirectoryController;
+use App\Http\Controllers\Api\V1\BusinessEventController;
+use App\Http\Controllers\Api\V1\BusinessMatchController;
+use App\Http\Controllers\Api\V1\BusinessNeedController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
 use App\Http\Controllers\Api\V1\ConversationController;
@@ -63,6 +68,9 @@ Route::prefix('auth')->group(function () {
 
 // Public status flags (maintenance banner, registration toggle).
 Route::get('status', StatusController::class);
+
+// Public business category taxonomy (cached).
+Route::get('business/categories', [BusinessCategoryController::class, 'index']);
 
 // Public profile routes (viewer resolved when authenticated).
 Route::middleware('profile.active')->group(function () {
@@ -204,4 +212,14 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('messages/{message}/reactions', [MessageReactionController::class, 'destroy']);
 
     Route::get('me/unread-messages-count', [ConversationController::class, 'unreadCount']);
+
+    // Business directory, needs, matchmaking and events.
+    Route::get('business/directory', [BusinessDirectoryController::class, 'index']);
+    Route::get('business/matches', [BusinessMatchController::class, 'index']);
+    Route::get('business/events', [BusinessEventController::class, 'index']);
+
+    Route::get('me/business-needs', [BusinessNeedController::class, 'index']);
+    Route::post('me/business-needs', [BusinessNeedController::class, 'store']);
+    Route::patch('me/business-needs/{businessNeed}', [BusinessNeedController::class, 'update']);
+    Route::delete('me/business-needs/{businessNeed}', [BusinessNeedController::class, 'destroy']);
 });

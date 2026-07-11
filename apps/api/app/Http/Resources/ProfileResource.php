@@ -54,6 +54,15 @@ class ProfileResource extends JsonResource
             'bio' => $this->bio,
             'cover_path' => $this->cover_path,
             'category' => $this->category,
+            'business_category' => $this->when(
+                $this->relationLoaded('businessCategory') && $this->businessCategory !== null,
+                fn () => [
+                    'id' => $this->businessCategory->id,
+                    'slug' => $this->businessCategory->slug,
+                    'name' => $this->businessCategory->name,
+                    'icon' => $this->businessCategory->icon,
+                ],
+            ),
             'website' => $this->website,
             'location' => $this->location,
             'country_code' => $this->country_code,

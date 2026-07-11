@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Profiles\Tables;
 
 use App\Models\Badge;
+use App\Models\BusinessCategory;
 use App\Models\Profile;
 use App\Support\Moderation;
 use Filament\Actions\Action;
@@ -70,10 +71,17 @@ class ProfilesTable
                     ->icon(Heroicon::OutlinedTag)
                     ->fillForm(fn (Profile $record) => [
                         'category' => $record->category,
+                        'business_category_id' => $record->business_category_id,
                         'badges' => $record->badges()->pluck('badges.id')->all(),
                     ])
                     ->schema([
                         TextInput::make('category')->maxLength(255),
+                        Select::make('business_category_id')
+                            ->label('Business category')
+                            ->options(fn () => BusinessCategory::query()->orderBy('position')->pluck('name', 'id'))
+                            ->searchable()
+                            ->nullable()
+                            ->visible(fn (Profile $record) => $record->isBusiness()),
                         Select::make('badges')
                             ->label('Badges')
                             ->multiple()
@@ -81,7 +89,13 @@ class ProfilesTable
                             ->searchable(),
                     ])
                     ->action(function (Profile $record, array $data): void {
-                        $record->forceFill(['category' => $data['category'] ?? null])->save();
+                        $update = ['category' => $data['category'] ?? null];
+
+                        if ($record->isBusiness()) {
+                            $update['business_category_id'] = $data['business_category_id'] ?? null;
+                        }
+
+                        $record->forceFill($update)->save();
 
                         $sync = [];
                         foreach ($data['badges'] ?? [] as $badgeId) {

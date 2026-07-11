@@ -33,7 +33,9 @@ class MyProfileController extends Controller
     {
         abort_unless($profile->user_id === $request->user()->id, 403);
 
-        return new ProfileResource($profiles->updateProfile($profile, $request->validated()));
+        $updated = $profiles->updateProfile($profile, $request->validated());
+
+        return new ProfileResource($updated->load('businessCategory'));
     }
 
     public function destroy(Request $request, Profile $profile, ProfileService $profiles): Response

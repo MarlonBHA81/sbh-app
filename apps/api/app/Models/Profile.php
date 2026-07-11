@@ -39,6 +39,7 @@ class Profile extends Model
         'avatar_path',
         'cover_path',
         'category',
+        'business_category_id',
         'website',
         'location',
         'lat',
@@ -88,6 +89,16 @@ class Profile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function businessCategory(): BelongsTo
+    {
+        return $this->belongsTo(BusinessCategory::class);
+    }
+
+    public function businessNeeds(): HasMany
+    {
+        return $this->hasMany(BusinessNeed::class);
     }
 
     /**
