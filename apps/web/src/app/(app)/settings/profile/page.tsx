@@ -40,6 +40,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { CategoryChip } from "@/components/business/category-chip";
+import { useBusinessCategories } from "@/hooks/use-business-categories";
 import * as api from "@/lib/api/client";
 import type { DmPrivacy, Profile } from "@/lib/api/types";
 import { BUSINESS_CATEGORIES } from "@/lib/categories";
@@ -199,6 +201,87 @@ function MessagingSettings() {
             </Label>
           ))}
         </RadioGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Business-only: pick the structured business category (Milestone 10). */
+function BusinessCategorySettings() {
+  const activeProfile = useAuthStore((s) => s.activeProfile);
+  const updateActiveProfile = useAuthStore((s) => s.updateActiveProfile);
+  const { categories, phase } = useBusinessCategories();
+  const [busy, setBusy] = useState(false);
+
+  const current = activeProfile?.business_category ?? null;
+
+  async function choose(nextId: string) {
+    if (busy || !activeProfile) return;
+    const id = Number(nextId);
+    if (current && current.id === id) return;
+    setBusy(true);
+    const previous = activeProfile;
+    const chosen = categories.find((c) => c.id === id) ?? null;
+    // Optimistic: reflect the choice immediately.
+    updateActiveProfile({ ...activeProfile, business_category: chosen });
+    try {
+      const res = await api.patch<{ data: Profile }>(
+        `/api/v1/me/profiles/${activeProfile.ulid}`,
+        { business_category_id: id },
+      );
+      updateActiveProfile(res.data);
+      toast.success("Business category updated");
+    } catch (error) {
+      updateActiveProfile(previous);
+      toast.error(
+        error instanceof api.ApiError
+          ? error.message
+          : "Couldn't update business category",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Business category</CardTitle>
+        <CardDescription>
+          Your category powers the directory and matchmaking.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {current ? (
+          <div>
+            <CategoryChip category={current} />
+          </div>
+        ) : null}
+        <Select
+          value={current ? String(current.id) : undefined}
+          onValueChange={(value) => void choose(value)}
+          disabled={busy || phase !== "loaded"}
+        >
+          <SelectTrigger className="h-11 w-full">
+            <SelectValue
+              placeholder={
+                phase === "loading"
+                  ? "Loading categories…"
+                  : "Pick a business category"
+              }
+            />
+          </SelectTrigger>
+          <SelectContent>
+            {categories.map((category) => (
+              <SelectItem key={category.id} value={String(category.id)}>
+                <span className="flex items-center gap-1.5">
+                  <span aria-hidden>{category.icon ?? "🏢"}</span>
+                  {category.name}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </CardContent>
     </Card>
   );
@@ -476,6 +559,7 @@ export default function ProfileSettingsPage() {
           </Form>
         </CardContent>
       </Card>
+      {activeProfile.kind === "business" ? <BusinessCategorySettings /> : null}
       <ContentSettings />
       <MessagingSettings />
       <PrivacySafetySettings />

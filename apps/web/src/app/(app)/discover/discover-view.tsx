@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, ChevronRight, MapPin, Trophy } from "lucide-react";
+import { Briefcase, ChevronDown, ChevronRight, MapPin, Trophy } from "lucide-react";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -246,6 +246,25 @@ export function DiscoverView() {
           </span>
           <span className="block text-xs text-muted-foreground">
             See who&apos;s earning the most XP this week.
+          </span>
+        </span>
+        <ChevronRight
+          className="size-5 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+      </Link>
+
+      <Link
+        href="/business"
+        className="flex items-center gap-3 rounded-xl border bg-accent/40 p-3 transition-colors hover:bg-accent/60"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-indigo-600 dark:text-indigo-400">
+          <Briefcase className="size-5" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">Business hub</span>
+          <span className="block text-xs text-muted-foreground">
+            Browse the directory, find events, and get matched.
           </span>
         </span>
         <ChevronRight

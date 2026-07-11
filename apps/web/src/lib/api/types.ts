@@ -59,6 +59,11 @@ export interface Profile {
    * Present on own-profile payloads only (Milestone 9).
    */
   share_location?: boolean;
+  /**
+   * The structured business category (Milestone 10). Present on business
+   * profiles; null when unset. Absent on payloads that don't include it.
+   */
+  business_category?: BusinessCategory | null;
 }
 
 /** Trimmed profile shape embedded in messaging payloads. */
@@ -531,3 +536,47 @@ export interface ReverseGeocode {
 
 /** Which local feed the Nearby tab is showing. */
 export type LocalScope = "radius" | "city" | "country";
+
+// --- Business hub (Milestone 10) -----------------------------------------
+
+/** A business category from GET /api/v1/business/categories. */
+export interface BusinessCategory {
+  id: number;
+  slug: string;
+  name: string;
+  icon: string | null;
+}
+
+/** A business need is either something offered or something sought. */
+export type BusinessNeedKind = "offering" | "seeking";
+
+/** One of the active profile's business needs (max 10 active). */
+export interface BusinessNeed {
+  ulid: string;
+  kind: BusinessNeedKind;
+  description: string;
+  active: boolean;
+  category: BusinessCategory;
+}
+
+/** A single reason a match was made: one of my needs meets one of theirs. */
+export interface BusinessMatchReason {
+  my_need: {
+    ulid: string;
+    kind: BusinessNeedKind;
+    category: BusinessCategory;
+  };
+  their_need: {
+    ulid: string;
+    kind: BusinessNeedKind;
+    description: string;
+    category: BusinessCategory;
+  };
+}
+
+/** A matched business profile with its score and the reasons behind it. */
+export interface BusinessMatch {
+  profile: Profile;
+  score: number;
+  matches: BusinessMatchReason[];
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, PenSquare, Trophy } from "lucide-react";
+import { Briefcase, ChevronsUpDown, PenSquare, Trophy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -75,6 +75,23 @@ export function SidebarNav() {
             </Link>
           );
         })}
+        <Link
+          href="/business"
+          aria-current={
+            pathname === "/business" || pathname.startsWith("/business/")
+              ? "page"
+              : undefined
+          }
+          className={cn(
+            "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+            pathname === "/business" || pathname.startsWith("/business/")
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+          )}
+        >
+          <Briefcase className="size-5" aria-hidden />
+          Business
+        </Link>
         <Link
           href="/leaderboard"
           aria-current={
