@@ -112,8 +112,8 @@ Minimum: 2 vCPU, 4 GB RAM, 40 GB SSD. Ports 80, 443, 8080.
 
 ```bash
 cp .env.prod.example .env.prod   # fill in secrets
-docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml exec api php artisan migrate --force
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec api php artisan migrate --force
 ```
 
 TLS: edit `docker/nginx/prod.conf` with your domain, then issue certs with the bundled certbot service (command in the file's header comment).

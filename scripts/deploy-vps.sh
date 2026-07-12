@@ -91,24 +91,24 @@ fi
 
 # --- 5. Build + start ------------------------------------------------------
 say "Building and starting the stack (first build takes several minutes)"
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 
 say "Waiting for the database"
 sleep 15
 
 # --- 6. App bootstrap ------------------------------------------------------
 say "Running migrations + seeders"
-docker compose -f docker-compose.prod.yml exec -T api php artisan migrate --force --seed
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T api php artisan migrate --force --seed
 
 say "Generating web push (VAPID) keys"
-docker compose -f docker-compose.prod.yml exec -T api php artisan webpush:vapid --show 2>/dev/null || true
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T api php artisan webpush:vapid --show 2>/dev/null || true
 echo "  ^ Copy VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY into .env.prod, set"
 echo "    NEXT_PUBLIC_VAPID_PUBLIC_KEY as a web build arg, then re-run this script (idempotent)."
 
 say "Create your admin account (Filament panel at https://$DOMAIN/admin)"
-docker compose -f docker-compose.prod.yml exec api php artisan make:admin < /dev/tty || true
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec api php artisan make:admin < /dev/tty || true
 
 say "Done! Your app is live at: https://$DOMAIN"
 echo "  API health:  https://$DOMAIN/api/v1/status"
 echo "  Admin panel: https://$DOMAIN/admin"
-echo "  Logs:        docker compose -f docker-compose.prod.yml logs -f"
+echo "  Logs:        docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f"

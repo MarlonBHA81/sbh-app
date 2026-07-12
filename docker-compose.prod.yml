@@ -1,4 +1,5 @@
-# Production stack: docker compose -f docker-compose.prod.yml up -d --build
+# Production stack: docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+# (--env-file is required: the ${VARS} below are resolved by compose itself.)
 # Copy .env.prod.example to .env.prod and fill in secrets first.
 services:
   mysql:
@@ -13,10 +14,12 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
-      interval: 10s
+      # $$ so the variable resolves inside the container, not at compose time.
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 30
+      start_period: 60s
 
   redis:
     image: redis:7-alpine
