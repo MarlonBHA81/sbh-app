@@ -43,6 +43,8 @@ cd "$DIR"
 if [ ! -f .env.prod ]; then
   say "Configuration"
   read -rp "Your domain (e.g. app.example.com, must already point to this server): " DOMAIN < /dev/tty
+  # Forgive pasted URLs: strip scheme, path/trailing slash, and whitespace.
+  DOMAIN="$(printf '%s' "$DOMAIN" | sed -e 's|^[a-zA-Z]*://||' -e 's|/.*$||' | tr -d '[:space:]')"
   [ -n "$DOMAIN" ] || die "Domain is required."
   read -rp "Email for SSL certificate + web push contact: " EMAIL < /dev/tty
   [ -n "$EMAIL" ] || die "Email is required."
@@ -54,6 +56,8 @@ if [ ! -f .env.prod ]; then
   DB_PASSWORD="$(rand)"; DB_ROOT_PASSWORD="$(rand)"
   REVERB_KEY="$(rand)"; REVERB_SECRET="$(rand)"
 
+  # Start from pristine templates so re-runs with a corrected domain work.
+  git checkout -- docker/nginx/prod.conf 2>/dev/null || true
   cp .env.prod.example .env.prod
   sed -i \
     -e "s|^APP_KEY=.*|APP_KEY=base64:$(head -c 32 /dev/urandom | base64)|" \
@@ -68,7 +72,7 @@ if [ ! -f .env.prod ]; then
 
   sed -i "s|example.com|$DOMAIN|g" docker/nginx/prod.conf
 else
-  DOMAIN="$(grep '^APP_URL=' .env.prod | sed 's|.*https://||')"
+  DOMAIN="$(grep '^APP_URL=' .env.prod | sed -e 's|.*https://||' -e 's|/.*$||')"
   EMAIL="$(grep '^MAIL_FROM_ADDRESS=' .env.prod | cut -d= -f2)"
   say "Reusing existing .env.prod (domain: $DOMAIN)"
 fi
