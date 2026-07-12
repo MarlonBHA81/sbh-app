@@ -5,9 +5,10 @@ namespace App\Console\Commands;
 use App\Models\User;
 use App\Services\ProfileService;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Console\PromptsForMissingInput;
 use Illuminate\Support\Facades\Hash;
 
-class MakeAdminCommand extends Command
+class MakeAdminCommand extends Command implements PromptsForMissingInput
 {
     protected $signature = 'make:admin {email} {--name=} {--password=} {--super}';
 
