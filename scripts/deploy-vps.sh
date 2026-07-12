@@ -21,6 +21,7 @@ say() { printf '\n\033[1;32m==> %s\033[0m\n' "$*"; }
 die() { printf '\n\033[1;31mERROR: %s\033[0m\n' "$*" >&2; exit 1; }
 
 [ "$(id -u)" -eq 0 ] || die "Run as root (or with sudo)."
+[ -e /dev/tty ] || die "No terminal available for prompts — run: bash scripts/deploy-vps.sh"
 
 # --- 1. Docker + git -------------------------------------------------------
 if ! command -v docker >/dev/null 2>&1; then
@@ -41,9 +42,9 @@ cd "$DIR"
 # --- 3. Configuration ------------------------------------------------------
 if [ ! -f .env.prod ]; then
   say "Configuration"
-  read -rp "Your domain (e.g. app.example.com, must already point to this server): " DOMAIN
+  read -rp "Your domain (e.g. app.example.com, must already point to this server): " DOMAIN < /dev/tty
   [ -n "$DOMAIN" ] || die "Domain is required."
-  read -rp "Email for SSL certificate + web push contact: " EMAIL
+  read -rp "Email for SSL certificate + web push contact: " EMAIL < /dev/tty
   [ -n "$EMAIL" ] || die "Email is required."
 
   rand() { tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 32; }
@@ -99,7 +100,7 @@ echo "  ^ Copy VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY into .env.prod, set"
 echo "    NEXT_PUBLIC_VAPID_PUBLIC_KEY as a web build arg, then re-run this script (idempotent)."
 
 say "Create your admin account (Filament panel at https://$DOMAIN/admin)"
-docker compose -f docker-compose.prod.yml exec api php artisan make:admin || true
+docker compose -f docker-compose.prod.yml exec api php artisan make:admin < /dev/tty || true
 
 say "Done! Your app is live at: https://$DOMAIN"
 echo "  API health:  https://$DOMAIN/api/v1/status"
