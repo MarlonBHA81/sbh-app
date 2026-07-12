@@ -11,6 +11,7 @@ use App\Models\TopicFollow;
 use App\Services\Posts\PostService;
 use App\Services\SafetyService;
 use App\Support\Geohash;
+use App\Support\Sql;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -202,12 +203,7 @@ class FeedService
     {
         $prefixes = Geohash::coverRadius($lat, $lng, $radiusKm);
 
-        // Standard haversine (spherical law of cosines) guarded against
-        // floating point drift pushing acos() out of [-1, 1]. Works on
-        // both SQLite (math functions) and MySQL.
-        $haversine = '(6371 * acos(min(1.0, max(-1.0,'
-            .' cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?))'
-            .' + sin(radians(?)) * sin(radians(lat))))))';
+        $haversine = Sql::haversine();
 
         return Post::query()
             ->published()

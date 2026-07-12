@@ -7,17 +7,13 @@ use App\Models\Profile;
 use App\Services\Geo\GeocodingService;
 use App\Services\SafetyService;
 use App\Support\Geohash;
+use App\Support\Sql;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class GeoController extends Controller
 {
-    /** Same guarded spherical-law-of-cosines expression the nearby feed uses. */
-    private const HAVERSINE = '(6371 * acos(min(1.0, max(-1.0,'
-        .' cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?))'
-        .' + sin(radians(?)) * sin(radians(lat))))))';
-
     public function __construct(private SafetyService $safety) {}
 
     /**
@@ -69,10 +65,10 @@ class GeoController extends Controller
                     $query->orWhere('geohash', 'like', $prefix.'%');
                 }
             })
-            ->selectRaw('*, '.self::HAVERSINE.' as distance_km', [$lat, $lng, $lat])
+            ->selectRaw('*, '.Sql::haversine().' as distance_km', [$lat, $lng, $lat])
             // cast(? as real): PDO binds the radius as text and SQLite ranks
             // any number below any text, which would defeat the comparison.
-            ->whereRaw(self::HAVERSINE.' <= cast(? as real)', [$lat, $lng, $lat, $radiusKm])
+            ->whereRaw(Sql::haversine().' <= cast(? as real)', [$lat, $lng, $lat, $radiusKm])
             ->orderBy('distance_km')
             ->limit(100)
             ->get();

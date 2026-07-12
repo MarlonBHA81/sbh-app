@@ -7,6 +7,7 @@ use App\Models\Profile;
 use App\Services\Posts\PostService;
 use App\Services\SafetyService;
 use App\Support\Geohash;
+use App\Support\Sql;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -62,9 +63,7 @@ class BusinessEventService
 
         $prefixes = Geohash::coverRadius($lat, $lng, $radiusKm);
 
-        $haversine = '(6371 * acos(min(1.0, max(-1.0,'
-            .' cos(radians(?)) * cos(radians(posts.lat)) * cos(radians(posts.lng) - radians(?))'
-            .' + sin(radians(?)) * sin(radians(posts.lat))))))';
+        $haversine = Sql::haversine('posts.lat', 'posts.lng');
 
         return $query
             ->whereNotNull('posts.geohash')
