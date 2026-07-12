@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 Schedule::command('posts:publish-due')->everyMinute();
 Schedule::command('posts:refresh-scores')->everyFifteenMinutes();
 Schedule::command('uploads:prune')->hourly();
+Schedule::command('ads:settle')->everyFifteenMinutes();

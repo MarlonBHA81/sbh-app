@@ -8,6 +8,7 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Models\Profile;
+use App\Services\Analytics\PostStatsService;
 use App\Services\Posts\PostService;
 use App\Support\ViewerReactions;
 use App\Support\ViewerSatelliteState;
@@ -62,11 +63,12 @@ class PostController extends Controller
      * Return the full (unmasked) payload for hidden-payload types such as
      * secret and magnifier. Counts as a view for now.
      */
-    public function reveal(Request $request, Post $post): JsonResponse
+    public function reveal(Request $request, Post $post, PostStatsService $stats): JsonResponse
     {
         $this->ensureVisible($request, $post);
 
         $post->increment('views_count');
+        $stats->bump($post, PostStatsService::VIEWS);
 
         return response()->json([
             'data' => [

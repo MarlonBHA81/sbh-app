@@ -2,6 +2,7 @@
 
 namespace App\Services\Feed;
 
+use App\Models\Campaign;
 use App\Models\Follow;
 use App\Models\Post;
 use App\Models\Profile;
@@ -96,7 +97,101 @@ class FeedService
 
         $this->markSeen($viewer, array_map(fn (Post $post) => $post->ulid, $paginator->items()));
 
+        $this->injectPromoted($paginator, $viewer);
+
         return $paginator;
+    }
+
+    /**
+     * Splice paid promoted posts into a for-you page at fixed slots (index 3,
+     * 3+rate, …), up to floor(pageSize / injection_rate) of them, chosen from
+     * servable campaigns weighted by remaining budget.
+     *
+     * Injected posts never enter the seen set (they aren't marked seen) and
+     * never anchor the cursor (they are only ever spliced before the final
+     * organic item), so pagination and dedupe are unaffected. Promoted posts
+     * whose target post is already organically present on the page are skipped.
+     */
+    private function injectPromoted(CursorPaginator $paginator, Profile $viewer): void
+    {
+        $rate = max(1, (int) config('ads.injection_rate'));
+        $max = intdiv(self::PER_PAGE, $rate);
+
+        if ($max < 1) {
+            return;
+        }
+
+        $items = collect($paginator->items());
+        $presentPostIds = $items->pluck('id')->all();
+        $excluded = $this->safety->feedExcludedProfileIds($viewer);
+
+        $campaigns = Campaign::query()
+            ->servable()
+            ->whereHas('post', function (Builder $query) use ($viewer, $excluded) {
+                $query
+                    ->published()
+                    ->where('visibility', Post::VISIBILITY_PUBLIC)
+                    ->where('profile_id', '!=', $viewer->id)
+                    ->when($excluded !== [], fn (Builder $q) => $q->whereNotIn('profile_id', $excluded));
+            })
+            ->with(['post' => fn ($query) => $query->with(PostService::EAGER)])
+            ->get()
+            ->filter(fn (Campaign $c) => $c->post !== null && ! in_array($c->post->id, $presentPostIds, true))
+            ->values();
+
+        if ($campaigns->isEmpty()) {
+            return;
+        }
+
+        $chosen = $this->pickWeighted($campaigns, $max);
+
+        $result = $items->all();
+
+        foreach ($chosen as $i => $campaign) {
+            $position = 3 + $i * $rate;
+
+            // Only inject within the page and never at/after the last slot, so
+            // the final organic item continues to anchor the cursor.
+            if ($position >= count($result)) {
+                continue;
+            }
+
+            $post = $campaign->post->markPromoted($campaign->ulid);
+
+            array_splice($result, $position, 0, [$post]);
+        }
+
+        $paginator->setCollection(collect($result));
+    }
+
+    /**
+     * Sample up to $max distinct campaigns weighted by remaining budget.
+     *
+     * @param  Collection<int, Campaign>  $campaigns
+     * @return list<Campaign>
+     */
+    private function pickWeighted(Collection $campaigns, int $max): array
+    {
+        $pool = $campaigns->all();
+        $chosen = [];
+
+        while (count($chosen) < $max && $pool !== []) {
+            $total = array_sum(array_map(fn (Campaign $c) => max(1, $c->remainingCents()), $pool));
+            $roll = random_int(1, $total);
+
+            foreach ($pool as $key => $campaign) {
+                $roll -= max(1, $campaign->remainingCents());
+
+                if ($roll <= 0) {
+                    $chosen[] = $campaign;
+                    unset($pool[$key]);
+                    $pool = array_values($pool);
+                    break;
+                }
+            }
+        }
+
+        return $chosen;
     }
 
     /**

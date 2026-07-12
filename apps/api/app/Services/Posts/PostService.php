@@ -10,6 +10,7 @@ use App\Models\Topic;
 use App\Models\User;
 use App\Notifications\PostQuoted;
 use App\Notifications\PostReposted;
+use App\Services\Analytics\PostStatsService;
 use App\Services\Gamification\GamificationService;
 use App\Services\MentionService;
 use App\Support\Geohash;
@@ -42,6 +43,7 @@ class PostService
         private PostTypeRegistry $registry,
         private MentionService $mentions,
         private GamificationService $gamification,
+        private PostStatsService $stats,
     ) {}
 
     /**
@@ -293,6 +295,7 @@ class PostService
 
         if ($post->isRepost() && $post->parent) {
             $post->parent->increment('reposts_count');
+            $this->stats->bump($post->parent, PostStatsService::REPOSTS);
         }
 
         Topic::query()

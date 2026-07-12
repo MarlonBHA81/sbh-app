@@ -10,6 +10,7 @@ use App\Models\Profile;
 use App\Models\Reaction;
 use App\Notifications\CommentLiked;
 use App\Notifications\PostLiked;
+use App\Services\Analytics\PostStatsService;
 use App\Services\Gamification\GamificationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,10 @@ use Illuminate\Support\Str;
  */
 class ReactionService
 {
-    public function __construct(private GamificationService $gamification) {}
+    public function __construct(
+        private GamificationService $gamification,
+        private PostStatsService $stats,
+    ) {}
 
     /**
      * Idempotent like. Returns true when a new like was created.
@@ -52,6 +56,10 @@ class ReactionService
             $this->afterChange($reactable);
             $this->notifyLike($actor, $reactable);
             $this->awardEngagement($actor, $reactable, GamificationService::LIKE_RECEIVED);
+
+            if ($reactable instanceof Post) {
+                $this->stats->bump($reactable, PostStatsService::LIKES);
+            }
         }
 
         return $created;
@@ -148,6 +156,12 @@ class ReactionService
 
             if ($value === 1) {
                 $this->awardEngagement($actor, $reactable, GamificationService::UPVOTE_RECEIVED);
+            }
+
+            // Any vote change (cast, switch or clear) counts as a vote event on
+            // the post for analytics purposes.
+            if ($reactable instanceof Post) {
+                $this->stats->bump($reactable, PostStatsService::VOTES);
             }
         }
     }

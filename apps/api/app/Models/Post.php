@@ -99,9 +99,33 @@ class Post extends Model
         });
     }
 
+    /**
+     * Transient per-request flag marking this post as a promoted (paid) feed
+     * injection, carrying the promoting campaign's ulid. Set by FeedService and
+     * surfaced by PostResource, mirroring the viewer-state pattern.
+     */
+    protected ?string $promotedCampaignUlid = null;
+
     public function getRouteKeyName(): string
     {
         return 'ulid';
+    }
+
+    public function markPromoted(string $campaignUlid): static
+    {
+        $this->promotedCampaignUlid = $campaignUlid;
+
+        return $this;
+    }
+
+    public function isPromoted(): bool
+    {
+        return $this->promotedCampaignUlid !== null;
+    }
+
+    public function promotedCampaignUlid(): ?string
+    {
+        return $this->promotedCampaignUlid;
     }
 
     public function profile(): BelongsTo

@@ -36,6 +36,8 @@ class PostResource extends JsonResource
             'downvotes_count' => $this->downvotes_count,
             'liked' => $this->viewerLiked(),
             'my_vote' => $this->viewerVote(),
+            'promoted' => $this->isPromoted(),
+            'campaign_ulid' => $this->promotedCampaignUlid(),
             'lat' => $this->lat,
             'lng' => $this->lng,
             'city' => $this->city,

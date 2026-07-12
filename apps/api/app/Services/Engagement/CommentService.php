@@ -9,6 +9,7 @@ use App\Models\Post;
 use App\Models\Profile;
 use App\Notifications\CommentReplied;
 use App\Notifications\PostCommented;
+use App\Services\Analytics\PostStatsService;
 use App\Services\Gamification\GamificationService;
 use App\Services\MentionService;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,7 @@ class CommentService
     public function __construct(
         private MentionService $mentions,
         private GamificationService $gamification,
+        private PostStatsService $stats,
     ) {}
 
     /**
@@ -84,6 +86,8 @@ class CommentService
         $this->notify($author, $post, $parent, $comment);
 
         $this->gamification->award($author, GamificationService::COMMENT_CREATED, $comment);
+
+        $this->stats->bump($post, PostStatsService::COMMENTS);
 
         CommentAdded::dispatch($comment);
 

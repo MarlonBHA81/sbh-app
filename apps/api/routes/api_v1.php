@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AdSlotController;
+use App\Http\Controllers\Api\V1\AdTrackController;
+use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
@@ -11,6 +14,7 @@ use App\Http\Controllers\Api\V1\BusinessDirectoryController;
 use App\Http\Controllers\Api\V1\BusinessEventController;
 use App\Http\Controllers\Api\V1\BusinessMatchController;
 use App\Http\Controllers\Api\V1\BusinessNeedController;
+use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
 use App\Http\Controllers\Api\V1\ConversationController;
@@ -31,6 +35,7 @@ use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\PostInteractionController;
 use App\Http\Controllers\Api\V1\PostReactionController;
+use App\Http\Controllers\Api\V1\PostSeenController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLocationController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
@@ -129,7 +134,24 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('posts/{post}', [PostController::class, 'destroy']);
     Route::post('posts/{post}/reveal', [PostController::class, 'reveal']);
 
+    // Batch view tracking (one view per post per profile per day).
+    Route::post('posts/seen', [PostSeenController::class, 'store'])->middleware('throttle:60,1');
+
     Route::get('profiles/{handle}/posts', [ProfileController::class, 'posts']);
+
+    // Ad Center: promoted-post campaigns, tracking and sponsor slots.
+    Route::get('ads/campaigns', [CampaignController::class, 'index']);
+    Route::post('ads/campaigns', [CampaignController::class, 'store']);
+    Route::get('ads/campaigns/{campaign}', [CampaignController::class, 'show']);
+    Route::patch('ads/campaigns/{campaign}', [CampaignController::class, 'update']);
+    Route::delete('ads/campaigns/{campaign}', [CampaignController::class, 'destroy']);
+
+    Route::post('ads/track', [AdTrackController::class, 'store'])->middleware('throttle:120,1');
+    Route::get('ads/slots/{placement}', [AdSlotController::class, 'show']);
+
+    // Creator analytics dashboard.
+    Route::get('analytics/overview', [AnalyticsController::class, 'overview']);
+    Route::get('analytics/posts', [AnalyticsController::class, 'posts']);
 
     // Gamification: XP, ranks and leaderboards.
     Route::get('me/xp', [GamificationController::class, 'xp']);
