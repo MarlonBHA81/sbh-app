@@ -31,7 +31,7 @@ they mirror correctly under RTL.
 
 | Layer | Tech |
 |---|---|
-| Backend API | Laravel 12 (PHP 8.2+), Sanctum, Socialite, Scout |
+| Backend API | Laravel 12 (PHP 8.3+), Sanctum, Socialite, Scout |
 | Frontend | Next.js 16 (React 19, TypeScript), Tailwind CSS 4, shadcn/ui, Zustand |
 | Real-time | Laravel Reverb (WebSockets) + Laravel Echo |
 | Data | MySQL 8, Redis 7 |
