@@ -10,6 +10,7 @@ import {
   Flag,
   Heart,
   Link2,
+  Megaphone,
   MessageCircle,
   MoreHorizontal,
   Repeat2,
@@ -18,9 +19,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createElement, useRef, useState } from "react";
+import { createElement, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { usePromote } from "@/components/ads/promote-provider";
 import { useComposer } from "@/components/composer/composer-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ReportDialog } from "@/components/safety/report-dialog";
@@ -44,6 +46,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  trackCampaignClick,
+  trackCampaignImpression,
+} from "@/lib/ads/track";
 import * as api from "@/lib/api/client";
 import type { Post, Vote } from "@/lib/api/types";
 import { applyVote, formatCount, formatNetVotes } from "@/lib/reactions";
@@ -163,6 +169,7 @@ export function PostCard({
 }) {
   const router = useRouter();
   const { openComposer, notifyPostsMutated } = useComposer();
+  const { openPromote } = usePromote();
   const activeUlid = useAuthStore((s) => s.activeProfile?.ulid ?? null);
   const showSensitivePref = useAuthStore((s) =>
     Boolean(s.user?.settings?.show_sensitive),
@@ -189,6 +196,35 @@ export function PostCard({
   const [seenLive, setSeenLive] = useState<LiveCounts | null>(null);
   const likeBusy = useRef(false);
   const voteBusy = useRef(false);
+  const articleRef = useRef<HTMLElement | null>(null);
+
+  // Promoted posts: track an impression once the card is on screen (deduped
+  // per campaign for the session).
+  const promoted = Boolean(post.promoted && post.campaign_ulid);
+  const campaignUlid = post.campaign_ulid ?? null;
+  useEffect(() => {
+    if (!promoted || !campaignUlid) return;
+    const node = articleRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      trackCampaignImpression(campaignUlid);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          trackCampaignImpression(campaignUlid);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [promoted, campaignUlid]);
+
+  const trackPromotedClick = () => {
+    if (promoted && campaignUlid) trackCampaignClick(campaignUlid);
+  };
 
   // Live counts are authoritative server totals — apply (during render, guarded
   // against re-applying the same broadcast) without touching the viewer's own
@@ -357,6 +393,7 @@ export function PostCard({
     const target = event.target as HTMLElement;
     if (target.closest("a,button,[role='menuitem'],[data-no-nav]")) return;
     if (window.getSelection()?.toString()) return;
+    trackPromotedClick();
     router.push(detailHref);
   }
 
@@ -364,6 +401,7 @@ export function PostCard({
 
   return (
     <article
+      ref={articleRef}
       onClick={handleCardClick}
       className={cn(
         "flex flex-col gap-3 rounded-xl border bg-card p-4 text-card-foreground",
@@ -400,12 +438,22 @@ export function PostCard({
                 href={detailHref}
                 className="hover:underline"
                 aria-label="View post"
+                onClick={trackPromotedClick}
               >
                 <time dateTime={timestamp}>{relativeTime(timestamp)}</time>
               </Link>
             ) : (
               <time dateTime={timestamp}>{relativeTime(timestamp)}</time>
             )}
+            {promoted ? (
+              <>
+                <span aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1 font-medium">
+                  <Megaphone className="size-3" aria-hidden />
+                  Promoted
+                </span>
+              </>
+            ) : null}
           </span>
         </div>
         {badge ? (
@@ -433,6 +481,20 @@ export function PostCard({
             </DropdownMenuItem>
             {isOwnPost ? (
               <>
+                {post.status === "published" &&
+                post.visibility === "public" &&
+                post.type !== "repost" ? (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="min-h-11 gap-3"
+                      onSelect={() => openPromote(post)}
+                    >
+                      <Megaphone className="size-4" aria-hidden />
+                      Promote
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   variant="destructive"
@@ -531,7 +593,10 @@ export function PostCard({
           icon={MessageCircle}
           count={post.comments_count}
           label="Comments"
-          onClick={() => router.push(detailHref)}
+          onClick={() => {
+            trackPromotedClick();
+            router.push(detailHref);
+          }}
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

@@ -61,6 +61,7 @@ function FeedPane({
         }
         refreshKey={mutationCount}
         emptyState={emptyState}
+        showInlineSponsors
       />
     </PullToRefresh>
   );

@@ -8,12 +8,17 @@ import {
   useState,
 } from "react";
 
+import { SponsorCard, useSponsorSlot } from "@/components/ads/sponsor-card";
 import { PostCard } from "@/components/post-types/post-card";
+import { SeenTracker } from "@/components/posts/seen-tracker";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import type { Paginated, Post } from "@/lib/api/types";
 import { useModerationStore } from "@/lib/stores/moderation-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+
+/** Insert an inline sponsor card after every Nth feed item. */
+const INLINE_SPONSOR_INTERVAL = 15;
 
 /** In low data mode, ask for smaller pages (the backend may ignore it). */
 function withListParams(url: string): string {
@@ -72,6 +77,8 @@ export function PostList({
   refreshKey,
   renderItem,
   renderError,
+  trackViews = true,
+  showInlineSponsors = false,
   ref,
 }: {
   buildUrl: (cursor: string | null) => string;
@@ -83,11 +90,19 @@ export function PostList({
    * message). `retry` refetches page 1. Falls back to the default error card.
    */
   renderError?: (error: unknown, retry: () => void) => React.ReactNode;
+  /** Count items as viewed once seen (feeds). Off for own-post lists. */
+  trackViews?: boolean;
+  /** Render an inline sponsor slot every 15 items (home feed only). */
+  showInlineSponsors?: boolean;
   ref?: React.Ref<PostListHandle>;
 }) {
   const [retry, setRetry] = useState(0);
   const key = `${String(refreshKey)}#${retry}`;
   const hiddenProfileUlids = useModerationStore((s) => s.hiddenProfileUlids);
+  const { slot: inlineSlot, dismiss: dismissInlineSlot } = useSponsorSlot(
+    "feed_inline",
+    { enabled: showInlineSponsors },
+  );
 
   const [state, setState] = useState<ListState>({
     key,
@@ -254,13 +269,33 @@ export function PostList({
 
   return (
     <div className="flex flex-col gap-3">
-      {visiblePosts.map((post) =>
-        renderItem ? (
-          <div key={post.ulid}>{renderItem(post, helpers)}</div>
+      {visiblePosts.map((post, index) => {
+        const item = renderItem ? (
+          renderItem(post, helpers)
         ) : (
-          <PostCard key={post.ulid} post={post} />
-        ),
-      )}
+          <PostCard post={post} />
+        );
+        const showSponsorAfter =
+          showInlineSponsors &&
+          inlineSlot !== null &&
+          (index + 1) % INLINE_SPONSOR_INTERVAL === 0;
+        return (
+          <div key={post.ulid} className="contents">
+            {trackViews ? (
+              <SeenTracker ulid={post.ulid}>{item}</SeenTracker>
+            ) : (
+              <div>{item}</div>
+            )}
+            {showSponsorAfter && inlineSlot ? (
+              <SponsorCard
+                slot={inlineSlot}
+                variant="inline"
+                onDismiss={dismissInlineSlot}
+              />
+            ) : null}
+          </div>
+        );
+      })}
       {nextCursor ? (
         <>
           {loadingMore ? <PostSkeleton /> : null}

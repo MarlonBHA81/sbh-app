@@ -13,6 +13,7 @@ function StatusList({ status }: { status: "draft" | "scheduled" }) {
 
   return (
     <PostList
+      trackViews={false}
       buildUrl={(cursor) =>
         `/api/v1/me/posts?status=${status}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`
       }

@@ -302,6 +302,10 @@ export interface Post {
   quiz?: Quiz | null;
   event?: PostEvent | null;
   job?: PostJob | null;
+  /** Injected into feeds when the post is a paid promotion (Milestone 11). */
+  promoted?: boolean;
+  /** The campaign backing a promoted feed post (Milestone 11). */
+  campaign_ulid?: string | null;
   created_at: string;
 }
 
@@ -579,4 +583,96 @@ export interface BusinessMatch {
   profile: Profile;
   score: number;
   matches: BusinessMatchReason[];
+}
+
+// --- Advertising & insights (Milestone 11) -------------------------------
+
+/** Lifecycle of an ad campaign. */
+export type CampaignStatus = "active" | "paused" | "completed";
+
+/** Trimmed post shape embedded in a campaign (its promoted post). */
+export interface CampaignPost {
+  ulid: string;
+  type: PostType;
+  body: string | null;
+}
+
+/**
+ * A promotion of one post. Monetary fields are integer cents (ZAR); reach
+ * metrics are lifetime totals. Returned by the /ads/campaigns endpoints.
+ */
+export interface Campaign {
+  ulid: string;
+  status: CampaignStatus;
+  budget_cents: number;
+  spent_cents: number;
+  remaining_cents: number;
+  impressions: number;
+  clicks: number;
+  ctr_pct: number;
+  starts_at: string;
+  ends_at: string;
+  post: CampaignPost;
+  /** Daily reach series; present only on the detail endpoint (`?series=1`). */
+  series?: CampaignSeriesPoint[];
+}
+
+/** One day of a campaign's reach, for the detail chart. */
+export interface CampaignSeriesPoint {
+  date: string;
+  impressions: number;
+  clicks: number;
+}
+
+/**
+ * A sponsor placement returned by GET /ads/slots/{placement}. The endpoint
+ * returns 204 (no slot to show) — surfaces treat that as "render nothing".
+ */
+export interface AdSlot {
+  key: string;
+  name: string;
+  sponsor_name: string;
+  sponsor_url: string;
+  image_url: string;
+  body: string;
+}
+
+/** One day of the analytics engagement series. */
+export interface AnalyticsSeriesPoint {
+  date: string;
+  views: number;
+  likes: number;
+  comments: number;
+  reposts: number;
+}
+
+/** Aggregate totals for the selected analytics window. */
+export interface AnalyticsTotals {
+  views: number;
+  likes: number;
+  comments: number;
+  reposts: number;
+  votes: number;
+  followers_gained: number;
+  posts_published: number;
+}
+
+/** GET /api/v1/analytics/overview — headline totals + daily series. */
+export interface AnalyticsOverview {
+  totals: AnalyticsTotals;
+  series: AnalyticsSeriesPoint[];
+}
+
+/** One own-post row with its per-post metrics (GET /analytics/posts). */
+export interface AnalyticsPostRow {
+  ulid: string;
+  type: PostType;
+  body: string | null;
+  published_at: string | null;
+  created_at: string;
+  views: number;
+  likes: number;
+  comments: number;
+  reposts: number;
+  engagement_rate_pct: number;
 }
