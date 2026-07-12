@@ -364,12 +364,11 @@ export interface AppNotification {
   created_at: string;
 }
 
+/** GET /api/v1/me returns this shape unwrapped (no `data` envelope). */
 export interface MeResponse {
-  data: {
-    user: User;
-    profiles: Profile[];
-    active_profile: Profile;
-  };
+  user: User;
+  profiles: Profile[];
+  active_profile: Profile | null;
 }
 
 export interface AppStatus {

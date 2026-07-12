@@ -79,8 +79,8 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
       const persisted = readPersistedProfileId();
       if (persisted) api.setActiveProfileId(persisted);
       try {
-        const res = await api.get<MeResponse>("/api/v1/me");
-        const { user, profiles, active_profile } = res.data;
+        const { user, profiles, active_profile } =
+          await api.get<MeResponse>("/api/v1/me");
         const active =
           profiles.find((p) => p.ulid === persisted) ??
           active_profile ??

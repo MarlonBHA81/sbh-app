@@ -53,8 +53,12 @@ class FeedService
 
     /**
      * Score-ranked mix of posts from followed topics, followed profiles and
-     * the global top — fresh (< 7 days), public posts only. Posts already
-     * served to this profile within 24h are excluded via the seen set.
+     * the global top — fresh (< 7 days), public posts only.
+     *
+     * The seen set only dedupes WITHIN a scroll session: cursor pages exclude
+     * posts served on earlier pages (scores shift between requests, so the
+     * cursor alone can repeat items). A fresh load (no cursor) never filters —
+     * refreshing the feed must show the top posts again, not an empty page.
      */
     public function forYou(Profile $viewer): CursorPaginator
     {
@@ -74,7 +78,8 @@ class FeedService
             ->limit(self::GLOBAL_TOP)
             ->pluck('id');
 
-        $seen = $this->seen($viewer);
+        $paginating = request()->filled('cursor');
+        $seen = $paginating ? $this->seen($viewer) : [];
 
         $paginator = Post::query()
             ->tap($fresh)
@@ -96,7 +101,11 @@ class FeedService
             ->orderByDesc('id')
             ->cursorPaginate(self::PER_PAGE);
 
-        $this->markSeen($viewer, array_map(fn (Post $post) => $post->ulid, $paginator->items()));
+        $this->markSeen(
+            $viewer,
+            array_map(fn (Post $post) => $post->ulid, $paginator->items()),
+            append: $paginating,
+        );
 
         $this->injectPromoted($paginator, $viewer);
 
@@ -316,15 +325,18 @@ class FeedService
     }
 
     /**
+     * A fresh load (no cursor) starts a new scroll session: the set is
+     * replaced with just the served page. Cursor pages append to it.
+     *
      * @param  list<string>  $ulids
      */
-    private function markSeen(Profile $viewer, array $ulids): void
+    private function markSeen(Profile $viewer, array $ulids, bool $append = true): void
     {
-        if ($ulids === []) {
+        if ($ulids === [] && $append) {
             return;
         }
 
-        $seen = array_values(array_unique([...$this->seen($viewer), ...$ulids]));
+        $seen = array_values(array_unique([...$append ? $this->seen($viewer) : [], ...$ulids]));
         $seen = array_slice($seen, -self::SEEN_CAP);
 
         Cache::put($this->seenKey($viewer), $seen, now()->addHours(self::SEEN_TTL_HOURS));

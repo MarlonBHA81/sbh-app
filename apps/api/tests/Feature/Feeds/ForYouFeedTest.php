@@ -56,27 +56,48 @@ test('for-you feed orders posts by score descending', function () {
     expect($ulids->values()->all())->toBe([$high->ulid, $mid->ulid, $low->ulid]);
 });
 
-test('for-you feed excludes posts already seen in a previous request', function () {
+test('for-you cursor pages exclude posts served earlier in the scroll session', function () {
+    $viewer = userWithProfile();
+    $author = userWithProfile();
+
+    // More than one page (PER_PAGE = 20) with identical scores, so the seen
+    // set — not the cursor tuple — is what guarantees no repeats.
+    Post::factory()->count(25)->create([
+        'profile_id' => $author->personalProfile->id,
+        'score' => 1.0,
+    ]);
+
+    $first = $this->actingAs($viewer)->getJson('/api/v1/feeds/for-you')->assertOk();
+    $first->assertJsonCount(20, 'data');
+    $firstUlids = collect($first->json('data'))->pluck('ulid');
+
+    $cursor = $first->json('meta.next_cursor');
+    expect($cursor)->not->toBeNull();
+
+    $second = $this->actingAs($viewer)
+        ->getJson('/api/v1/feeds/for-you?cursor='.$cursor)
+        ->assertOk();
+
+    $secondUlids = collect($second->json('data'))->pluck('ulid');
+
+    expect($secondUlids->intersect($firstUlids))->toBeEmpty()
+        ->and($secondUlids)->toHaveCount(5);
+});
+
+test('a fresh for-you load shows top posts again instead of an empty feed', function () {
     $viewer = userWithProfile();
     $author = userWithProfile();
 
     Post::factory()->count(3)->create(['profile_id' => $author->personalProfile->id]);
 
-    $first = $this->actingAs($viewer)->getJson('/api/v1/feeds/for-you')->assertOk();
-    $first->assertJsonCount(3, 'data');
+    $this->actingAs($viewer)->getJson('/api/v1/feeds/for-you')->assertJsonCount(3, 'data');
 
-    // Same request again (no cursor): everything was marked seen.
+    // Refreshing (no cursor) must NOT come back empty — this was a real bug:
+    // the first page marked everything seen and the reload filtered it out.
     $this->actingAs($viewer)
         ->getJson('/api/v1/feeds/for-you')
         ->assertOk()
-        ->assertJsonCount(0, 'data');
-
-    // A post published after the first page is still served.
-    $newPost = Post::factory()->create(['profile_id' => $author->personalProfile->id]);
-
-    $ulids = collect($this->actingAs($viewer)->getJson('/api/v1/feeds/for-you')->json('data'))->pluck('ulid');
-
-    expect($ulids->all())->toBe([$newPost->ulid]);
+        ->assertJsonCount(3, 'data');
 });
 
 test('the seen set does not leak between profiles', function () {
