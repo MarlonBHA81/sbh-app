@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Services\Ai\AiGateway;
+use App\Services\Ai\Drivers\AnthropicAiDriver;
+use App\Services\Ai\Drivers\NullAiDriver;
 use App\Services\Posts\PostTypeRegistry;
 use App\Services\SafetyService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -18,6 +21,13 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(PostTypeRegistry::class);
         $this->app->singleton(SafetyService::class);
+
+        $this->app->singleton(AiGateway::class, function () {
+            return match (config('ai.driver')) {
+                'anthropic' => new AnthropicAiDriver(config('ai.anthropic', [])),
+                default => new NullAiDriver,
+            };
+        });
     }
 
     /**
@@ -43,6 +53,10 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('reports', function (Request $request) {
             return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
+        });
+
+        RateLimiter::for('suggest-topics', function (Request $request) {
+            return Limit::perMinute(20)->by($request->user()?->id ?: $request->ip());
         });
     }
 }

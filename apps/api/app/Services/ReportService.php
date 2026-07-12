@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Jobs\AiModerationAssist;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\Profile;
 use App\Models\Report;
+use App\Services\Ai\AiGateway;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -53,6 +55,12 @@ class ReportService
             'details' => $data['details'] ?? null,
             'status' => Report::STATUS_PENDING,
         ]);
+
+        // Kick off an advisory AI assessment when the gateway is enabled. The
+        // job re-resolves the report and is a no-op for disabled gateways.
+        if (app(AiGateway::class)->enabled()) {
+            AiModerationAssist::dispatch($report);
+        }
 
         return [$report, true];
     }

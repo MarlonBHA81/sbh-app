@@ -14,7 +14,7 @@ class EnsureNotBanned
 
         if ($user && $user->isBanned()) {
             return response()->json([
-                'message' => 'Your account has been banned.',
+                'message' => __('Your account has been banned.'),
                 'ban_reason' => $user->ban_reason,
             ], 403);
         }

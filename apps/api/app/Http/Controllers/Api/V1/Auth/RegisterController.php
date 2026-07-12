@@ -17,7 +17,7 @@ class RegisterController extends Controller
     {
         if (! Setting::get('registration_open', true)) {
             return response()->json([
-                'message' => 'Registration is currently closed.',
+                'message' => __('Registration is currently closed.'),
             ], 403);
         }
 

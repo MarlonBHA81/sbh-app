@@ -112,6 +112,16 @@ class Profile extends Model
             : Storage::disk('public')->url($this->avatar_path);
     }
 
+    /**
+     * Absolute URL to the cover image, or null when none is set.
+     */
+    public function coverUrl(): ?string
+    {
+        return $this->cover_path === null
+            ? null
+            : Storage::disk('public')->url($this->cover_path);
+    }
+
     public function followers(): BelongsToMany
     {
         return $this->belongsToMany(self::class, 'follows', 'followed_profile_id', 'follower_profile_id')

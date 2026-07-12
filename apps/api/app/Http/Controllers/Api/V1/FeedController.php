@@ -58,9 +58,9 @@ class FeedController extends Controller
         $viewer = $this->activeProfile($request);
 
         if ($scope === 'city') {
-            abort_if($viewer->city === null || $viewer->country_code === null, 422, 'Set your location first');
+            abort_if($viewer->city === null || $viewer->country_code === null, 422, __('Set your location first'));
         } else {
-            abort_if($viewer->country_code === null, 422, 'Set your location first');
+            abort_if($viewer->country_code === null, 422, __('Set your location first'));
         }
 
         return $this->present($feeds->local($viewer, $scope), $viewer);

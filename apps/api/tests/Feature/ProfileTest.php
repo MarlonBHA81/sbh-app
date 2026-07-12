@@ -19,12 +19,12 @@ test('me can be updated with locale, timezone and settings', function () {
 
     $this->actingAs($user)
         ->patchJson('/api/v1/me', [
-            'locale' => 'af',
+            'locale' => 'fr',
             'timezone' => 'Africa/Johannesburg',
             'settings' => ['dark_mode' => true],
         ])
         ->assertOk()
-        ->assertJsonPath('user.locale', 'af')
+        ->assertJsonPath('user.locale', 'fr')
         ->assertJsonPath('user.settings.dark_mode', true);
 });
 

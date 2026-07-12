@@ -30,7 +30,7 @@ class SocialAuthController extends Controller
         $user = $auth->findOrCreateSocialUser($provider, $socialUser);
 
         if ($user->isBanned()) {
-            abort(403, 'Your account has been banned.');
+            abort(403, __('Your account has been banned.'));
         }
 
         Auth::guard('web')->login($user, remember: true);

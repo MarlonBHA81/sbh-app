@@ -35,6 +35,30 @@ class ReportInfolist
                         ->state(fn (Report $record) => ReportActions::preview($record->reportable))
                         ->columnSpanFull(),
                 ]),
+
+            Section::make('AI assessment')
+                ->columns(2)
+                ->visible(fn (Report $record) => ! empty($record->ai_assessment))
+                ->schema([
+                    TextEntry::make('ai_assessment.flagged')
+                        ->label('Flagged')
+                        ->badge()
+                        ->state(fn (Report $record) => ($record->ai_assessment['flagged'] ?? false) ? 'Flagged' : 'Clear')
+                        ->color(fn (Report $record) => ($record->ai_assessment['flagged'] ?? false) ? 'danger' : 'success'),
+                    TextEntry::make('ai_assessment.confidence')
+                        ->label('Confidence')
+                        ->state(fn (Report $record) => number_format((float) ($record->ai_assessment['confidence'] ?? 0) * 100).'%'),
+                    TextEntry::make('ai_assessment.categories')
+                        ->label('Categories')
+                        ->badge()
+                        ->state(fn (Report $record) => $record->ai_assessment['categories'] ?? [])
+                        ->placeholder('—'),
+                    TextEntry::make('ai_assessment.summary')
+                        ->label('Summary')
+                        ->state(fn (Report $record) => $record->ai_assessment['summary'] ?? null)
+                        ->placeholder('—')
+                        ->columnSpanFull(),
+                ]),
         ]);
     }
 }

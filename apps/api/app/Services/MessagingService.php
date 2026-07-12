@@ -366,12 +366,12 @@ class MessagingService
         $privacy = $target->dm_privacy ?? Profile::DM_PRIVACY_EVERYONE;
 
         if ($privacy === Profile::DM_PRIVACY_NO_ONE) {
-            abort(403, 'This profile is not accepting direct messages.');
+            abort(403, __('This profile is not accepting direct messages.'));
         }
 
         // "followers" = the target only accepts DMs from profiles they follow.
         if ($privacy === Profile::DM_PRIVACY_FOLLOWERS && ! $creator->isFollowedBy($target)) {
-            abort(403, 'This profile only accepts direct messages from profiles they follow.');
+            abort(403, __('This profile only accepts direct messages from profiles they follow.'));
         }
     }
 

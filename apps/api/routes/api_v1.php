@@ -39,6 +39,8 @@ use App\Http\Controllers\Api\V1\PostSeenController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileLocationController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
+use App\Http\Controllers\Api\V1\Public\PublicPostController;
+use App\Http\Controllers\Api\V1\Public\PublicProfileController;
 use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SearchController;
@@ -73,6 +75,13 @@ Route::prefix('auth')->group(function () {
 
 // Public status flags (maintenance banner, registration toggle).
 Route::get('status', StatusController::class);
+
+// Unauthenticated read endpoints for Next.js SSR metadata / SEO. No auth or
+// active-profile resolution; privacy walls are enforced inside the controllers.
+Route::prefix('public')->middleware('throttle:60,1')->group(function () {
+    Route::get('profiles/{handle}', [PublicProfileController::class, 'show']);
+    Route::get('posts/{ulid}', [PublicPostController::class, 'show']);
+});
 
 // Public business category taxonomy (cached).
 Route::get('business/categories', [BusinessCategoryController::class, 'index']);
@@ -127,6 +136,9 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('uploads/{upload}', [UploadController::class, 'destroy']);
 
     Route::get('me/posts', [MyPostController::class, 'index']);
+
+    Route::post('posts/suggest-topics', [PostController::class, 'suggestTopics'])
+        ->middleware('throttle:suggest-topics');
 
     Route::post('posts', [PostController::class, 'store']);
     Route::get('posts/{post}', [PostController::class, 'show']);

@@ -20,7 +20,7 @@ class SetActiveProfile
                 $profile = Profile::query()->where('ulid', $ulid)->first();
 
                 if (! $profile || $profile->user_id !== $user->id) {
-                    abort(403, 'The requested profile does not belong to you.');
+                    abort(403, __('The requested profile does not belong to you.'));
                 }
             } else {
                 $profile = $user->personalProfile;

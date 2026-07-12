@@ -23,7 +23,7 @@ class TokenController extends Controller
 
         if ($user->isBanned()) {
             return response()->json([
-                'message' => 'Your account has been banned.',
+                'message' => __('Your account has been banned.'),
                 'ban_reason' => $user->ban_reason,
             ], 403);
         }

@@ -14,7 +14,7 @@ class UpdateMeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'locale' => ['sometimes', 'string', 'max:10'],
+            'locale' => ['sometimes', 'string', 'in:en,bn,ar,es,fr'],
             'timezone' => ['sometimes', 'string', 'timezone:all'],
             'settings' => ['sometimes', 'nullable', 'array'],
         ];

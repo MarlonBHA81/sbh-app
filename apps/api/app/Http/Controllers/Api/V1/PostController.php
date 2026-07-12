@@ -8,6 +8,7 @@ use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Models\Profile;
+use App\Services\Ai\AiGateway;
 use App\Services\Analytics\PostStatsService;
 use App\Services\Posts\PostService;
 use App\Support\ViewerReactions;
@@ -77,6 +78,21 @@ class PostController extends Controller
                 'payload' => $post->payload,
                 'views_count' => $post->views_count,
             ],
+        ]);
+    }
+
+    /**
+     * Suggest topic slugs for draft post text via the AI gateway. Returns an
+     * empty list when AI is disabled, which the composer treats as a no-op.
+     */
+    public function suggestTopics(Request $request, AiGateway $ai): JsonResponse
+    {
+        $data = $request->validate([
+            'text' => ['required', 'string', 'max:5000'],
+        ]);
+
+        return response()->json([
+            'data' => ['slugs' => $ai->suggestTopics($data['text'])],
         ]);
     }
 

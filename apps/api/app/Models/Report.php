@@ -34,7 +34,15 @@ class Report extends Model
         'status',
         'handled_by',
         'resolution_note',
+        'ai_assessment',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'ai_assessment' => 'array',
+        ];
+    }
 
     protected static function booted(): void
     {
