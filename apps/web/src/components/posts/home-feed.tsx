@@ -1,6 +1,7 @@
 "use client";
 
 import { Newspaper, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
@@ -73,6 +74,7 @@ function FeedPane({
  * tab switches; the window scroll position is saved/restored per tab.
  */
 export function HomeFeed() {
+  const t = useTranslations("feed");
   const { openComposer } = useComposer();
   const [tab, setTab] = useState<FeedTab>(readPersistedTab);
   // Panes mount lazily on first visit, then stay mounted.
@@ -104,13 +106,13 @@ export function HomeFeed() {
       <div className="sticky top-14 z-30 -mx-4 border-b bg-background/90 px-4 py-2 backdrop-blur md:top-0">
         <TabsList className="w-full">
           <TabsTrigger value="for-you" className="h-10 flex-1">
-            For You
+            {t("forYou")}
           </TabsTrigger>
           <TabsTrigger value="following" className="h-10 flex-1">
-            Following
+            {t("following")}
           </TabsTrigger>
           <TabsTrigger value="nearby" className="h-10 flex-1">
-            Nearby
+            {t("nearby")}
           </TabsTrigger>
         </TabsList>
       </div>
@@ -122,11 +124,11 @@ export function HomeFeed() {
             emptyState={
               <EmptyState
                 icon={Newspaper}
-                title="Nothing here yet"
-                description="Your personalized feed fills up as you follow people and topics."
+                title={t("forYouEmptyTitle")}
+                description={t("forYouEmptyBody")}
               >
                 <Button className="mt-2 h-11" onClick={() => openComposer()}>
-                  Write a post
+                  {t("writeAPost")}
                 </Button>
               </EmptyState>
             }
@@ -141,11 +143,11 @@ export function HomeFeed() {
             emptyState={
               <EmptyState
                 icon={Users}
-                title="Your following feed is empty"
-                description="Posts from people and businesses you follow show up here."
+                title={t("followingEmptyTitle")}
+                description={t("followingEmptyBody")}
               >
                 <Button asChild variant="outline" className="mt-2 h-11">
-                  <Link href="/discover">Find topics to follow</Link>
+                  <Link href="/discover">{t("findTopics")}</Link>
                 </Button>
               </EmptyState>
             }

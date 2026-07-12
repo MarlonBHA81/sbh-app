@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert, MailCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -37,6 +38,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations("auth");
   const [sent, setSent] = useState(false);
 
   const form = useForm<Values>({
@@ -49,7 +51,7 @@ export default function ForgotPasswordPage() {
     try {
       await api.post("/api/v1/auth/forgot-password", { email: values.email });
       setSent(true);
-      toast.success("Reset link sent");
+      toast.success(t("resetLinkSent"));
     } catch (error) {
       if (!applyServerErrors(error, form.setError)) {
         form.setError("root", { message: errorMessage(error) });
@@ -66,15 +68,12 @@ export default function ForgotPasswordPage() {
           <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
             <MailCheck className="size-6 text-muted-foreground" aria-hidden />
           </div>
-          <CardTitle>Check your email</CardTitle>
-          <CardDescription>
-            If an account exists for that address, we sent a link to reset your
-            password.
-          </CardDescription>
+          <CardTitle>{t("resetLinkSent")}</CardTitle>
+          <CardDescription>{t("resetLinkSentBody")}</CardDescription>
         </CardHeader>
         <CardFooter className="justify-center">
           <Button asChild variant="outline" className="h-11 w-full">
-            <Link href="/login">Back to sign in</Link>
+            <Link href="/login">{t("backToSignIn")}</Link>
           </Button>
         </CardFooter>
       </Card>
@@ -84,16 +83,14 @@ export default function ForgotPasswordPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Reset your password</CardTitle>
-        <CardDescription>
-          Enter your email and we&apos;ll send you a reset link
-        </CardDescription>
+        <CardTitle>{t("forgotTitle")}</CardTitle>
+        <CardDescription>{t("forgotSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {rootError ? (
           <Alert variant="destructive">
             <CircleAlert />
-            <AlertTitle>Request failed</AlertTitle>
+            <AlertTitle>{t("signInFailed")}</AlertTitle>
             <AlertDescription>{rootError}</AlertDescription>
           </Alert>
         ) : null}
@@ -108,7 +105,7 @@ export default function ForgotPasswordPage() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("email")}</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
@@ -128,18 +125,20 @@ export default function ForgotPasswordPage() {
               className="h-11 w-full"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Sending…" : "Send reset link"}
+              {form.formState.isSubmitting
+                ? t("sending")
+                : t("sendResetLink")}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
-        Remembered it?{" "}
+        {t("alreadyHaveAccount")}{" "}
         <Link
           href="/login"
-          className="ml-1 font-medium text-foreground underline-offset-4 hover:underline"
+          className="ms-1 font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Sign in
+          {t("signInLink")}
         </Link>
       </CardFooter>
     </Card>

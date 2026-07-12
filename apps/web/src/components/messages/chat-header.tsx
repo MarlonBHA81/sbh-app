@@ -65,7 +65,7 @@ export function ChatHeader({
         )}
         {!isGroup && online ? (
           <span
-            className="absolute right-0 bottom-0 size-3 rounded-full bg-emerald-500 ring-2 ring-background"
+            className="absolute end-0 bottom-0 size-3 rounded-full bg-emerald-500 ring-2 ring-background"
             aria-label="Online"
           />
         ) : null}
@@ -101,7 +101,7 @@ export function ChatHeader({
         <button
           type="button"
           onClick={onOpenMembers}
-          className="flex min-w-0 flex-1 items-center text-left"
+          className="flex min-w-0 flex-1 items-center text-start"
         >
           {identity}
         </button>

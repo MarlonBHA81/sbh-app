@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { NAV_ITEMS } from "@/components/shell/nav-items";
@@ -16,6 +17,7 @@ function formatBadge(count: number): string {
 
 export function BottomNav() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const unreadMessages = useMessagesStore((s) => s.unreadTotal);
@@ -30,7 +32,8 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <div className="flex h-14">
-        {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
+        {NAV_ITEMS.map(({ labelKey, href, icon: Icon }) => {
+          const label = t(labelKey);
           const active = pathname === href || pathname.startsWith(`${href}/`);
           const badgeCount =
             href === "/notifications"
@@ -44,7 +47,9 @@ export function BottomNav() {
               key={href}
               href={href}
               aria-label={
-                showBadge ? `${label} (${badgeCount} unread)` : label
+                showBadge
+                  ? `${label} (${t("unreadCount", { count: badgeCount })})`
+                  : label
               }
               aria-current={active ? "page" : undefined}
               className={cn(
@@ -61,7 +66,7 @@ export function BottomNav() {
                   aria-hidden
                 />
                 {showBadge ? (
-                  <span className="absolute -top-1 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
+                  <span className="absolute -top-1 -end-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
                     {formatBadge(badgeCount)}
                   </span>
                 ) : null}
@@ -72,7 +77,7 @@ export function BottomNav() {
         })}
         <Link
           href={profileHref}
-          aria-label="Profile"
+          aria-label={t("profile")}
           aria-current={profileActive ? "page" : undefined}
           className="flex min-h-11 flex-1 flex-col items-center justify-center"
         >
@@ -83,7 +88,7 @@ export function BottomNav() {
               profileActive && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
             )}
           />
-          <span className="sr-only">Profile</span>
+          <span className="sr-only">{t("profile")}</span>
         </Link>
       </div>
     </nav>

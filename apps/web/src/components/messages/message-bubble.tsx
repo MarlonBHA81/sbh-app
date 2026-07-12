@@ -1,6 +1,7 @@
 "use client";
 
 import { CornerUpLeft, MoreHorizontal, SmilePlus, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -112,6 +113,8 @@ export function MessageBubble({
   onRetry: (message: ChatMessage) => void;
   onJumpToReply: (ulid: string) => void;
 }) {
+  const t = useTranslations("chat");
+  const tc = useTranslations("common");
   const [reactionOpen, setReactionOpen] = useState(false);
   const [showTime, setShowTime] = useState(false);
   const pressTimer = useRef<number | null>(null);
@@ -192,7 +195,7 @@ export function MessageBubble({
                 <DropdownMenuContent align={own ? "end" : "start"}>
                   <DropdownMenuItem onSelect={() => onReply(message)}>
                     <CornerUpLeft className="size-4" aria-hidden />
-                    Reply
+                    {t("reply")}
                   </DropdownMenuItem>
                   {own ? (
                     <DropdownMenuItem
@@ -200,7 +203,7 @@ export function MessageBubble({
                       onSelect={() => onDelete(message)}
                     >
                       <Trash2 className="size-4" aria-hidden />
-                      Delete
+                      {tc("delete")}
                     </DropdownMenuItem>
                   ) : null}
                 </DropdownMenuContent>
@@ -223,7 +226,7 @@ export function MessageBubble({
                 onTouchEnd={endPress}
                 onTouchMove={endPress}
                 className={cn(
-                  "block rounded-2xl px-3 py-2 text-left text-sm break-words whitespace-pre-wrap",
+                  "block rounded-2xl px-3 py-2 text-start text-sm break-words whitespace-pre-wrap",
                   tombstone
                     ? "bg-muted text-muted-foreground italic"
                     : own
@@ -242,17 +245,17 @@ export function MessageBubble({
                       onJumpToReply(message.reply_to!.ulid);
                     }}
                     className={cn(
-                      "mb-1 block w-full rounded-md border-l-2 px-2 py-1 text-left text-xs",
+                      "mb-1 block w-full rounded-md border-s-2 px-2 py-1 text-start text-xs",
                       own
                         ? "border-primary-foreground/50 bg-primary-foreground/10"
                         : "border-border bg-background/60",
                     )}
                   >
                     <span className="block font-medium">
-                      {message.reply_to.sender.name || "Message"}
+                      {message.reply_to.sender.name || t("message")}
                     </span>
                     <span className="line-clamp-2 opacity-80">
-                      {message.reply_to.body ?? "Message unavailable"}
+                      {message.reply_to.body ?? t("messageUnavailable")}
                     </span>
                   </button>
                 ) : null}
@@ -265,7 +268,7 @@ export function MessageBubble({
 
                 {tombstone ? (
                   <span>
-                    {deleted ? "Message deleted" : "Message unavailable"}
+                    {deleted ? t("messageDeleted") : t("messageUnavailable")}
                   </span>
                 ) : message.body ? (
                   <span>{message.body}</span>
@@ -326,24 +329,24 @@ export function MessageBubble({
         {/* Timestamp / status */}
         {failed ? (
           <span className="mt-0.5 flex items-center gap-1.5 px-1 text-[11px]">
-            <span className="text-destructive">Failed to send</span>
+            <span className="text-destructive">{t("failedToSend")}</span>
             <button
               type="button"
               onClick={() => onRetry(message)}
               className="font-medium text-foreground underline underline-offset-2"
             >
-              Retry
+              {tc("retry")}
             </button>
           </span>
         ) : showTime || sending ? (
           <span className="mt-0.5 px-1 text-[11px] text-muted-foreground">
-            {sending ? "Sending…" : messageTime(message.created_at)}
+            {sending ? t("sending") : messageTime(message.created_at)}
           </span>
         ) : null}
 
         {showSeen ? (
           <span className="mt-0.5 px-1 text-[11px] text-muted-foreground">
-            Seen
+            {t("seen")}
           </span>
         ) : null}
       </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { Button } from "@/components/ui/button";
 import { API_URL } from "@/lib/api/client";
 
@@ -52,6 +54,7 @@ function XIcon() {
 }
 
 export function SocialButtons() {
+  const t = useTranslations("auth");
   const enableX = process.env.NEXT_PUBLIC_ENABLE_X === "true";
 
   return (
@@ -63,7 +66,7 @@ export function SocialButtons() {
         onClick={() => redirectTo("google")}
       >
         <GoogleIcon />
-        Continue with Google
+        {t("continueWith", { provider: "Google" })}
       </Button>
       <Button
         type="button"
@@ -72,7 +75,7 @@ export function SocialButtons() {
         onClick={() => redirectTo("facebook")}
       >
         <FacebookIcon />
-        Continue with Facebook
+        {t("continueWith", { provider: "Facebook" })}
       </Button>
       {enableX ? (
         <Button
@@ -82,7 +85,7 @@ export function SocialButtons() {
           onClick={() => redirectTo("twitter")}
         >
           <XIcon />
-          Continue with X
+          {t("continueWith", { provider: "X" })}
         </Button>
       ) : null}
     </div>
@@ -90,10 +93,11 @@ export function SocialButtons() {
 }
 
 export function AuthDivider() {
+  const t = useTranslations("auth");
   return (
     <div className="flex items-center gap-3 text-xs uppercase text-muted-foreground">
       <span className="h-px flex-1 bg-border" />
-      or
+      {t("orDivider")}
       <span className="h-px flex-1 bg-border" />
     </div>
   );

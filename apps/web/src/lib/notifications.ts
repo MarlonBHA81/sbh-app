@@ -11,19 +11,23 @@ import {
 
 import type { AppNotification, NotificationType } from "@/lib/api/types";
 
-const ACTION_TEXT: Record<NotificationType, string> = {
-  new_follower: "followed you",
-  follow_requested: "requested to follow you",
-  follow_accepted: "accepted your follow request",
-  post_liked: "liked your post",
-  post_commented: "commented on your post",
-  comment_replied: "replied to your comment",
-  comment_liked: "liked your comment",
-  mentioned: "mentioned you",
-  post_reposted: "reposted your post",
-  post_quoted: "quoted your post",
-  rank_unlocked: "unlocked a new rank",
+/** Maps a notification type to its key under the `notifications` namespace. */
+const ACTION_KEY: Record<NotificationType, string> = {
+  new_follower: "newFollower",
+  follow_requested: "followRequested",
+  follow_accepted: "followAccepted",
+  post_liked: "postLiked",
+  post_commented: "postCommented",
+  comment_replied: "commentReplied",
+  comment_liked: "commentLiked",
+  mentioned: "mentioned",
+  post_reposted: "postReposted",
+  post_quoted: "postQuoted",
+  rank_unlocked: "rankUnlocked",
 };
+
+/** A translator function, e.g. from `useTranslations("notifications")`. */
+type Translate = (key: string, values?: Record<string, string>) => string;
 
 const ICONS: Record<NotificationType, LucideIcon> = {
   new_follower: UserPlus,
@@ -39,13 +43,19 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   rank_unlocked: Trophy,
 };
 
-/** Trailing action text, e.g. "liked your post". */
-export function notificationAction(notification: AppNotification): string {
+/** Trailing action text, e.g. "liked your post". Localized via `t`. */
+export function notificationAction(
+  notification: AppNotification,
+  t: Translate,
+): string {
   if (notification.type === "rank_unlocked") {
     const name = notification.data.rank?.name;
-    return name ? `You unlocked the ${name} rank` : "You unlocked a new rank";
+    return name
+      ? t("rankUnlockedNamed", { rank: name })
+      : t("rankUnlocked");
   }
-  return ACTION_TEXT[notification.type] ?? "sent you a notification";
+  const key = ACTION_KEY[notification.type];
+  return key ? t(key) : t("fallback");
 }
 
 export function notificationIcon(notification: AppNotification): LucideIcon {

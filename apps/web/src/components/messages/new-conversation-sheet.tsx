@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronLeft, MessageSquarePlus, Users, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,6 +32,7 @@ export function NewConversationSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const t = useTranslations("chat");
   const router = useRouter();
   const upsertConversation = useMessagesStore((s) => s.upsertConversation);
   const [mode, setMode] = useState<Mode>("choose");
@@ -126,7 +128,7 @@ export function NewConversationSheet({
               type="button"
               onClick={() => setMode("choose")}
               aria-label="Back"
-              className="-ml-1 flex size-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+              className="-ms-1 flex size-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
             >
               <ChevronLeft className="size-5" aria-hidden />
             </button>
@@ -134,10 +136,10 @@ export function NewConversationSheet({
           <div className="flex-1">
             <SheetTitle>
               {mode === "choose"
-                ? "New conversation"
+                ? t("newMessage")
                 : mode === "dm"
-                  ? "New message"
-                  : "New group"}
+                  ? t("newMessage")
+                  : t("newGroup")}
             </SheetTitle>
             <SheetDescription className="sr-only">
               Start a direct message or create a group conversation.
@@ -151,13 +153,13 @@ export function NewConversationSheet({
               <button
                 type="button"
                 onClick={() => setMode("dm")}
-                className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-accent/40"
+                className="flex items-center gap-3 rounded-xl border p-4 text-start transition-colors hover:bg-accent/40"
               >
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
                   <MessageSquarePlus className="size-5" aria-hidden />
                 </span>
                 <span className="flex flex-col">
-                  <span className="text-sm font-medium">New message</span>
+                  <span className="text-sm font-medium">{t("newMessage")}</span>
                   <span className="text-sm text-muted-foreground">
                     Start a direct chat with one person
                   </span>
@@ -166,13 +168,13 @@ export function NewConversationSheet({
               <button
                 type="button"
                 onClick={() => setMode("group")}
-                className="flex items-center gap-3 rounded-xl border p-4 text-left transition-colors hover:bg-accent/40"
+                className="flex items-center gap-3 rounded-xl border p-4 text-start transition-colors hover:bg-accent/40"
               >
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
                   <Users className="size-5" aria-hidden />
                 </span>
                 <span className="flex flex-col">
-                  <span className="text-sm font-medium">New group</span>
+                  <span className="text-sm font-medium">{t("newGroup")}</span>
                   <span className="text-sm text-muted-foreground">
                     Chat with several people at once
                   </span>
@@ -210,7 +212,7 @@ export function NewConversationSheet({
                   {members.map((member) => (
                     <span
                       key={member.ulid}
-                      className="flex items-center gap-1.5 rounded-full bg-accent py-1 pr-1 pl-1.5 text-sm"
+                      className="flex items-center gap-1.5 rounded-full bg-accent py-1 pe-1 ps-1.5 text-sm"
                     >
                       <ProfileAvatar profile={member} className="size-5" />
                       <span className="max-w-32 truncate">{member.name}</span>

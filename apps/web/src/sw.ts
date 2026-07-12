@@ -6,6 +6,7 @@ import {
   ExpirationPlugin,
   NetworkFirst,
   Serwist,
+  StaleWhileRevalidate,
 } from "serwist";
 
 declare global {
@@ -38,6 +39,53 @@ const serwist = new Serwist({
       }),
     },
     {
+      // Feed pages: serve fresh when online, fall back to the last cached
+      // response (so the timeline is readable offline).
+      matcher: ({ url }) => url.pathname.startsWith("/api/v1/feeds/"),
+      handler: new NetworkFirst({
+        cacheName: "sbh-api-feeds",
+        networkTimeoutSeconds: 3,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 50,
+            maxAgeSeconds: 24 * 60 * 60, // 1 day
+          }),
+        ],
+      }),
+    },
+    {
+      // Notifications list: same network-first strategy for offline reads.
+      matcher: ({ url }) => url.pathname === "/api/v1/notifications",
+      handler: new NetworkFirst({
+        cacheName: "sbh-api-notifications",
+        networkTimeoutSeconds: 3,
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 10,
+            maxAgeSeconds: 24 * 60 * 60, // 1 day
+          }),
+        ],
+      }),
+    },
+    {
+      // Media thumbnails: show instantly from cache, refresh in the
+      // background. Matches the storage disk and any `thumb` variant paths.
+      matcher: ({ url, request }) =>
+        request.destination === "image" &&
+        (url.pathname.includes("/storage/") ||
+          url.pathname.includes("thumb")),
+      handler: new StaleWhileRevalidate({
+        cacheName: "sbh-media-thumbs",
+        plugins: [
+          new ExpirationPlugin({
+            maxEntries: 200,
+            maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
+            purgeOnQuotaError: true,
+          }),
+        ],
+      }),
+    },
+    {
       // App icons and fonts change rarely; serve from cache first.
       matcher: ({ url, request, sameOrigin }) =>
         (sameOrigin && url.pathname.startsWith("/icons/")) ||
@@ -54,6 +102,15 @@ const serwist = new Serwist({
     },
     ...defaultCache,
   ],
+  fallbacks: {
+    entries: [
+      {
+        // Shown when a navigation request fails and the route isn't cached.
+        url: "/~offline",
+        matcher: ({ request }) => request.destination === "document",
+      },
+    ],
+  },
 });
 
 serwist.addEventListeners();

@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Ban, ChevronRight, CircleAlert, MapPin, VolumeX } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -9,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { PushSettings } from "@/components/notifications/push-settings";
+import { LanguagePicker } from "@/components/settings/language-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -74,6 +76,7 @@ function valuesFromProfile(profile: Profile): Values {
 }
 
 function ContentSettings() {
+  const t = useTranslations("settings");
   const showSensitive = useAuthStore((s) =>
     Boolean(s.user?.settings?.show_sensitive),
   );
@@ -105,22 +108,22 @@ function ContentSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Content</CardTitle>
-        <CardDescription>Control what you see in your feeds.</CardDescription>
+        <CardTitle className="text-base">{t("content")}</CardTitle>
+        <CardDescription>{t("contentHint")}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border p-4">
           <div className="space-y-0.5">
-            <p className="text-sm font-medium">Show sensitive content</p>
+            <p className="text-sm font-medium">{t("showSensitive")}</p>
             <p className="text-sm text-muted-foreground">
-              Show posts marked as sensitive without a warning overlay.
+              {t("showSensitiveHint")}
             </p>
           </div>
           <Switch
             checked={showSensitive}
             disabled={busy}
             onCheckedChange={(checked) => void toggle(checked)}
-            aria-label="Show sensitive content"
+            aria-label={t("showSensitive")}
           />
         </div>
       </CardContent>
@@ -128,17 +131,15 @@ function ContentSettings() {
   );
 }
 
-const DM_PRIVACY_OPTIONS: { value: DmPrivacy; label: string; hint: string }[] = [
-  { value: "everyone", label: "Everyone", hint: "Anyone can message you" },
-  {
-    value: "followers",
-    label: "People I follow",
-    hint: "Only accounts you follow can start a chat",
-  },
-  { value: "no_one", label: "No one", hint: "Turn off new direct messages" },
-];
+const DM_PRIVACY_OPTIONS: { value: DmPrivacy; labelKey: string; hintKey: string }[] =
+  [
+    { value: "everyone", labelKey: "dmEveryone", hintKey: "dmEveryoneHint" },
+    { value: "followers", labelKey: "dmFollowers", hintKey: "dmFollowersHint" },
+    { value: "no_one", labelKey: "dmNoOne", hintKey: "dmNoOneHint" },
+  ];
 
 function MessagingSettings() {
+  const t = useTranslations("settings");
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const updateActiveProfile = useAuthStore((s) => s.updateActiveProfile);
   const [busy, setBusy] = useState(false);
@@ -171,8 +172,8 @@ function MessagingSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Messaging</CardTitle>
-        <CardDescription>Choose who can start a direct message.</CardDescription>
+        <CardTitle className="text-base">{t("messaging")}</CardTitle>
+        <CardDescription>{t("messagingHint")}</CardDescription>
       </CardHeader>
       <CardContent>
         <RadioGroup
@@ -193,9 +194,9 @@ function MessagingSettings() {
                 className="mt-0.5"
               />
               <span className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium">{option.label}</span>
+                <span className="text-sm font-medium">{t(option.labelKey)}</span>
                 <span className="text-sm text-muted-foreground">
-                  {option.hint}
+                  {t(option.hintKey)}
                 </span>
               </span>
             </Label>
@@ -208,6 +209,7 @@ function MessagingSettings() {
 
 /** Business-only: pick the structured business category (Milestone 10). */
 function BusinessCategorySettings() {
+  const t = useTranslations("settings");
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const updateActiveProfile = useAuthStore((s) => s.updateActiveProfile);
   const { categories, phase } = useBusinessCategories();
@@ -246,10 +248,8 @@ function BusinessCategorySettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Business category</CardTitle>
-        <CardDescription>
-          Your category powers the directory and matchmaking.
-        </CardDescription>
+        <CardTitle className="text-base">{t("businessCategory")}</CardTitle>
+        <CardDescription>{t("businessCategoryHint")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {current ? (
@@ -288,15 +288,14 @@ function BusinessCategorySettings() {
 }
 
 function PrivacySafetySettings() {
+  const t = useTranslations("settings");
   const { sharing, busy, enable, disable } = useLocationSharing();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Privacy &amp; safety</CardTitle>
-        <CardDescription>
-          Manage location sharing and the accounts you&apos;ve blocked or muted.
-        </CardDescription>
+        <CardTitle className="text-base">{t("privacySafety")}</CardTitle>
+        <CardDescription>{t("privacySafetyHint")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-2">
         <div className="flex min-h-11 items-center justify-between gap-4 rounded-lg border p-4">
@@ -306,10 +305,9 @@ function PrivacySafetySettings() {
               aria-hidden
             />
             <div className="space-y-0.5">
-              <p className="text-sm font-medium">Location sharing</p>
+              <p className="text-sm font-medium">{t("locationSharing")}</p>
               <p className="text-sm text-muted-foreground">
-                Appear on the nearby map. Only your approximate location is
-                shared, never your exact position.
+                {t("locationSharingHint")}
               </p>
             </div>
           </div>
@@ -319,7 +317,7 @@ function PrivacySafetySettings() {
             onCheckedChange={(checked) =>
               void (checked ? enable() : disable())
             }
-            aria-label="Location sharing"
+            aria-label={t("locationSharing")}
           />
         </div>
         <Link
@@ -327,7 +325,9 @@ function PrivacySafetySettings() {
           className="flex min-h-11 items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent/40"
         >
           <Ban className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-          <span className="flex-1 text-sm font-medium">Blocked accounts</span>
+          <span className="flex-1 text-sm font-medium">
+            {t("blockedAccounts")}
+          </span>
           <ChevronRight
             className="size-4 shrink-0 text-muted-foreground"
             aria-hidden
@@ -341,7 +341,9 @@ function PrivacySafetySettings() {
             className="size-5 shrink-0 text-muted-foreground"
             aria-hidden
           />
-          <span className="flex-1 text-sm font-medium">Muted accounts</span>
+          <span className="flex-1 text-sm font-medium">
+            {t("mutedAccounts")}
+          </span>
           <ChevronRight
             className="size-4 shrink-0 text-muted-foreground"
             aria-hidden
@@ -353,6 +355,8 @@ function PrivacySafetySettings() {
 }
 
 export default function ProfileSettingsPage() {
+  const t = useTranslations("settings");
+  const tc = useTranslations("common");
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const updateActiveProfile = useAuthStore((s) => s.updateActiveProfile);
 
@@ -399,7 +403,7 @@ export default function ProfileSettingsPage() {
       );
       updateActiveProfile(res.data);
       form.reset(valuesFromProfile(res.data));
-      toast.success("Profile updated");
+      toast.success(t("profileUpdated"));
     } catch (error) {
       if (!applyServerErrors(error, form.setError)) {
         form.setError("root", { message: errorMessage(error) });
@@ -411,14 +415,16 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-xl font-semibold tracking-tight">Edit profile</h1>
+      <h1 className="text-xl font-semibold tracking-tight">
+        {t("editProfile")}
+      </h1>
       <Card>
         <CardHeader>
           <CardTitle className="text-base">@{activeProfile.handle}</CardTitle>
           <CardDescription>
             {activeProfile.kind === "business"
-              ? "Business profile"
-              : "Personal profile"}
+              ? t("businessProfile")
+              : t("personalProfile")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -439,7 +445,7 @@ export default function ProfileSettingsPage() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Name</FormLabel>
+                    <FormLabel>{t("name")}</FormLabel>
                     <FormControl>
                       <Input className="h-11" {...field} />
                     </FormControl>
@@ -452,11 +458,11 @@ export default function ProfileSettingsPage() {
                 name="bio"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bio</FormLabel>
+                    <FormLabel>{t("bio")}</FormLabel>
                     <FormControl>
                       <Textarea
                         rows={4}
-                        placeholder="Tell people what you do"
+                        placeholder={t("bioPlaceholder")}
                         {...field}
                       />
                     </FormControl>
@@ -469,11 +475,11 @@ export default function ProfileSettingsPage() {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t("category")}</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-11 w-full">
-                          <SelectValue placeholder="Pick a category" />
+                          <SelectValue placeholder={t("pickCategory")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -493,7 +499,7 @@ export default function ProfileSettingsPage() {
                 name="website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website</FormLabel>
+                    <FormLabel>{t("website")}</FormLabel>
                     <FormControl>
                       <Input
                         type="url"
@@ -512,7 +518,7 @@ export default function ProfileSettingsPage() {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>{t("location")}</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Sydney, Australia"
@@ -530,10 +536,9 @@ export default function ProfileSettingsPage() {
                 render={({ field }) => (
                   <FormItem className="flex min-h-11 flex-row items-center justify-between gap-4 rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel>Private account</FormLabel>
+                      <FormLabel>{t("privateAccount")}</FormLabel>
                       <FormDescription>
-                        New followers must be approved before they can see your
-                        posts.
+                        {t("privateAccountHint")}
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -553,12 +558,13 @@ export default function ProfileSettingsPage() {
                   form.formState.isSubmitting || !form.formState.isDirty
                 }
               >
-                {form.formState.isSubmitting ? "Saving…" : "Save changes"}
+                {form.formState.isSubmitting ? tc("saving") : t("saveChanges")}
               </Button>
             </form>
           </Form>
         </CardContent>
       </Card>
+      <LanguagePicker />
       {activeProfile.kind === "business" ? <BusinessCategorySettings /> : null}
       <ContentSettings />
       <MessagingSettings />

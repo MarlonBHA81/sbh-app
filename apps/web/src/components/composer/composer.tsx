@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { ParentCard } from "@/components/post-types/parent-card";
@@ -75,6 +76,7 @@ import {
   isQuizValid,
   type QuizDraftQuestion,
 } from "./quiz-editor";
+import { SuggestedTopics } from "./suggested-topics";
 import { TopicPicker } from "./topic-picker";
 import { useSavePost, type SavePostInput } from "./use-save-post";
 
@@ -88,25 +90,29 @@ const MAX_BODY = 500;
 
 type ComposerType = Exclude<PostType, "repost">;
 
-const TYPE_CHIPS: { value: ComposerType; label: string; icon: typeof Type }[] =
-  [
-    { value: "text", label: "Text", icon: Type },
-    { value: "image", label: "Photos", icon: ImageIcon },
-    { value: "link", label: "Link", icon: Link2 },
-    { value: "typewriter", label: "Typewriter", icon: Keyboard },
-    { value: "magnifier", label: "Magnifier", icon: Search },
-    { value: "secret", label: "Secret", icon: Lock },
-    { value: "checkin", label: "Check-in", icon: MapPin },
-    // Milestone 5 additions.
-    { value: "video", label: "Video", icon: Video },
-    { value: "audio", label: "Audio", icon: AudioLines },
-    { value: "blog", label: "Blog", icon: Newspaper },
-    { value: "poll", label: "Poll", icon: BarChart3 },
-    { value: "quiz", label: "Quiz", icon: GraduationCap },
-    { value: "event", label: "Event", icon: CalendarDays },
-    { value: "job", label: "Job", icon: Briefcase },
-    { value: "portfolio", label: "Portfolio", icon: LayoutGrid },
-  ];
+/** `labelKey` indexes the `composer.types` message namespace. */
+const TYPE_CHIPS: {
+  value: ComposerType;
+  labelKey: string;
+  icon: typeof Type;
+}[] = [
+  { value: "text", labelKey: "text", icon: Type },
+  { value: "image", labelKey: "photos", icon: ImageIcon },
+  { value: "link", labelKey: "link", icon: Link2 },
+  { value: "typewriter", labelKey: "typewriter", icon: Keyboard },
+  { value: "magnifier", labelKey: "magnifier", icon: Search },
+  { value: "secret", labelKey: "secret", icon: Lock },
+  { value: "checkin", labelKey: "checkin", icon: MapPin },
+  // Milestone 5 additions.
+  { value: "video", labelKey: "video", icon: Video },
+  { value: "audio", labelKey: "audio", icon: AudioLines },
+  { value: "blog", labelKey: "blog", icon: Newspaper },
+  { value: "poll", labelKey: "poll", icon: BarChart3 },
+  { value: "quiz", labelKey: "quiz", icon: GraduationCap },
+  { value: "event", labelKey: "event", icon: CalendarDays },
+  { value: "job", labelKey: "job", icon: Briefcase },
+  { value: "portfolio", labelKey: "portfolio", icon: LayoutGrid },
+];
 
 /** Types where the payload text field replaces the common body textarea. */
 const PAYLOAD_TEXT_TYPES: ComposerType[] = ["typewriter", "magnifier", "secret"];
@@ -154,12 +160,13 @@ function payloadString(payload: Record<string, unknown> | null, key: string) {
   return typeof value === "string" ? value : "";
 }
 
-function bodyPlaceholder(type: ComposerType, isQuote: boolean): string {
-  if (type === "image") return "Add a caption…";
-  if (type === "video") return "Add a caption…";
-  if (type === "poll") return "Ask a question…";
-  if (isQuote) return "Add your thoughts…";
-  return "What's happening at your business?";
+/** Returns a key under the `composer.placeholder` message namespace. */
+function bodyPlaceholderKey(type: ComposerType, isQuote: boolean): string {
+  if (type === "image") return "caption";
+  if (type === "video") return "caption";
+  if (type === "poll") return "pollQuestion";
+  if (isQuote) return "quoteThoughts";
+  return "default";
 }
 
 export function Composer({
@@ -176,6 +183,7 @@ export function Composer({
   onSaved: () => void;
 }) {
   const isMobile = useIsMobile();
+  const t = useTranslations("composer");
   const { save, saving } = useSavePost();
 
   const parent = quoteParent ?? editPost?.parent ?? null;
@@ -503,12 +511,16 @@ export function Composer({
     }
   }
 
-  const title = editing ? "Edit post" : isQuote ? "Quote post" : "New post";
+  const title = editing
+    ? t("editPost")
+    : isQuote
+      ? t("quotePost")
+      : t("newPost");
   const primaryLabel = saving
-    ? "Saving…"
+    ? t("saving")
     : scheduledLocal
-      ? "Schedule"
-      : "Post";
+      ? t("schedule")
+      : t("post");
 
   const form = (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
@@ -516,9 +528,9 @@ export function Composer({
         <div
           className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)]"
           role="tablist"
-          aria-label="Post type"
+          aria-label={t("postTypeLabel")}
         >
-          {TYPE_CHIPS.map(({ value, label, icon: Icon }) => (
+          {TYPE_CHIPS.map(({ value, labelKey, icon: Icon }) => (
             <Button
               key={value}
               type="button"
@@ -530,7 +542,7 @@ export function Composer({
               onClick={() => setType(value)}
             >
               <Icon className="size-4" aria-hidden />
-              {label}
+              {t(`types.${labelKey}`)}
             </Button>
           ))}
         </div>
@@ -890,7 +902,7 @@ export function Composer({
 
       {showBody ? (
         <Textarea
-          placeholder={bodyPlaceholder(type, isQuote)}
+          placeholder={t(`placeholder.${bodyPlaceholderKey(type, isQuote)}`)}
           className="min-h-28"
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -913,6 +925,18 @@ export function Composer({
         </p>
       ) : null}
 
+      <SuggestedTopics
+        text={activeText}
+        selected={topics}
+        onSelect={(topic) =>
+          setTopics((prev) =>
+            prev.some((t) => t.id === topic.id) || prev.length >= 3
+              ? prev
+              : [...prev, topic],
+          )
+        }
+      />
+
       <TopicPicker value={topics} onChange={setTopics} />
 
       <div className="flex flex-wrap items-center gap-3">
@@ -920,12 +944,12 @@ export function Composer({
           value={visibility}
           onValueChange={(value) => setVisibility(value as PostVisibility)}
         >
-          <SelectTrigger className="h-11 w-32" aria-label="Visibility">
+          <SelectTrigger className="h-11 w-32" aria-label={t("visibility")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="public">Public</SelectItem>
-            <SelectItem value="followers">Followers</SelectItem>
+            <SelectItem value="public">{t("public")}</SelectItem>
+            <SelectItem value="followers">{t("followers")}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -939,11 +963,11 @@ export function Composer({
               <CalendarClock className="size-4" aria-hidden />
               {scheduledLocal
                 ? formatLocalDateTime(new Date(scheduledLocal).toISOString())
-                : "Schedule"}
+                : t("schedule")}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="flex w-80 flex-col gap-3">
-            <Label htmlFor="composer-schedule">Publish at</Label>
+            <Label htmlFor="composer-schedule">{t("publishAt")}</Label>
             <Input
               id="composer-schedule"
               type="datetime-local"
@@ -953,7 +977,7 @@ export function Composer({
               onChange={(e) => setScheduledLocal(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Times are in SAST (your local time).
+              {t("scheduleHint")}
             </p>
             {scheduledLocal ? (
               <Button
@@ -964,7 +988,7 @@ export function Composer({
                 onClick={() => setScheduledLocal("")}
               >
                 <X className="size-4" aria-hidden />
-                Clear schedule
+                {t("clearSchedule")}
               </Button>
             ) : null}
           </PopoverContent>
@@ -972,13 +996,13 @@ export function Composer({
 
         <label className="flex min-h-11 items-center gap-2 text-sm">
           <Switch checked={sensitive} onCheckedChange={setSensitive} />
-          Sensitive
+          {t("sensitive")}
         </label>
       </div>
 
       {mediaProcessing ? (
         <p className="text-xs text-amber-600 dark:text-amber-500" aria-live="polite">
-          Still processing — save a draft and publish once it&apos;s ready.
+          {t("processingHint")}
         </p>
       ) : null}
 
@@ -990,7 +1014,7 @@ export function Composer({
           disabled={!canSaveBase}
           onClick={() => void submit("draft")}
         >
-          Save draft
+          {t("saveDraft")}
         </Button>
         <Button
           type="button"
@@ -1026,7 +1050,7 @@ export function Composer({
         <DialogHeader className="px-4 py-4">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="sr-only">
-            Create a new post
+            {t("createDescription")}
           </DialogDescription>
         </DialogHeader>
         {form}

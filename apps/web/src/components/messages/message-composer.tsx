@@ -1,6 +1,7 @@
 "use client";
 
 import { ImagePlus, SendHorizontal, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { PhotoPicker } from "@/components/composer/photo-picker";
@@ -23,6 +24,7 @@ export function MessageComposer({
   onTyping: () => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations("chat");
   const [text, setText] = useState("");
   const [media, setMedia] = useState<Media[]>([]);
   const [showAttach, setShowAttach] = useState(false);
@@ -66,16 +68,17 @@ export function MessageComposer({
         <div className="mb-2 flex items-start gap-2 rounded-lg border-l-2 border-primary bg-muted/60 px-3 py-2">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-medium">
-              Replying to {replyTo.profile.name}
+              {t("replyingTo", { name: replyTo.profile.name })}
             </p>
             <p className="line-clamp-1 text-xs text-muted-foreground">
-              {replyTo.body ?? (replyTo.media.length > 0 ? "Photo" : "Message")}
+              {replyTo.body ??
+                (replyTo.media.length > 0 ? t("photo") : t("message"))}
             </p>
           </div>
           <button
             type="button"
             onClick={onCancelReply}
-            aria-label="Cancel reply"
+            aria-label={t("cancelReply")}
             className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-background hover:text-foreground"
           >
             <X className="size-4" aria-hidden />
@@ -98,7 +101,7 @@ export function MessageComposer({
         <button
           type="button"
           onClick={() => setShowAttach((v) => !v)}
-          aria-label="Attach photos"
+          aria-label={t("attachPhotos")}
           disabled={disabled || media.length >= 4}
           className={cn(
             "flex size-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50",
@@ -117,7 +120,7 @@ export function MessageComposer({
           }}
           onKeyDown={handleKeyDown}
           rows={1}
-          placeholder="Message"
+          placeholder={t("message")}
           disabled={disabled}
           className="max-h-40 min-h-10 flex-1 resize-none rounded-2xl border bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-60"
         />
@@ -127,7 +130,7 @@ export function MessageComposer({
           size="icon"
           onClick={submit}
           disabled={!canSend}
-          aria-label="Send message"
+          aria-label={t("sendMessage")}
           className="size-10 shrink-0 rounded-full"
         >
           <SendHorizontal className="size-5" aria-hidden />

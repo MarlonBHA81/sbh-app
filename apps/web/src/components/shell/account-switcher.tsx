@@ -127,7 +127,7 @@ export function AccountSwitcher({
               checked={lowData}
               aria-hidden
               tabIndex={-1}
-              className="pointer-events-none ml-auto"
+              className="pointer-events-none ms-auto"
             />
           </DropdownMenuItem>
           <DropdownMenuItem

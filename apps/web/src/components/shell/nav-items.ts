@@ -1,14 +1,15 @@
 import { Bell, Compass, Home, MessageCircle, type LucideIcon } from "lucide-react";
 
 export interface NavItem {
-  label: string;
+  /** Key under the `nav` message namespace. */
+  labelKey: "home" | "discover" | "notifications" | "messages";
   href: string;
   icon: LucideIcon;
 }
 
 export const NAV_ITEMS: NavItem[] = [
-  { label: "Home", href: "/home", icon: Home },
-  { label: "Discover", href: "/discover", icon: Compass },
-  { label: "Notifications", href: "/notifications", icon: Bell },
-  { label: "Messages", href: "/messages", icon: MessageCircle },
+  { labelKey: "home", href: "/home", icon: Home },
+  { labelKey: "discover", href: "/discover", icon: Compass },
+  { labelKey: "notifications", href: "/notifications", icon: Bell },
+  { labelKey: "messages", href: "/messages", icon: MessageCircle },
 ];

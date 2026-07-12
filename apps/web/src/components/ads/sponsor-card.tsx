@@ -1,6 +1,7 @@
 "use client";
 
 import { ExternalLink, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ export function SponsorCard({
   variant?: "rail" | "inline";
   onDismiss?: () => void;
 }) {
+  const t = useTranslations("feed");
   const ref = useRef<HTMLElement | null>(null);
 
   // Impression: fire once the unit is actually on screen.
@@ -105,7 +107,7 @@ export function SponsorCard({
   return (
     <aside
       ref={ref}
-      aria-label="Sponsored"
+      aria-label={t("sponsored")}
       className={cn(
         "relative flex flex-col gap-3 rounded-xl border bg-card p-3 text-card-foreground",
         variant === "inline" && "shadow-xs",
@@ -136,7 +138,7 @@ export function SponsorCard({
             {slot.sponsor_name}
           </span>
           <span className="shrink-0 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-            Sponsored
+            {t("sponsored")}
           </span>
         </div>
         <p className="line-clamp-2 text-sm text-muted-foreground">

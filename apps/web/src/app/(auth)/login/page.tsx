@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -40,6 +41,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 export default function LoginPage() {
+  const t = useTranslations("auth");
   const login = useAuthStore((s) => s.login);
   const router = useRouter();
   const [banned, setBanned] = useState<{
@@ -80,24 +82,26 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Welcome back</CardTitle>
-        <CardDescription>Sign in to your SBH account</CardDescription>
+        <CardTitle>{t("welcomeBack")}</CardTitle>
+        <CardDescription>{t("signInSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {banned ? (
           <Alert variant="destructive">
             <CircleAlert />
-            <AlertTitle>Account suspended</AlertTitle>
+            <AlertTitle>{t("accountSuspended")}</AlertTitle>
             <AlertDescription>
               {banned.message}
-              {banned.reason ? ` Reason: ${banned.reason}` : null}
+              {banned.reason
+                ? ` ${t("banReason", { reason: banned.reason })}`
+                : null}
             </AlertDescription>
           </Alert>
         ) : null}
         {rootError ? (
           <Alert variant="destructive">
             <CircleAlert />
-            <AlertTitle>Sign in failed</AlertTitle>
+            <AlertTitle>{t("signInFailed")}</AlertTitle>
             <AlertDescription>{rootError}</AlertDescription>
           </Alert>
         ) : null}
@@ -112,7 +116,7 @@ export default function LoginPage() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("email")}</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
@@ -133,12 +137,12 @@ export default function LoginPage() {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t("password")}</FormLabel>
                     <Link
                       href="/forgot-password"
                       className="text-xs text-muted-foreground underline-offset-4 hover:underline"
                     >
-                      Forgot password?
+                      {t("forgotPassword")}
                     </Link>
                   </div>
                   <FormControl>
@@ -158,7 +162,7 @@ export default function LoginPage() {
               className="h-11 w-full"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? "Signing in…" : "Sign in"}
+              {form.formState.isSubmitting ? t("signingIn") : t("signIn")}
             </Button>
           </form>
         </Form>
@@ -166,12 +170,12 @@ export default function LoginPage() {
         <SocialButtons />
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
-        New to SBH?{" "}
+        {t("newToSbh")}{" "}
         <Link
           href="/register"
-          className="ml-1 font-medium text-foreground underline-offset-4 hover:underline"
+          className="ms-1 font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Create an account
+          {t("createAccount")}
         </Link>
       </CardFooter>
     </Card>

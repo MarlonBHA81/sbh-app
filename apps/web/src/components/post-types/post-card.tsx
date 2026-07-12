@@ -18,6 +18,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { createElement, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -168,6 +169,8 @@ export function PostCard({
   liveCounts?: LiveCounts | null;
 }) {
   const router = useRouter();
+  const t = useTranslations("post");
+  const tf = useTranslations("feed");
   const { openComposer, notifyPostsMutated } = useComposer();
   const { openPromote } = usePromote();
   const activeUlid = useAuthStore((s) => s.activeProfile?.ulid ?? null);
@@ -450,7 +453,7 @@ export function PostCard({
                 <span aria-hidden>·</span>
                 <span className="inline-flex items-center gap-1 font-medium">
                   <Megaphone className="size-3" aria-hidden />
-                  Promoted
+                  {tf("promoted")}
                 </span>
               </>
             ) : null}
@@ -466,7 +469,7 @@ export function PostCard({
             <button
               type="button"
               aria-label="More options"
-              className="-mr-2 flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="-me-2 flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <MoreHorizontal className="size-5" aria-hidden />
             </button>
@@ -477,7 +480,7 @@ export function PostCard({
               onSelect={() => void copyLink()}
             >
               <Link2 className="size-4" aria-hidden />
-              Copy link
+              {t("copyLink")}
             </DropdownMenuItem>
             {isOwnPost ? (
               <>
@@ -491,7 +494,7 @@ export function PostCard({
                       onSelect={() => openPromote(post)}
                     >
                       <Megaphone className="size-4" aria-hidden />
-                      Promote
+                      {t("promote")}
                     </DropdownMenuItem>
                   </>
                 ) : null}
@@ -502,7 +505,7 @@ export function PostCard({
                   onSelect={() => setDeleteConfirmOpen(true)}
                 >
                   <Trash2 className="size-4" aria-hidden />
-                  Delete post
+                  {t("delete")}
                 </DropdownMenuItem>
               </>
             ) : (
@@ -512,14 +515,14 @@ export function PostCard({
                   onSelect={() => setReportOpen(true)}
                 >
                   <Flag className="size-4" aria-hidden />
-                  Report post
+                  {t("report")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="min-h-11 gap-3"
                   onSelect={() => setMuteConfirmOpen(true)}
                 >
                   <VolumeX className="size-4" aria-hidden />
-                  Mute @{post.profile.handle}
+                  {t("mute")} @{post.profile.handle}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -528,7 +531,7 @@ export function PostCard({
                   onSelect={() => setBlockConfirmOpen(true)}
                 >
                   <Ban className="size-4" aria-hidden />
-                  Block @{post.profile.handle}
+                  {t("block")} @{post.profile.handle}
                 </DropdownMenuItem>
               </>
             )}
@@ -574,7 +577,7 @@ export function PostCard({
         <ActionButton
           icon={Heart}
           count={likesCount}
-          label={liked ? "Unlike" : "Like"}
+          label={liked ? "Unlike" : t("like")}
           active={liked}
           onClick={() => void toggleLike()}
           className={cn(liked && "text-rose-500 hover:text-rose-500")}
@@ -592,7 +595,7 @@ export function PostCard({
         <ActionButton
           icon={MessageCircle}
           count={post.comments_count}
-          label="Comments"
+          label={t("comment")}
           onClick={() => {
             trackPromotedClick();
             router.push(detailHref);
@@ -617,14 +620,14 @@ export function PostCard({
               onSelect={() => setRepostConfirmOpen(true)}
             >
               <Repeat2 className="size-4" aria-hidden />
-              Repost
+              {t("repost")}
             </DropdownMenuItem>
             <DropdownMenuItem
               className="min-h-11 gap-3"
               onSelect={() => openComposer({ quoteParent: repostTarget })}
             >
               <MessageCircle className="size-4" aria-hidden />
-              Quote
+              {t("quote")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

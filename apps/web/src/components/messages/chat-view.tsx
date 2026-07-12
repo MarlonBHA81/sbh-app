@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -77,6 +78,7 @@ function toggleReaction(
 }
 
 export function ChatView({ ulid }: { ulid: string }) {
+  const t = useTranslations("chat");
   const router = useRouter();
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const selfUlid = activeProfile?.ulid ?? null;
@@ -613,7 +615,7 @@ export function ChatView({ ulid }: { ulid: string }) {
 
       {typingName ? (
         <div className="px-4 pb-1 text-xs text-muted-foreground">
-          {typingName} is typing…
+          {t("typingNamed", { name: typingName })}
         </div>
       ) : null}
 

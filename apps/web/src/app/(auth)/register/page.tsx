@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert, Lock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -52,6 +53,7 @@ const schema = z.object({
 type Values = z.infer<typeof schema>;
 
 export default function RegisterPage() {
+  const t = useTranslations("auth");
   const register = useAuthStore((s) => s.register);
   const router = useRouter();
   // "checking" while we fetch /status; failures fall back to "open".
@@ -131,12 +133,12 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="justify-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          {t("alreadyHaveAccount")}{" "}
           <Link
             href="/login"
-            className="ml-1 font-medium text-foreground underline-offset-4 hover:underline"
+            className="ms-1 font-medium text-foreground underline-offset-4 hover:underline"
           >
-            Sign in
+            {t("signInLink")}
           </Link>
         </CardFooter>
       </Card>
@@ -146,16 +148,14 @@ export default function RegisterPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Create your account</CardTitle>
-        <CardDescription>
-          Grow your business with the SBH community
-        </CardDescription>
+        <CardTitle>{t("createTitle")}</CardTitle>
+        <CardDescription>{t("createSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {rootError ? (
           <Alert variant="destructive">
             <CircleAlert />
-            <AlertTitle>Registration failed</AlertTitle>
+            <AlertTitle>{t("registrationFailed")}</AlertTitle>
             <AlertDescription>{rootError}</AlertDescription>
           </Alert>
         ) : null}
@@ -170,7 +170,7 @@ export default function RegisterPage() {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>{t("name")}</FormLabel>
                   <FormControl>
                     <Input
                       autoComplete="name"
@@ -188,7 +188,7 @@ export default function RegisterPage() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("email")}</FormLabel>
                   <FormControl>
                     <Input
                       type="email"
@@ -208,7 +208,7 @@ export default function RegisterPage() {
               name="handle"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Handle (optional)</FormLabel>
+                  <FormLabel>{t("handle")}</FormLabel>
                   <FormControl>
                     <Input
                       autoComplete="username"
@@ -229,7 +229,7 @@ export default function RegisterPage() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>{t("password")}</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
@@ -248,8 +248,8 @@ export default function RegisterPage() {
               disabled={form.formState.isSubmitting}
             >
               {form.formState.isSubmitting
-                ? "Creating account…"
-                : "Create account"}
+                ? t("creatingAccount")
+                : t("createAccount")}
             </Button>
           </form>
         </Form>
@@ -257,12 +257,12 @@ export default function RegisterPage() {
         <SocialButtons />
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("alreadyHaveAccount")}{" "}
         <Link
           href="/login"
-          className="ml-1 font-medium text-foreground underline-offset-4 hover:underline"
+          className="ms-1 font-medium text-foreground underline-offset-4 hover:underline"
         >
-          Sign in
+          {t("signInLink")}
         </Link>
       </CardFooter>
     </Card>

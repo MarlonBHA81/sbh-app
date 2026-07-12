@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { useComposer } from "@/components/composer/composer-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -28,6 +29,7 @@ function formatBadge(count: number): string {
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const unreadMessages = useMessagesStore((s) => s.unreadTotal);
@@ -46,7 +48,8 @@ export function SidebarNav() {
         <SearchTrigger variant="bar" />
       </div>
       <nav aria-label="Primary" className="flex flex-1 flex-col gap-1">
-        {NAV_ITEMS.map(({ label, href, icon: Icon }) => {
+        {NAV_ITEMS.map(({ labelKey, href, icon: Icon }) => {
+          const label = t(labelKey);
           const active = pathname === href || pathname.startsWith(`${href}/`);
           const badgeCount =
             href === "/notifications"
@@ -70,14 +73,14 @@ export function SidebarNav() {
               <span className="relative">
                 <Icon className="size-5" aria-hidden />
                 {showBadge ? (
-                  <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
+                  <span className="absolute -top-1.5 -end-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
                     {formatBadge(badgeCount)}
                   </span>
                 ) : null}
               </span>
               {label}
               {showBadge ? (
-                <span className="sr-only">{badgeCount} unread</span>
+                <span className="sr-only">{t("unreadCount", { count: badgeCount })}</span>
               ) : null}
             </Link>
           );
@@ -97,7 +100,7 @@ export function SidebarNav() {
           )}
         >
           <Briefcase className="size-5" aria-hidden />
-          Business
+          {t("business")}
         </Link>
         <Link
           href="/leaderboard"
@@ -112,7 +115,7 @@ export function SidebarNav() {
           )}
         >
           <Trophy className="size-5" aria-hidden />
-          Leaderboard
+          {t("leaderboard")}
         </Link>
         <Link
           href="/ads"
@@ -129,7 +132,7 @@ export function SidebarNav() {
           )}
         >
           <Megaphone className="size-5" aria-hidden />
-          Ad Center
+          {t("adCenter")}
         </Link>
         <Link
           href="/insights"
@@ -142,7 +145,7 @@ export function SidebarNav() {
           )}
         >
           <ChartLine className="size-5" aria-hidden />
-          Insights
+          {t("insights")}
         </Link>
         <Link
           href={profileHref}
@@ -154,7 +157,7 @@ export function SidebarNav() {
           )}
         >
           <ProfileAvatar profile={activeProfile} className="size-5" />
-          Profile
+          {t("profile")}
         </Link>
         <Button
           type="button"
@@ -162,7 +165,7 @@ export function SidebarNav() {
           onClick={() => openComposer()}
         >
           <PenSquare className="size-4" aria-hidden />
-          Post
+          {t("post")}
         </Button>
       </nav>
       <AccountSwitcher align="start">

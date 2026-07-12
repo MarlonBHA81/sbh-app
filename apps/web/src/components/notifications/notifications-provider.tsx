@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -66,6 +67,7 @@ function toAppNotification(payload: unknown): AppNotification | null {
  */
 export function NotificationsProvider() {
   const router = useRouter();
+  const t = useTranslations("notifications");
   const activeUlid = useAuthStore((s) => s.activeProfile?.ulid ?? null);
   const setUnreadCount = useNotificationsStore((s) => s.setUnreadCount);
   const pushLive = useNotificationsStore((s) => s.pushLive);
@@ -116,7 +118,7 @@ export function NotificationsProvider() {
               <span className="font-semibold">
                 {notification.data.actor?.name}
               </span>{" "}
-              {notificationAction(notification)}
+              {notificationAction(notification, t)}
             </span>
           </button>
         ),

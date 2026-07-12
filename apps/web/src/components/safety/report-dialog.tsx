@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -42,6 +43,8 @@ export function ReportDialog({
   reportableUlid: string;
   contextLabel: string;
 }) {
+  const t = useTranslations("report");
+  const tc = useTranslations("common");
   const [step, setStep] = useState<Step>("category");
   const [category, setCategory] = useState<ReportCategory | null>(null);
   const [details, setDetails] = useState("");
@@ -93,10 +96,8 @@ export function ReportDialog({
         {step === "category" ? (
           <>
             <DialogHeader>
-              <DialogTitle>Report {contextLabel}</DialogTitle>
-              <DialogDescription>
-                Why are you reporting this? Your report is anonymous.
-              </DialogDescription>
+              <DialogTitle>{t("title", { target: contextLabel })}</DialogTitle>
+              <DialogDescription>{t("subtitle")}</DialogDescription>
             </DialogHeader>
             <RadioGroup
               value={category ?? ""}
@@ -115,9 +116,11 @@ export function ReportDialog({
                     className="mt-0.5"
                   />
                   <span className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium">{option.label}</span>
+                    <span className="text-sm font-medium">
+                      {t(`categories.${option.value}`)}
+                    </span>
                     <span className="text-xs text-muted-foreground">
-                      {option.description}
+                      {t(`categories.${option.value}Description`)}
                     </span>
                   </span>
                 </Label>
@@ -130,7 +133,7 @@ export function ReportDialog({
                 className="h-11"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {tc("cancel")}
               </Button>
               <Button
                 type="button"
@@ -138,7 +141,7 @@ export function ReportDialog({
                 disabled={!category}
                 onClick={() => setStep("details")}
               >
-                Next
+                {tc("next")}
               </Button>
             </DialogFooter>
           </>
@@ -147,24 +150,20 @@ export function ReportDialog({
         {step === "details" ? (
           <>
             <DialogHeader>
-              <DialogTitle>Add details</DialogTitle>
-              <DialogDescription>
-                Optional — tell our moderators anything that helps.
-              </DialogDescription>
+              <DialogTitle>{t("detailsTitle")}</DialogTitle>
+              <DialogDescription>{t("detailsSubtitle")}</DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2">
               <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
-                Reporting {contextLabel} for{" "}
+                {t("reportingFor", { target: contextLabel })}{" "}
                 <span className="font-medium text-foreground">
-                  {
-                    REPORT_CATEGORIES.find((c) => c.value === category)?.label
-                  }
+                  {category ? t(`categories.${category}`) : ""}
                 </span>
               </p>
               <Textarea
                 rows={4}
                 maxLength={REPORT_DETAILS_MAX}
-                placeholder="Add context (optional)"
+                placeholder={t("detailsPlaceholder")}
                 value={details}
                 onChange={(event) => setDetails(event.target.value)}
               />
@@ -179,7 +178,7 @@ export function ReportDialog({
                 className="h-11"
                 onClick={() => setStep("category")}
               >
-                Back
+                {tc("back")}
               </Button>
               <Button
                 type="button"
@@ -187,7 +186,7 @@ export function ReportDialog({
                 disabled={submitting}
                 onClick={() => void handleSubmit()}
               >
-                {submitting ? "Submitting…" : "Submit report"}
+                {submitting ? t("submitting") : t("submit")}
               </Button>
             </DialogFooter>
           </>
@@ -204,14 +203,10 @@ export function ReportDialog({
                 )}
               </div>
               <DialogTitle>
-                {step === "already"
-                  ? "Already reported"
-                  : "Thanks for letting us know"}
+                {step === "already" ? t("alreadyTitle") : t("successTitle")}
               </DialogTitle>
               <DialogDescription>
-                {step === "already"
-                  ? "You've already reported this — it's under review by our moderators."
-                  : "Our moderators will review this report and take action if it breaks our rules."}
+                {step === "already" ? t("alreadyBody") : t("successBody")}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="sm:justify-center">
@@ -220,7 +215,7 @@ export function ReportDialog({
                 className="h-11 min-w-24"
                 onClick={() => onOpenChange(false)}
               >
-                Done
+                {tc("done")}
               </Button>
             </DialogFooter>
           </>

@@ -2,6 +2,7 @@
 
 import { Bell, BellRing, Trophy, X } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { createElement, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -106,6 +107,7 @@ function NotificationRow({
   notification: AppNotification;
   onRead: (id: string) => void;
 }) {
+  const t = useTranslations("notifications");
   const href = notificationHref(notification);
   const unread = notification.read_at == null;
   const { actor } = notification.data;
@@ -143,13 +145,13 @@ function NotificationRow({
         <p className="text-sm leading-snug">
           {isRank || !actor ? (
             <span className="font-semibold">
-              {notificationAction(notification)}
+              {notificationAction(notification, t)}
             </span>
           ) : (
             <>
               <span className="font-semibold">{actor.name}</span>{" "}
               <span className="text-muted-foreground">
-                {notificationAction(notification)}
+                {notificationAction(notification, t)}
               </span>
             </>
           )}

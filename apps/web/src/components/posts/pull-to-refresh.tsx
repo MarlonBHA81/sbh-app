@@ -1,6 +1,7 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   useCallback,
   useEffect,
@@ -52,6 +53,7 @@ export function PullToRefresh({
   children: React.ReactNode;
   className?: string;
 }) {
+  const t = useTranslations("feed");
   const isTouch = useMediaQuery("(pointer: coarse)");
   const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [refreshing, setRefreshing] = useState(false);
@@ -211,7 +213,7 @@ export function PullToRefresh({
               )}
               aria-hidden
             />
-            {refreshing ? "Refreshing…" : "Refresh"}
+            {refreshing ? t("refreshing") : t("refresh")}
           </Button>
         </div>
       )}
@@ -219,7 +221,7 @@ export function PullToRefresh({
         {children}
       </div>
       <span aria-live="polite" className="sr-only">
-        {refreshing ? "Refreshing feed" : ""}
+        {refreshing ? t("refreshingFeed") : ""}
       </span>
     </div>
   );
