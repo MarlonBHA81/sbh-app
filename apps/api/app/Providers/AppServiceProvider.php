@@ -22,7 +22,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PostTypeRegistry::class);
         $this->app->singleton(SafetyService::class);
 
-        $this->app->singleton(AiGateway::class, function () {
+        // Bound (not a singleton) so the driver is resolved from config at
+        // resolution time. Integration settings stored in the database can
+        // override config('ai.*') at runtime (see IntegrationSettingsProvider),
+        // and a fresh resolve must reflect the current driver/credentials.
+        $this->app->bind(AiGateway::class, function () {
             return match (config('ai.driver')) {
                 'anthropic' => new AnthropicAiDriver(config('ai.anthropic', [])),
                 default => new NullAiDriver,

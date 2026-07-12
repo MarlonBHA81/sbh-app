@@ -9,19 +9,28 @@ use Illuminate\Support\Facades\Hash;
 
 class MakeAdminCommand extends Command
 {
-    protected $signature = 'make:admin {email} {--name=} {--password=}';
+    protected $signature = 'make:admin {email} {--name=} {--password=} {--super}';
 
-    protected $description = 'Create or promote a user to admin (grants Filament panel access).';
+    protected $description = 'Create or promote a user to admin (grants Filament panel access). Pass --super to also grant super-admin (integration settings + platform analytics); super admin always implies admin.';
 
     public function handle(ProfileService $profiles): int
     {
         $email = $this->argument('email');
+        $super = (bool) $this->option('super');
+
+        // Super admin implies admin — a super admin is always an admin too.
+        $flags = ['is_admin' => true];
+        if ($super) {
+            $flags['is_super_admin'] = true;
+        }
 
         $user = User::query()->where('email', $email)->first();
 
         if ($user) {
-            $user->forceFill(['is_admin' => true])->save();
-            $this->info("Promoted existing user {$email} to admin.");
+            $user->forceFill($flags)->save();
+            $this->info($super
+                ? "Promoted existing user {$email} to super admin (admin + super admin)."
+                : "Promoted existing user {$email} to admin.");
 
             return self::SUCCESS;
         }
@@ -40,15 +49,16 @@ class MakeAdminCommand extends Command
             'email' => $email,
             'password' => Hash::make($password),
         ]);
-        $user->forceFill([
-            'is_admin' => true,
+        $user->forceFill(array_merge($flags, [
             'email_verified_at' => now(),
-        ])->save();
+        ]))->save();
 
         // Give the new admin a personal profile so the rest of the app works.
         $profiles->createPersonalProfile($user);
 
-        $this->info("Created admin user {$email}.");
+        $this->info($super
+            ? "Created super admin user {$email} (admin + super admin)."
+            : "Created admin user {$email}.");
 
         return self::SUCCESS;
     }

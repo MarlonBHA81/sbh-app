@@ -12,7 +12,7 @@ function ownPost(User $user, array $attributes = []): Post
 }
 
 test('a creator can promote their own published public post', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $post = ownPost($user);
 
     $response = $this->actingAs($user)->postJson('/api/v1/ads/campaigns', [
@@ -32,8 +32,8 @@ test('a creator can promote their own published public post', function () {
 });
 
 test('a creator cannot promote a post they do not own', function () {
-    $user = userWithProfile();
-    $other = userWithProfile();
+    $user = adminWithProfile();
+    $other = adminWithProfile();
     $post = ownPost($other);
 
     $this->actingAs($user)->postJson('/api/v1/ads/campaigns', [
@@ -44,7 +44,7 @@ test('a creator cannot promote a post they do not own', function () {
 });
 
 test('a draft post cannot be promoted', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $post = ownPost($user, ['status' => Post::STATUS_DRAFT, 'published_at' => null]);
 
     $this->actingAs($user)->postJson('/api/v1/ads/campaigns', [
@@ -55,7 +55,7 @@ test('a draft post cannot be promoted', function () {
 });
 
 test('a followers-only post cannot be promoted', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $post = ownPost($user, ['visibility' => Post::VISIBILITY_FOLLOWERS]);
 
     $this->actingAs($user)->postJson('/api/v1/ads/campaigns', [
@@ -66,7 +66,7 @@ test('a followers-only post cannot be promoted', function () {
 });
 
 test('budget must be within the configured bounds', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $post = ownPost($user);
 
     $this->actingAs($user)->postJson('/api/v1/ads/campaigns', [
@@ -83,7 +83,7 @@ test('budget must be within the configured bounds', function () {
 });
 
 test('duration must be between one and thirty days', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $post = ownPost($user);
 
     $this->actingAs($user)->postJson('/api/v1/ads/campaigns', [
@@ -100,7 +100,7 @@ test('duration must be between one and thirty days', function () {
 });
 
 test('a post may only have one non-completed campaign', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $post = ownPost($user);
 
     Campaign::factory()->create([
@@ -117,7 +117,7 @@ test('a post may only have one non-completed campaign', function () {
 });
 
 test('a post can be re-promoted once its previous campaign is completed', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $post = ownPost($user);
 
     Campaign::factory()->completed()->create([
@@ -133,7 +133,7 @@ test('a post can be re-promoted once its previous campaign is completed', functi
 });
 
 test('a campaign can be paused and resumed', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $campaign = Campaign::factory()->create([
         'profile_id' => $user->personalProfile->id,
         'post_id' => ownPost($user)->id,
@@ -149,7 +149,7 @@ test('a campaign can be paused and resumed', function () {
 });
 
 test('a completed campaign cannot be reactivated', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $campaign = Campaign::factory()->completed()->create([
         'profile_id' => $user->personalProfile->id,
         'post_id' => ownPost($user)->id,
@@ -161,7 +161,7 @@ test('a completed campaign cannot be reactivated', function () {
 });
 
 test('deleting a campaign ends it early by completing it', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $campaign = Campaign::factory()->create([
         'profile_id' => $user->personalProfile->id,
         'post_id' => ownPost($user)->id,
@@ -173,8 +173,8 @@ test('deleting a campaign ends it early by completing it', function () {
 });
 
 test('a creator cannot view or manage another creators campaign', function () {
-    $user = userWithProfile();
-    $other = userWithProfile();
+    $user = adminWithProfile();
+    $other = adminWithProfile();
     $campaign = Campaign::factory()->create([
         'profile_id' => $other->personalProfile->id,
         'post_id' => ownPost($other)->id,
@@ -185,8 +185,8 @@ test('a creator cannot view or manage another creators campaign', function () {
 });
 
 test('the campaign index lists only my campaigns newest first', function () {
-    $user = userWithProfile();
-    $other = userWithProfile();
+    $user = adminWithProfile();
+    $other = adminWithProfile();
 
     $older = Campaign::factory()->create([
         'profile_id' => $user->personalProfile->id,
@@ -208,7 +208,7 @@ test('the campaign index lists only my campaigns newest first', function () {
 });
 
 test('the show endpoint returns a per-day series when requested', function () {
-    $user = userWithProfile();
+    $user = adminWithProfile();
     $campaign = Campaign::factory()->create([
         'profile_id' => $user->personalProfile->id,
         'post_id' => ownPost($user)->id,
@@ -222,4 +222,50 @@ test('the show endpoint returns a per-day series when requested', function () {
 
     expect($response->json('data.series'))->toBeArray()->not->toBeEmpty();
     expect($response->json('data.series.0'))->toHaveKeys(['date', 'impressions', 'clicks']);
+});
+
+test('a non-admin cannot list campaigns', function () {
+    $user = userWithProfile();
+
+    $this->actingAs($user)->getJson('/api/v1/ads/campaigns')->assertForbidden();
+});
+
+test('a non-admin cannot create a campaign', function () {
+    $user = userWithProfile();
+    $post = ownPost($user);
+
+    $this->actingAs($user)->postJson('/api/v1/ads/campaigns', [
+        'post_ulid' => $post->ulid,
+        'budget_cents' => 10000,
+        'duration_days' => 7,
+    ])->assertForbidden();
+
+    expect(Campaign::query()->count())->toBe(0);
+});
+
+test('a non-admin cannot show, update or delete a campaign', function () {
+    $admin = adminWithProfile();
+    $campaign = Campaign::factory()->create([
+        'profile_id' => $admin->personalProfile->id,
+        'post_id' => ownPost($admin)->id,
+    ]);
+
+    $user = userWithProfile();
+
+    $this->actingAs($user)->getJson("/api/v1/ads/campaigns/{$campaign->ulid}")->assertForbidden();
+    $this->actingAs($user)->patchJson("/api/v1/ads/campaigns/{$campaign->ulid}", [
+        'status' => Campaign::STATUS_PAUSED,
+    ])->assertForbidden();
+    $this->actingAs($user)->deleteJson("/api/v1/ads/campaigns/{$campaign->ulid}")->assertForbidden();
+});
+
+test('an admin can create and manage campaigns', function () {
+    $admin = adminWithProfile();
+    $post = ownPost($admin);
+
+    $this->actingAs($admin)->postJson('/api/v1/ads/campaigns', [
+        'post_ulid' => $post->ulid,
+        'budget_cents' => 10000,
+        'duration_days' => 7,
+    ])->assertCreated();
 });

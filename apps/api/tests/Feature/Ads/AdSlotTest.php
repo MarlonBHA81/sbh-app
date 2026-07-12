@@ -56,3 +56,15 @@ test('an unknown placement is rejected', function () {
 
     $this->actingAs($user)->getJson('/api/v1/ads/slots/banner')->assertNotFound();
 });
+
+test('a non-admin can still fetch sponsor slots', function () {
+    $user = userWithProfile();
+
+    expect($user->is_admin)->toBeFalse();
+
+    $slot = AdSlot::factory()->placement(AdSlot::PLACEMENT_RIGHT_RAIL)->create();
+
+    $this->actingAs($user)->getJson('/api/v1/ads/slots/right_rail')
+        ->assertOk()
+        ->assertJsonPath('data.key', $slot->key);
+});

@@ -72,3 +72,70 @@ test('canAccessPanel gates on is_admin', function () {
     expect($admin->canAccessPanel($panel))->toBeTrue()
         ->and($plain->canAccessPanel($panel))->toBeFalse();
 });
+
+test('make:admin --super sets both admin flags on a new user', function () {
+    Artisan::call('make:admin', [
+        'email' => 'super@example.com',
+        '--name' => 'Super',
+        '--password' => 'Password123!',
+        '--super' => true,
+    ]);
+
+    $user = User::query()->where('email', 'super@example.com')->first();
+
+    expect($user)->not->toBeNull()
+        ->and($user->is_admin)->toBeTrue()
+        ->and($user->is_super_admin)->toBeTrue()
+        ->and($user->personalProfile)->not->toBeNull();
+});
+
+test('make:admin --super promotes an existing user to super admin', function () {
+    $user = userWithProfile();
+
+    Artisan::call('make:admin', ['email' => $user->email, '--super' => true]);
+
+    expect($user->fresh()->is_admin)->toBeTrue()
+        ->and($user->fresh()->is_super_admin)->toBeTrue();
+});
+
+test('make:admin without --super does not grant super admin', function () {
+    $user = userWithProfile();
+
+    Artisan::call('make:admin', ['email' => $user->email]);
+
+    expect($user->fresh()->is_admin)->toBeTrue()
+        ->and($user->fresh()->is_super_admin)->toBeFalse();
+});
+
+test('the users table exposes the super admin column', function () {
+    $admin = superAdminWithProfile();
+
+    $this->actingAs($admin)
+        ->get('/admin/users')
+        ->assertSuccessful()
+        ->assertSee('Super admin');
+});
+
+test('the integrations page is forbidden for a regular admin', function () {
+    $admin = adminWithProfile();
+
+    $this->actingAs($admin)->get('/admin/integrations')->assertForbidden();
+});
+
+test('the integrations page renders for a super admin', function () {
+    $admin = superAdminWithProfile();
+
+    $this->actingAs($admin)->get('/admin/integrations')->assertSuccessful();
+});
+
+test('the platform analytics page is forbidden for a regular admin', function () {
+    $admin = adminWithProfile();
+
+    $this->actingAs($admin)->get('/admin/platform-analytics')->assertForbidden();
+});
+
+test('the platform analytics page renders for a super admin', function () {
+    $admin = superAdminWithProfile();
+
+    $this->actingAs($admin)->get('/admin/platform-analytics')->assertSuccessful();
+});

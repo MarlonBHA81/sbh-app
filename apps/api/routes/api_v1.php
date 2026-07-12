@@ -151,13 +151,17 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
     Route::get('profiles/{handle}/posts', [ProfileController::class, 'posts']);
 
-    // Ad Center: promoted-post campaigns, tracking and sponsor slots.
-    Route::get('ads/campaigns', [CampaignController::class, 'index']);
-    Route::post('ads/campaigns', [CampaignController::class, 'store']);
-    Route::get('ads/campaigns/{campaign}', [CampaignController::class, 'show']);
-    Route::patch('ads/campaigns/{campaign}', [CampaignController::class, 'update']);
-    Route::delete('ads/campaigns/{campaign}', [CampaignController::class, 'destroy']);
+    // Ad Center: promoted-post campaign management is admin-only.
+    Route::middleware('admin')->group(function () {
+        Route::get('ads/campaigns', [CampaignController::class, 'index']);
+        Route::post('ads/campaigns', [CampaignController::class, 'store']);
+        Route::get('ads/campaigns/{campaign}', [CampaignController::class, 'show']);
+        Route::patch('ads/campaigns/{campaign}', [CampaignController::class, 'update']);
+        Route::delete('ads/campaigns/{campaign}', [CampaignController::class, 'destroy']);
+    });
 
+    // Tracking and sponsor slots stay open to every authenticated user —
+    // impressions and clicks come from the whole audience, not just admins.
     Route::post('ads/track', [AdTrackController::class, 'store'])->middleware('throttle:120,1');
     Route::get('ads/slots/{placement}', [AdSlotController::class, 'show']);
 

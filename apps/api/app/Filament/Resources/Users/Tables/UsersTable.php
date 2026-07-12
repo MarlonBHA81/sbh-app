@@ -23,6 +23,7 @@ class UsersTable
                 TextColumn::make('email')->searchable()->sortable()->copyable(),
                 TextColumn::make('profiles_count')->counts('profiles')->label('Profiles')->sortable(),
                 IconColumn::make('is_admin')->boolean()->label('Admin')->sortable(),
+                IconColumn::make('is_super_admin')->boolean()->label('Super admin')->sortable(),
                 TextColumn::make('banned_at')->dateTime()->label('Banned')->placeholder('—')->sortable(),
                 TextColumn::make('created_at')->dateTime()->label('Joined')->sortable()->toggleable(),
             ])
@@ -32,6 +33,7 @@ class UsersTable
                     ->nullable()
                     ->attribute('banned_at'),
                 TernaryFilter::make('is_admin')->label('Admins'),
+                TernaryFilter::make('is_super_admin')->label('Super admins'),
             ])
             ->recordActions([
                 Action::make('ban')
@@ -77,6 +79,30 @@ class UsersTable
                         Moderation::log($record->is_admin ? 'user.promote' : 'user.demote', $record);
 
                         Notification::make()->title('Admin status updated')->success()->send();
+                    }),
+
+                Action::make('toggle_super_admin')
+                    ->label(fn (User $record) => $record->is_super_admin ? 'Revoke super admin' : 'Make super admin')
+                    ->icon(Heroicon::OutlinedSparkles)
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    // Only super admins may manage the super-admin tier, and a
+                    // super admin can never demote themselves (avoids locking
+                    // the platform out of its only super-admin controls).
+                    ->visible(fn (User $record) => (bool) auth()->user()?->is_super_admin
+                        && $record->getKey() !== auth()->id())
+                    ->action(function (User $record): void {
+                        $granting = ! $record->is_super_admin;
+
+                        $record->forceFill([
+                            'is_super_admin' => $granting,
+                            // Super admin implies admin.
+                            'is_admin' => $granting ? true : $record->is_admin,
+                        ])->save();
+
+                        Moderation::log($granting ? 'user.super_promote' : 'user.super_demote', $record);
+
+                        Notification::make()->title('Super admin status updated')->success()->send();
                     }),
             ]);
     }

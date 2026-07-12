@@ -132,3 +132,19 @@ test('the ads:settle command completes expired active campaigns', function () {
     expect($expired->refresh()->status)->toBe(Campaign::STATUS_COMPLETED)
         ->and($live->refresh()->status)->toBe(Campaign::STATUS_ACTIVE);
 });
+
+test('a non-admin can still track ad impressions', function () {
+    $advertiser = userWithProfile();
+    $viewer = userWithProfile();
+
+    expect($viewer->is_admin)->toBeFalse();
+
+    $campaign = campaignFor($advertiser, ['budget_cents' => 10000, 'cpi_cents' => 2]);
+
+    $this->actingAs($viewer)->postJson('/api/v1/ads/track', [
+        'kind' => 'impression',
+        'campaign_ulid' => $campaign->ulid,
+    ])->assertNoContent();
+
+    expect($campaign->refresh()->impressions_count)->toBe(1);
+});
