@@ -47,7 +47,9 @@ if [ ! -f .env.prod ]; then
   read -rp "Email for SSL certificate + web push contact: " EMAIL < /dev/tty
   [ -n "$EMAIL" ] || die "Email is required."
 
-  rand() { tr -dc 'a-zA-Z0-9' </dev/urandom | head -c 32; }
+  # No early-exiting readers here: under pipefail, `tr | head` dies on
+  # SIGPIPE (exit 141) and set -e aborts the whole script silently.
+  rand() { head -c 48 /dev/urandom | base64 | tr -dc 'a-zA-Z0-9' | cut -c1-32; }
 
   DB_PASSWORD="$(rand)"; DB_ROOT_PASSWORD="$(rand)"
   REVERB_KEY="$(rand)"; REVERB_SECRET="$(rand)"
