@@ -14,7 +14,9 @@ return [
     |
     */
 
-    'driver' => env('AI_DRIVER', 'null'),
+    // ?: not a default arg: env() turns the literal string "null" (as shipped
+    // in .env.example) into a real null, which must still mean "disabled".
+    'driver' => env('AI_DRIVER') ?: 'null',
 
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
