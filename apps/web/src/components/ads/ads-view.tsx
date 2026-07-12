@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import type { Campaign, Paginated } from "@/lib/api/types";
+import { useAuthStore } from "@/lib/stores/auth-store-provider";
 
 interface ListState {
   /** Identity of the loaded list (the campaign mutation counter). */
@@ -21,6 +22,7 @@ interface ListState {
 
 export function AdsView() {
   const { openPromote, campaignMutationCount } = usePromote();
+  const isAdmin = useAuthStore((st) => Boolean(st.user?.is_admin));
   const [state, setState] = useState<ListState>({
     key: campaignMutationCount,
     phase: "loading",
@@ -103,6 +105,18 @@ export function AdsView() {
       ),
     }));
   }, []);
+
+
+  // The Ad Center is an admin-only tool; regular accounts see a notice.
+  if (!isAdmin) {
+    return (
+      <EmptyState
+        icon={Megaphone}
+        title="Ad Center is admin-only"
+        description="Promoting posts is currently limited to administrators. Contact an admin if you'd like a post promoted."
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">

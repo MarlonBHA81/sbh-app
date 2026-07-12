@@ -4,6 +4,8 @@ export interface User {
   email: string;
   locale: string | null;
   timezone: string | null;
+  is_admin?: boolean;
+  is_super_admin?: boolean;
   settings: Record<string, unknown> | null;
 }
 

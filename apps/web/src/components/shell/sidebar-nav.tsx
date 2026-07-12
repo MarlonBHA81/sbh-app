@@ -31,6 +31,7 @@ export function SidebarNav() {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const activeProfile = useAuthStore((s) => s.activeProfile);
+  const isAdmin = useAuthStore((s) => Boolean(s.user?.is_admin));
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const unreadMessages = useMessagesStore((s) => s.unreadTotal);
   const { openComposer } = useComposer();
@@ -117,23 +118,25 @@ export function SidebarNav() {
           <Trophy className="size-5" aria-hidden />
           {t("leaderboard")}
         </Link>
-        <Link
-          href="/ads"
-          aria-current={
-            pathname === "/ads" || pathname.startsWith("/ads/")
-              ? "page"
-              : undefined
-          }
-          className={cn(
-            "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
-            pathname === "/ads" || pathname.startsWith("/ads/")
-              ? "bg-accent text-accent-foreground"
-              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-          )}
-        >
-          <Megaphone className="size-5" aria-hidden />
-          {t("adCenter")}
-        </Link>
+        {isAdmin ? (
+          <Link
+            href="/ads"
+            aria-current={
+              pathname === "/ads" || pathname.startsWith("/ads/")
+                ? "page"
+                : undefined
+            }
+            className={cn(
+              "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+              pathname === "/ads" || pathname.startsWith("/ads/")
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+            )}
+          >
+            <Megaphone className="size-5" aria-hidden />
+            {t("adCenter")}
+          </Link>
+        ) : null}
         <Link
           href="/insights"
           aria-current={pathname === "/insights" ? "page" : undefined}

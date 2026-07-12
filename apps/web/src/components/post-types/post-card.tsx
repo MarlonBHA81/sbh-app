@@ -173,6 +173,7 @@ export function PostCard({
   const tf = useTranslations("feed");
   const { openComposer, notifyPostsMutated } = useComposer();
   const { openPromote } = usePromote();
+  const isAdmin = useAuthStore((s) => Boolean(s.user?.is_admin));
   const activeUlid = useAuthStore((s) => s.activeProfile?.ulid ?? null);
   const showSensitivePref = useAuthStore((s) =>
     Boolean(s.user?.settings?.show_sensitive),
@@ -484,7 +485,8 @@ export function PostCard({
             </DropdownMenuItem>
             {isOwnPost ? (
               <>
-                {post.status === "published" &&
+                {isAdmin &&
+                post.status === "published" &&
                 post.visibility === "public" &&
                 post.type !== "repost" ? (
                   <>
