@@ -2,7 +2,9 @@
 FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+# --ignore-platform-reqs: the composer image lacks ext-intl etc.; the real
+# platform check matters in the prod stage below, which compiles them all.
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction --ignore-platform-reqs
 
 # ---- Dev image (bind-mounted source, artisan serve) ----
 FROM php:8.3-cli-alpine AS dev
