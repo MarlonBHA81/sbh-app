@@ -13,7 +13,7 @@ import { fileURLToPath } from "node:url";
 const OUT_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "public", "icons");
 
 // Brand colors.
-const BG = [124, 58, 237, 255]; // violet-600 #7c3aed
+const BG = [78, 138, 136, 255]; // SBH Muted Teal #4e8a88
 const FG = [255, 255, 255, 255]; // white
 
 // 5x7 pixel font for S, B, H.
