@@ -44,12 +44,16 @@ class IntegrationSettingsProvider extends ServiceProvider
             config(['ai.driver' => $driver]);
         }
 
+        // Key/model apply to whichever provider is selected (anthropic
+        // stays the fallback so pre-OpenAI settings keep working).
+        $provider = in_array($driver, ['anthropic', 'openai'], true) ? $driver : 'anthropic';
+
         if ($apiKey !== null && $apiKey !== '') {
-            config(['ai.anthropic.api_key' => $apiKey]);
+            config(["ai.{$provider}.api_key" => $apiKey]);
         }
 
         if ($model !== null && $model !== '') {
-            config(['ai.anthropic.model' => $model]);
+            config(["ai.{$provider}.model" => $model]);
         }
     }
 

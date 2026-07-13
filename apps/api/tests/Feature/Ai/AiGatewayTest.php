@@ -79,3 +79,65 @@ test('the anthropic driver swallows transport and http failures', function () {
     expect($driver->moderateText('text'))->toBeNull()
         ->and($driver->suggestTopics('text'))->toBe([]);
 });
+
+test('the container binds the openai driver when selected', function () {
+    config(['ai.driver' => 'openai', 'ai.openai.api_key' => 'sk-test']);
+    app()->forgetInstance(AiGateway::class);
+
+    expect(app(AiGateway::class))->toBeInstanceOf(\App\Services\Ai\Drivers\OpenAiDriver::class);
+});
+
+test('the openai driver is disabled without an api key', function () {
+    $driver = new \App\Services\Ai\Drivers\OpenAiDriver(['api_key' => null]);
+
+    expect($driver->enabled())->toBeFalse()
+        ->and($driver->moderateText('text'))->toBeNull()
+        ->and($driver->suggestTopics('text'))->toBe([]);
+});
+
+test('the openai driver parses a moderation response', function () {
+    Http::fake([
+        'api.openai.com/*' => Http::response([
+            'choices' => [[
+                'message' => [
+                    'role' => 'assistant',
+                    'content' => '{"flagged": true, "categories": ["spam", "bogus"], "confidence": 1.4, "summary": "Spammy."}',
+                ],
+            ]],
+        ]),
+    ]);
+
+    $driver = new \App\Services\Ai\Drivers\OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
+
+    $result = $driver->moderateText('buy now cheap deal');
+
+    expect($result->flagged)->toBeTrue()
+        ->and($result->categories)->toBe(['spam']) // unknown category dropped
+        ->and($result->confidence)->toBe(1.0)      // clamped
+        ->and($result->summary)->toBe('Spammy.');
+});
+
+test('the openai driver parses a topic-suggestion response', function () {
+    Http::fake([
+        'api.openai.com/*' => Http::response([
+            'choices' => [[
+                'message' => ['role' => 'assistant', 'content' => '{"slugs": ["Cash Flow", "finance"]}'],
+            ]],
+        ]),
+    ]);
+
+    $driver = new \App\Services\Ai\Drivers\OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
+
+    expect($driver->suggestTopics('managing money'))->toBe(['cash-flow', 'finance']);
+});
+
+test('the openai driver swallows transport and http failures', function () {
+    Http::fake([
+        'api.openai.com/*' => Http::response('nope', 500),
+    ]);
+
+    $driver = new \App\Services\Ai\Drivers\OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
+
+    expect($driver->moderateText('text'))->toBeNull()
+        ->and($driver->suggestTopics('text'))->toBe([]);
+});

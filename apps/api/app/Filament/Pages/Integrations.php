@@ -82,6 +82,7 @@ class Integrations extends Page
                             ->options([
                                 'null' => 'Disabled',
                                 'anthropic' => 'Anthropic (Claude)',
+                                'openai' => 'OpenAI (GPT)',
                             ])
                             ->default('null')
                             ->required()
@@ -93,7 +94,8 @@ class Integrations extends Page
                             ->autocomplete(false),
                         TextInput::make('ai_model')
                             ->label('Model')
-                            ->default('claude-haiku-4-5-20251001'),
+                            ->default('claude-haiku-4-5-20251001')
+                            ->helperText('e.g. claude-haiku-4-5-20251001 (Anthropic) or gpt-4o-mini (OpenAI).'),
                     ]),
 
                 Section::make('Email')

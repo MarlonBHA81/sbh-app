@@ -18,6 +18,13 @@ return [
     // in .env.example) into a real null, which must still mean "disabled".
     'driver' => env('AI_DRIVER') ?: 'null',
 
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com'),
+        'timeout' => (int) env('ANTHROPIC_TIMEOUT', 15),
+    ],
+
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
 

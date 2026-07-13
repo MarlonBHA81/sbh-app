@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\Ai\AiGateway;
 use App\Services\Ai\Drivers\AnthropicAiDriver;
+use App\Services\Ai\Drivers\OpenAiDriver;
 use App\Services\Ai\Drivers\NullAiDriver;
 use App\Services\Posts\PostTypeRegistry;
 use App\Services\SafetyService;
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AiGateway::class, function () {
             return match (config('ai.driver')) {
                 'anthropic' => new AnthropicAiDriver(config('ai.anthropic', [])),
+                'openai' => new OpenAiDriver(config('ai.openai', [])),
                 default => new NullAiDriver,
             };
         });
