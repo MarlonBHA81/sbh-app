@@ -52,6 +52,11 @@ sed -i "s/example.com/$DOMAIN/g" docker/nginx/prod.conf
 echo "==> Rebuilding and restarting containers"
 "${COMPOSE[@]}" up -d --build --remove-orphans
 
+# nginx's config is a bind mount — compose won't recreate the container
+# when only the file's contents change, so always reload it explicitly.
+echo "==> Restarting nginx to apply config"
+"${COMPOSE[@]}" restart nginx
+
 echo "==> Running database migrations"
 "${COMPOSE[@]}" exec -T api php artisan migrate --force
 
