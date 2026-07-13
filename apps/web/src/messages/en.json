@@ -164,7 +164,9 @@
     "attachPhotos": "Attach photos",
     "sendMessage": "Send message",
     "emptyTitle": "No messages yet",
-    "emptySubtitle": "Start a conversation to see it here."
+    "emptySubtitle": "Start a conversation to see it here.",
+    "groupPending": "This group is awaiting admin approval — messaging unlocks once it's approved.",
+    "groupRejected": "This group wasn't approved by the moderators."
   },
   "settings": {
     "title": "Settings",
@@ -251,7 +253,9 @@
     "postQuoted": "quoted your post",
     "rankUnlockedNamed": "You unlocked the {rank} rank",
     "rankUnlocked": "You unlocked a new rank",
-    "fallback": "sent you a notification"
+    "fallback": "sent you a notification",
+    "groupApproved": "Your group was approved — start chatting!",
+    "groupRejected": "Your group wasn't approved"
   },
   "offline": {
     "title": "You're offline",

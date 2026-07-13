@@ -164,7 +164,9 @@
     "attachPhotos": "Joindre des photos",
     "sendMessage": "Envoyer le message",
     "emptyTitle": "Aucun message pour l'instant",
-    "emptySubtitle": "Démarrez une conversation pour la voir ici."
+    "emptySubtitle": "Démarrez une conversation pour la voir ici.",
+    "groupPending": "Ce groupe attend l'approbation d'un administrateur — la messagerie s'activera ensuite.",
+    "groupRejected": "Ce groupe n'a pas été approuvé par les modérateurs."
   },
   "settings": {
     "title": "Paramètres",
@@ -251,7 +253,9 @@
     "postQuoted": "a cité votre publication",
     "rankUnlockedNamed": "Vous avez débloqué le rang {rank}",
     "rankUnlocked": "Vous avez débloqué un nouveau rang",
-    "fallback": "vous a envoyé une notification"
+    "fallback": "vous a envoyé une notification",
+    "groupApproved": "Votre groupe a été approuvé — à vous de jouer !",
+    "groupRejected": "Votre groupe n'a pas été approuvé"
   },
   "offline": {
     "title": "Vous êtes hors ligne",

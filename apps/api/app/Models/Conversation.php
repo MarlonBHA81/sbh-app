@@ -20,9 +20,17 @@ class Conversation extends Model
 
     public const KIND_GROUP = 'group';
 
+    public const APPROVAL_PENDING = 'pending';
+
+    public const APPROVAL_APPROVED = 'approved';
+
+    public const APPROVAL_REJECTED = 'rejected';
+
     protected $fillable = [
         'ulid',
         'kind',
+        'approval_status',
+        'approved_at',
         'title',
         'avatar_path',
         'rules',
@@ -35,6 +43,7 @@ class Conversation extends Model
     {
         return [
             'last_message_at' => 'datetime',
+            'approved_at' => 'datetime',
             'messages_count' => 'integer',
         ];
     }
@@ -93,6 +102,12 @@ class Conversation extends Model
     public function isGroup(): bool
     {
         return $this->kind === self::KIND_GROUP;
+    }
+
+    /** DMs are always usable; groups only once an admin approves them. */
+    public function isApproved(): bool
+    {
+        return $this->isDm() || $this->approval_status === self::APPROVAL_APPROVED;
     }
 
     /**

@@ -96,6 +96,8 @@ class MessagingService
         return DB::transaction(function () use ($creator, $title, $rules, $members) {
             $conversation = Conversation::create([
                 'kind' => Conversation::KIND_GROUP,
+                // Groups launch only after an admin approves them.
+                'approval_status' => Conversation::APPROVAL_PENDING,
                 'title' => $title,
                 'rules' => $rules,
                 'created_by_profile_id' => $creator->id,
@@ -126,6 +128,14 @@ class MessagingService
      */
     public function sendMessage(Conversation $conversation, Profile $sender, array $data): Message
     {
+        if (! $conversation->isApproved()) {
+            throw ValidationException::withMessages([
+                'conversation' => [$conversation->approval_status === Conversation::APPROVAL_REJECTED
+                    ? 'This group was not approved by the moderators.'
+                    : 'This group is awaiting admin approval.'],
+            ]);
+        }
+
         $body = isset($data['body']) && trim((string) $data['body']) !== '' ? $data['body'] : null;
         $mediaIds = $data['media_ids'] ?? [];
 

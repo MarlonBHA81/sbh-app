@@ -19,6 +19,14 @@ function makeGroup(array $memberUsers, ?string $rules = null): array
         'rules' => $rules,
     ]))->assertCreated()->json('data.ulid');
 
+    // Groups start pending (admin approval); approve so feature tests that
+    // exercise group behaviour aren't blocked. GroupApprovalTest covers the
+    // pending flow itself.
+    Conversation::firstWhere('ulid', $ulid)->update([
+        'approval_status' => Conversation::APPROVAL_APPROVED,
+        'approved_at' => now(),
+    ]);
+
     return [$owner, $memberUsers, $ulid];
 }
 

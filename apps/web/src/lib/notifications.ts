@@ -1,4 +1,5 @@
 import {
+  Users,
   AtSign,
   Heart,
   MessageCircle,
@@ -53,6 +54,8 @@ const ACTION_KEY: Record<NotificationType, string> = {
   post_reposted: "postReposted",
   post_quoted: "postQuoted",
   rank_unlocked: "rankUnlocked",
+  group_approved: "groupApproved",
+  group_rejected: "groupRejected",
 };
 
 /** A translator function, e.g. from `useTranslations("notifications")`. */
@@ -70,6 +73,8 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   post_reposted: Repeat2,
   post_quoted: Quote,
   rank_unlocked: Trophy,
+  group_approved: Users,
+  group_rejected: Users,
 };
 
 /** Trailing action text, e.g. "liked your post". Localized via `t`. */
@@ -95,6 +100,12 @@ export function notificationIcon(notification: AppNotification): LucideIcon {
 export function notificationHref(notification: AppNotification): string {
   const { data } = notification;
   if (notification.type === "rank_unlocked") return "/leaderboard";
+  if (
+    notification.type === "group_approved" ||
+    notification.type === "group_rejected"
+  ) {
+    return "/messages";
+  }
   if (data.post_ulid) return `/p/${data.post_ulid}`;
   if (data.actor) return `/${data.actor.handle}`;
   return "/notifications";

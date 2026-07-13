@@ -33,6 +33,7 @@ class ConversationResource extends JsonResource
             'title' => $this->isDm() ? null : $this->title,
             'avatar_url' => $this->avatarUrl(),
             'rules' => $this->isGroup() ? $this->rules : null,
+            'approval_status' => $this->isGroup() ? $this->approval_status : null,
             'participants' => $active->map(fn (ConversationParticipant $p) => [
                 'role' => $p->role,
                 'profile' => MessagePayload::liteProfile($p->profile),

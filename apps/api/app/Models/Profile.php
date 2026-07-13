@@ -88,6 +88,12 @@ class Profile extends Model
         );
     }
 
+    public function challenges(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\Challenge::class, 'challenge_participants')
+            ->withPivot('joined_at');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

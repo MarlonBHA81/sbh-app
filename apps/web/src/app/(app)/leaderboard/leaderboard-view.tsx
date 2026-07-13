@@ -42,7 +42,7 @@ function PositionMarker({ position }: { position: number }) {
   );
 }
 
-function Row({ row, isViewer }: { row: LeaderboardRow; isViewer: boolean }) {
+export function Row({ row, isViewer }: { row: LeaderboardRow; isViewer: boolean }) {
   const { profile, position, xp } = row;
   return (
     <Link
@@ -75,7 +75,7 @@ function Row({ row, isViewer }: { row: LeaderboardRow; isViewer: boolean }) {
   );
 }
 
-function RowSkeleton() {
+export function RowSkeleton() {
   return (
     <div className="flex items-center gap-3 rounded-xl border px-3 py-2.5">
       <Skeleton className="h-5 w-8" />

@@ -124,6 +124,7 @@ class DemoContentSeeder extends Seeder
         $this->createPosts();
         $this->engage();
         $this->seedMessaging();
+        $this->seedChallenge();
         $this->seedBusinessNeeds();
         $this->backfillXpHistory();
         $this->seedAds();
@@ -891,6 +892,23 @@ class DemoContentSeeder extends Seeder
     // Messaging
     // ------------------------------------------------------------------
 
+    private function seedChallenge(): void
+    {
+        $challenge = \App\Models\Challenge::create([
+            'title' => 'July Hustle Challenge',
+            'description' => 'Earn the most XP this month — post, engage and climb the board. Top three win a shout-out from SBH Community.',
+            'starts_at' => now()->subDays(7),
+            'ends_at' => now()->addDays(21),
+            'is_active' => true,
+        ]);
+
+        foreach ($this->profiles as $profile) {
+            if ($profile->kind === 'personal') {
+                $challenge->participants()->attach($profile->id, ['joined_at' => now()->subDays(5)]);
+            }
+        }
+    }
+
     private function seedMessaging(): void
     {
         // DM 1: thabo <-> lerato (site work), with reactions + read states.
@@ -930,6 +948,12 @@ class DemoContentSeeder extends Seeder
             ],
             "1. Business talk first, memes second.\n2. No selling to members without asking.\n3. What is shared in the group stays in the group.",
         );
+
+        // Demo group ships pre-approved so its seeded chatter can send.
+        $group->update([
+            'approval_status' => \App\Models\Conversation::APPROVAL_APPROVED,
+            'approved_at' => now(),
+        ]);
 
         $t1 = $this->dm($group, 'thabo', 'Welcome to the trader crew! 🤝 Rule number one is in the group rules. Read them.');
         $t2 = $this->dm($group, 'karabo', 'Already breaking rule 1 with this: anyone need a December promo designed? Special group rate. 😄');

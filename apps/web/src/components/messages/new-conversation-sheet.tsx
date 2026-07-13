@@ -94,6 +94,7 @@ export function NewConversationSheet({
         },
       );
       goToConversation(res.data);
+      toast.info("Group created — it goes live once an admin approves it.");
     } catch (error) {
       setBusy(false);
       toast.error(

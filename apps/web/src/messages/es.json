@@ -164,7 +164,9 @@
     "attachPhotos": "Adjuntar fotos",
     "sendMessage": "Enviar mensaje",
     "emptyTitle": "Aún no hay mensajes",
-    "emptySubtitle": "Inicia una conversación para verla aquí."
+    "emptySubtitle": "Inicia una conversación para verla aquí.",
+    "groupPending": "Este grupo espera la aprobación de un administrador; los mensajes se activan al aprobarse.",
+    "groupRejected": "Los moderadores no aprobaron este grupo."
   },
   "settings": {
     "title": "Ajustes",
@@ -251,7 +253,9 @@
     "postQuoted": "citó tu publicación",
     "rankUnlockedNamed": "Desbloqueaste el rango {rank}",
     "rankUnlocked": "Desbloqueaste un nuevo rango",
-    "fallback": "te envió una notificación"
+    "fallback": "te envió una notificación",
+    "groupApproved": "Tu grupo fue aprobado: ¡a chatear!",
+    "groupRejected": "Tu grupo no fue aprobado"
   },
   "offline": {
     "title": "Estás sin conexión",

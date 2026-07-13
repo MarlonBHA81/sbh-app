@@ -620,12 +620,21 @@ export function ChatView({ ulid }: { ulid: string }) {
       ) : null}
 
       {conversation ? (
-        <MessageComposer
-          replyTo={replyTo}
-          onCancelReply={() => setReplyTo(null)}
-          onSend={handleSend}
-          onTyping={handleTyping}
-        />
+        conversation.approval_status === "pending" ||
+        conversation.approval_status === "rejected" ? (
+          <div className="border-t px-4 py-4 text-center text-sm text-muted-foreground">
+            {conversation.approval_status === "pending"
+              ? t("groupPending")
+              : t("groupRejected")}
+          </div>
+        ) : (
+          <MessageComposer
+            replyTo={replyTo}
+            onCancelReply={() => setReplyTo(null)}
+            onSend={handleSend}
+            onTyping={handleTyping}
+          />
+        )
       ) : null}
 
       {conversation ? (

@@ -347,7 +347,9 @@ export type NotificationType =
   | "mentioned"
   | "post_reposted"
   | "post_quoted"
-  | "rank_unlocked";
+  | "rank_unlocked"
+  | "group_approved"
+  | "group_rejected";
 
 export interface NotificationActor {
   ulid: string;
@@ -412,6 +414,8 @@ export interface Conversation {
   title: string | null;
   avatar_path: string | null;
   rules: string | null;
+  /** Groups only: pending until an admin approves; null for DMs. */
+  approval_status: "pending" | "approved" | "rejected" | null;
   participants: ConversationParticipant[];
   last_message: ConversationLastMessage | null;
   unread_count: number;
@@ -696,4 +700,22 @@ export interface AnalyticsPostRow {
   comments: number;
   reposts: number;
   engagement_rate_pct: number;
+}
+
+/** An admin-created XP challenge (GET /api/v1/challenges). */
+export interface Challenge {
+  ulid: string;
+  title: string;
+  description: string | null;
+  starts_at: string;
+  ends_at: string;
+  status: "upcoming" | "active" | "ended";
+  participants_count: number;
+  joined: boolean;
+}
+
+/** Challenge detail adds its leaderboard (GET /api/v1/challenges/{ulid}). */
+export interface ChallengeDetail extends Challenge {
+  entries: LeaderboardRow[];
+  me: LeaderboardViewer | null;
 }

@@ -61,6 +61,7 @@ class MasterResetService
         'media',
         'upload_sessions',
         // Social graph.
+        'challenge_participants',
         'follows',
         'topic_follows',
         'blocks',

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\BusinessEventController;
 use App\Http\Controllers\Api\V1\BusinessMatchController;
 use App\Http\Controllers\Api\V1\BusinessNeedController;
 use App\Http\Controllers\Api\V1\CampaignController;
+use App\Http\Controllers\Api\V1\ChallengeController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
 use App\Http\Controllers\Api\V1\ConversationController;
@@ -175,6 +176,10 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // Gamification: XP, ranks and leaderboards.
     Route::get('me/xp', [GamificationController::class, 'xp']);
     Route::get('gamification/leaderboard', [GamificationController::class, 'leaderboard']);
+    Route::get('challenges', [ChallengeController::class, 'index']);
+    Route::get('challenges/{challenge}', [ChallengeController::class, 'show']);
+    Route::post('challenges/{challenge}/join', [ChallengeController::class, 'join']);
+    Route::delete('challenges/{challenge}/join', [ChallengeController::class, 'leave']);
     Route::get('gamification/ranks', [GamificationController::class, 'ranks']);
 
     Route::get('me/topics', [TopicController::class, 'mine']);

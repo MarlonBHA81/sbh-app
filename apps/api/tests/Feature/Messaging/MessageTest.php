@@ -176,6 +176,7 @@ test('messages from a blocked pair are hidden but keep their slot in a group', f
         'member_ulids' => [$friend->personalProfile->ulid, $foe->personalProfile->ulid],
     ])->json('data.ulid');
     $conversation = Conversation::firstWhere('ulid', $ulid);
+    $conversation->update(['approval_status' => Conversation::APPROVAL_APPROVED, 'approved_at' => now()]);
 
     $this->actingAs($foe)->postJson("/api/v1/conversations/{$conversation->ulid}/messages", ['body' => 'secret']);
     $this->actingAs($friend)->postJson("/api/v1/conversations/{$conversation->ulid}/messages", ['body' => 'visible']);

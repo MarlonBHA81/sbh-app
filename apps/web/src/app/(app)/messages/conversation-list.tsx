@@ -84,6 +84,15 @@ function ConversationRow({
           >
             {title}
           </span>
+          {conversation.approval_status === "pending" ? (
+            <span className="shrink-0 rounded-full bg-warmgray px-2 py-0.5 text-[10px] font-medium text-text-secondary">
+              Pending
+            </span>
+          ) : conversation.approval_status === "rejected" ? (
+            <span className="shrink-0 rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-medium text-destructive">
+              Not approved
+            </span>
+          ) : null}
           {conversation.last_message ? (
             <time
               dateTime={conversation.last_message.created_at}
