@@ -21,15 +21,17 @@ type SlotState =
   | { phase: "ready"; slot: AdSlot };
 
 /**
- * Fetch a sponsor slot once per mount. Returns `null` while loading or when
- * there is nothing to show (204, error, or dismissed) so callers can render
- * nothing without branching on phases.
+ * Fetch a sponsor slot once per mount. `slot` is `null` while loading or when
+ * there is nothing to show (204, error, or dismissed). `status` lets callers
+ * distinguish genuinely unsold inventory ("empty" — show an ad-spot
+ * placeholder) from loading or a viewer dismissal (show nothing).
  */
 export function useSponsorSlot(
   placement: Placement,
   { enabled = true }: { enabled?: boolean } = {},
 ): {
   slot: AdSlot | null;
+  status: "loading" | "empty" | "ready" | "dismissed";
   dismiss: () => void;
 } {
   const [state, setState] = useState<SlotState>(() =>
@@ -67,6 +69,7 @@ export function useSponsorSlot(
 
   return {
     slot: !dismissed && state.phase === "ready" ? state.slot : null,
+    status: dismissed ? "dismissed" : state.phase,
     dismiss,
   };
 }

@@ -15,9 +15,6 @@ export function SbhMark({
   className?: string;
 }) {
   const badge = variant === "badge";
-  const ink = badge ? "#f5f1e8" : "#4e8a88";
-  const swirlOuter = badge ? "#a9c6c4" : "#a9c6c4";
-  const swirlInner = badge ? "#f5f1e8" : "#4e8a88";
 
   return (
     <svg
@@ -28,47 +25,84 @@ export function SbhMark({
     >
       {badge ? <circle cx="50" cy="50" r="48" fill="#4e8a88" /> : null}
       <g fill="none" strokeLinecap="round">
-        {/* Outer brush swirl — two offset incomplete rings. */}
-        <circle
-          cx="50"
-          cy="50"
-          r={badge ? 40 : 46}
-          stroke={swirlOuter}
-          strokeWidth={badge ? 3 : 3.5}
-          strokeDasharray={badge ? "215 36" : "245 44"}
-          transform="rotate(-55 50 50)"
-        />
-        <circle
-          cx="50"
-          cy="50"
-          r={badge ? 35 : 40}
-          stroke={swirlOuter}
-          strokeWidth={badge ? 5.5 : 6}
-          strokeDasharray={badge ? "180 40" : "205 46"}
-          transform="rotate(115 50 50)"
-          opacity="0.75"
-        />
-        {/* Inner accent arc. */}
-        <circle
-          cx="50"
-          cy="50"
-          r={badge ? 29 : 33}
-          stroke={swirlInner}
-          strokeWidth={badge ? 2.5 : 3}
-          strokeDasharray={badge ? "150 32" : "170 37"}
-          transform="rotate(40 50 50)"
-          opacity={badge ? 0.9 : 0.8}
-        />
+        {badge ? (
+          <>
+            {/* Badge: thin pale swirls over the teal disc (brand badge). */}
+            <circle
+              cx="50"
+              cy="50"
+              r="44"
+              stroke="#dce9e8"
+              strokeWidth="1.5"
+              strokeDasharray="221 55"
+              transform="rotate(-70 50 50)"
+              opacity="0.85"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="38.5"
+              stroke="#a9c6c4"
+              strokeWidth="3.6"
+              strokeDasharray="203 39"
+              transform="rotate(105 50 50)"
+              opacity="0.75"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="31.5"
+              stroke="#e9f0ef"
+              strokeWidth="1.4"
+              strokeDasharray="154 44"
+              transform="rotate(20 50 50)"
+              opacity="0.9"
+            />
+          </>
+        ) : (
+          <>
+            {/* Transparent mark: sage swirls with a teal accent arc. */}
+            <circle
+              cx="50"
+              cy="50"
+              r="46"
+              stroke="#a9c6c4"
+              strokeWidth="3.5"
+              strokeDasharray="245 44"
+              transform="rotate(-55 50 50)"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              stroke="#a9c6c4"
+              strokeWidth="6"
+              strokeDasharray="205 46"
+              transform="rotate(115 50 50)"
+              opacity="0.75"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="33"
+              stroke="#4e8a88"
+              strokeWidth="3"
+              strokeDasharray="170 37"
+              transform="rotate(40 50 50)"
+              opacity="0.8"
+            />
+          </>
+        )}
       </g>
       <text
         x="50"
         y="51.5"
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize="27"
-        fontWeight="600"
+        fontSize={badge ? 25 : 27}
+        fontWeight={badge ? 500 : 600}
         letterSpacing="-0.5"
-        fill={ink}
+        fill={badge ? "#f7f4ec" : "#4e8a88"}
         style={{ fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}
       >
         sbh

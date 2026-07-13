@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 
+import { AdSpotPlaceholder } from "@/components/ads/ad-spot-placeholder";
 import { SponsorCard, useSponsorSlot } from "@/components/ads/sponsor-card";
 import { PostCard } from "@/components/post-types/post-card";
 import { SeenTracker } from "@/components/posts/seen-tracker";
@@ -17,8 +18,11 @@ import type { Paginated, Post } from "@/lib/api/types";
 import { useModerationStore } from "@/lib/stores/moderation-store";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 
-/** Insert an inline sponsor card after every Nth feed item. */
-const INLINE_SPONSOR_INTERVAL = 15;
+/**
+ * Insert an inline ad unit after every Nth feed item — a sponsor card when a
+ * campaign fills the slot, otherwise a visible "ad spot" placeholder.
+ */
+const INLINE_SPONSOR_INTERVAL = 8;
 
 /** In low data mode, ask for smaller pages (the backend may ignore it). */
 function withListParams(url: string): string {
@@ -99,10 +103,11 @@ export function PostList({
   const [retry, setRetry] = useState(0);
   const key = `${String(refreshKey)}#${retry}`;
   const hiddenProfileUlids = useModerationStore((s) => s.hiddenProfileUlids);
-  const { slot: inlineSlot, dismiss: dismissInlineSlot } = useSponsorSlot(
-    "feed_inline",
-    { enabled: showInlineSponsors },
-  );
+  const {
+    slot: inlineSlot,
+    status: inlineSlotStatus,
+    dismiss: dismissInlineSlot,
+  } = useSponsorSlot("feed_inline", { enabled: showInlineSponsors });
 
   const [state, setState] = useState<ListState>({
     key,
@@ -275,10 +280,8 @@ export function PostList({
         ) : (
           <PostCard post={post} />
         );
-        const showSponsorAfter =
-          showInlineSponsors &&
-          inlineSlot !== null &&
-          (index + 1) % INLINE_SPONSOR_INTERVAL === 0;
+        const isAdPosition =
+          showInlineSponsors && (index + 1) % INLINE_SPONSOR_INTERVAL === 0;
         return (
           <div key={post.ulid} className="contents">
             {trackViews ? (
@@ -286,12 +289,14 @@ export function PostList({
             ) : (
               <div>{item}</div>
             )}
-            {showSponsorAfter && inlineSlot ? (
+            {isAdPosition && inlineSlot ? (
               <SponsorCard
                 slot={inlineSlot}
                 variant="inline"
                 onDismiss={dismissInlineSlot}
               />
+            ) : isAdPosition && inlineSlotStatus === "empty" ? (
+              <AdSpotPlaceholder variant="inline" />
             ) : null}
           </div>
         );
