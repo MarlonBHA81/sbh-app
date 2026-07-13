@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { PushSettings } from "@/components/notifications/push-settings";
+import { DataPrivacySettings } from "@/components/settings/data-privacy-settings";
 import { LanguagePicker } from "@/components/settings/language-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -636,6 +637,7 @@ export default function ProfileSettingsPage() {
       <MessagingSettings />
       <PrivacySafetySettings />
       <PushSettings />
+      <DataPrivacySettings />
     </div>
   );
 }

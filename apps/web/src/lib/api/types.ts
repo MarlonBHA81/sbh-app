@@ -6,6 +6,8 @@ export interface User {
   timezone: string | null;
   is_admin?: boolean;
   is_super_admin?: boolean;
+  /** Whether the account has a password (false for social-only accounts). */
+  has_password?: boolean;
   settings: Record<string, unknown> | null;
 }
 

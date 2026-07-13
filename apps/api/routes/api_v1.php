@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\BusinessDirectoryController;
 use App\Http\Controllers\Api\V1\BusinessEventController;
 use App\Http\Controllers\Api\V1\BusinessMatchController;
 use App\Http\Controllers\Api\V1\BusinessNeedController;
+use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\ChallengeController;
 use App\Http\Controllers\Api\V1\CommentController;
@@ -103,6 +104,9 @@ Route::middleware('profile.active')->group(function () {
 Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(function () {
     Route::get('me', [MeController::class, 'show']);
     Route::patch('me', [MeController::class, 'update']);
+    // Data-subject rights (GDPR/POPIA): export + account deletion.
+    Route::get('me/export', [AccountController::class, 'export']);
+    Route::delete('me/account', [AccountController::class, 'destroy'])->middleware('throttle:auth');
 
     Route::get('me/profiles', [MyProfileController::class, 'index']);
     Route::post('me/profiles', [MyProfileController::class, 'store']);

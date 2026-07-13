@@ -5,6 +5,7 @@ import { getLocale } from "next-intl/server";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { CookieConsent } from "@/components/legal/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
 import { localeDir, type Locale } from "@/i18n/config";
 import { AuthStoreProvider } from "@/lib/stores/auth-store-provider";
@@ -130,6 +131,7 @@ export default async function RootLayout({
           >
             <AuthStoreProvider>
               {children}
+              <CookieConsent />
               <Toaster position="top-center" />
             </AuthStoreProvider>
           </ThemeProvider>
