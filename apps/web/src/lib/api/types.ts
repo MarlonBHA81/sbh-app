@@ -499,8 +499,10 @@ export interface LeaderboardViewer {
 
 /** GET /api/v1/gamification/leaderboard */
 export interface LeaderboardResponse {
-  data: LeaderboardRow[];
-  viewer: LeaderboardViewer | null;
+  period: LeaderboardPeriod;
+  entries: LeaderboardRow[];
+  /** The viewer's own row ("me"), possibly outside the returned page. */
+  me: LeaderboardViewer | null;
 }
 
 export type LeaderboardPeriod = "weekly" | "all";

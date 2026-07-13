@@ -148,7 +148,7 @@ function Board({ period }: { period: LeaderboardPeriod }) {
     );
   }
 
-  const { data, viewer } = state.data;
+  const { entries: data, me: viewer } = state.data;
 
   if (data.length === 0) {
     return (

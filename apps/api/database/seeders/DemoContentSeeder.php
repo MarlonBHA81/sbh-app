@@ -197,6 +197,8 @@ class DemoContentSeeder extends Seeder
                 'location' => $city['city'].', South Africa',
             ]);
 
+            $this->attachProfileImages($profile);
+
             $this->users[$handle] = $user;
             $this->profiles[$handle] = $profile;
         }
@@ -240,6 +242,8 @@ class DemoContentSeeder extends Seeder
                 'share_location' => true,
                 'location' => $city['city'].', South Africa',
             ]);
+
+            $this->attachProfileImages($profile, withCover: true);
 
             $this->profiles[$handle] = $profile;
         }
@@ -1202,6 +1206,47 @@ class DemoContentSeeder extends Seeder
      * initials) with GD and run it through the real MediaService pipeline so
      * WebP conversion, sizing and thumbnails behave exactly like an upload.
      */
+
+    /** Deterministic brand-adjacent avatar color per handle. */
+    private function avatarColor(string $handle): string
+    {
+        $palette = ['4e8a88', '683f59', '5d7868', 'b38236', '575093', '447b78', '89386f', '549c65'];
+
+        return $palette[crc32($handle) % count($palette)];
+    }
+
+    /**
+     * Generate and attach a profile avatar (and optionally a wide cover),
+     * stored directly on the public disk.
+     */
+    private function attachProfileImages(Profile $profile, bool $withCover = false): void
+    {
+        $initials = mb_strtoupper(mb_substr($profile->name, 0, 1));
+        if (preg_match('/\s(\p{L})/u', $profile->name, $m)) {
+            $initials .= mb_strtoupper($m[1]);
+        }
+
+        $color = $this->avatarColor($profile->handle);
+
+        $png = $this->generatePng($initials, $color, 512, 512);
+        $avatarPath = 'media/avatars/'.$profile->handle.'.png';
+        Storage::disk('public')->put($avatarPath, (string) file_get_contents($png));
+        @unlink($png);
+
+        $coverPath = null;
+        if ($withCover) {
+            $png = $this->generatePng($initials, $color, 1500, 500);
+            $coverPath = 'media/covers/'.$profile->handle.'.png';
+            Storage::disk('public')->put($coverPath, (string) file_get_contents($png));
+            @unlink($png);
+        }
+
+        $profile->forceFill([
+            'avatar_path' => $avatarPath,
+            'cover_path' => $coverPath ?? $profile->cover_path,
+        ])->save();
+    }
+
     private function makeImage(Profile $profile, string $initials, string $hexColor, int $width = 1200, int $height = 900): Media
     {
         $path = $this->generatePng($initials, $hexColor, $width, $height);

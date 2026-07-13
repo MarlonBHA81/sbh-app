@@ -17,6 +17,7 @@ import {
   notificationAction,
   notificationHref,
   notificationIcon,
+  normalizeNotification,
 } from "@/lib/notifications";
 import { isPushSupported, pushPermission, subscribeToPush } from "@/lib/push";
 import { useNotificationsStore } from "@/lib/stores/notifications-store";
@@ -218,7 +219,9 @@ export function NotificationsView() {
         if (cancelled) return;
         // Merge any notifications that already arrived live before mount.
         const live = useNotificationsStore.getState().live;
-        const merged = [...res.data];
+        const merged = res.data
+          .map(normalizeNotification)
+          .filter((n): n is AppNotification => n !== null);
         merged.forEach((n) => seenIds.current.add(n.id));
         const extras = live.filter((n) => !seenIds.current.has(n.id));
         extras.forEach((n) => seenIds.current.add(n.id));
@@ -262,7 +265,10 @@ export function NotificationsView() {
         `/api/v1/notifications?cursor=${encodeURIComponent(state.cursor)}`,
       );
       setState((prev) => {
-        const next = res.data.filter((n) => !seenIds.current.has(n.id));
+        const next = res.data
+          .map(normalizeNotification)
+          .filter((n): n is AppNotification => n !== null)
+          .filter((n) => !seenIds.current.has(n.id));
         next.forEach((n) => seenIds.current.add(n.id));
         return {
           ...prev,

@@ -29,7 +29,7 @@ class ProfileResource extends JsonResource
             'kind' => $this->kind,
             'handle' => $this->handle,
             'name' => $this->name,
-            'avatar_path' => $blocked ? null : $this->avatar_path,
+            'avatar_url' => $blocked ? null : $this->avatarUrl(),
             'is_private' => $blocked ? true : $this->is_private,
             'is_verified' => $this->is_verified,
             'relationship' => $relationship,
@@ -52,7 +52,7 @@ class ProfileResource extends JsonResource
         return $base + [
             'limited' => false,
             'bio' => $this->bio,
-            'cover_path' => $this->cover_path,
+            'cover_url' => $this->coverUrl(),
             'category' => $this->category,
             'business_category' => $this->when(
                 $this->relationLoaded('businessCategory') && $this->businessCategory !== null,
