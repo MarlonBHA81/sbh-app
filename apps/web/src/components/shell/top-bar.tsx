@@ -2,6 +2,7 @@
 
 import { Gauge } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { SbhLogo } from "@/components/brand/sbh-logo";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -12,9 +13,28 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 
+/** Top-level segments that are NOT profile handles. */
+const RESERVED_SEGMENTS = new Set([
+  "home", "feeds", "events", "discover", "business", "messages",
+  "notifications", "leaderboard", "insights", "map", "search",
+  "settings", "topics", "drafts", "ads", "p",
+]);
+
+/** Screens that render their own reskin header instead of the top bar. */
+function hasOwnHeader(pathname: string): boolean {
+  const [first, ...rest] = pathname.split("/").filter(Boolean);
+  if (!first) return false;
+  if (["home", "feeds", "events"].includes(first)) return true;
+  // Profile pages (/{handle}) carry their own header too.
+  return rest.length === 0 && !RESERVED_SEGMENTS.has(first);
+}
+
 export function TopBar() {
+  const pathname = usePathname();
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const lowData = useSettingsStore((s) => s.lowData);
+
+  if (hasOwnHeader(pathname)) return null;
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/90 px-4 backdrop-blur md:hidden">

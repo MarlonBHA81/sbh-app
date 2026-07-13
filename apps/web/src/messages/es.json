@@ -12,7 +12,9 @@
     "settings": "Ajustes",
     "post": "Publicar",
     "primary": "Principal",
-    "unreadCount": "{count} sin leer"
+    "unreadCount": "{count} sin leer",
+    "feeds": "Feeds",
+    "events": "Eventos"
   },
   "common": {
     "cancel": "Cancelar",
@@ -256,5 +258,23 @@
     "body": "No pudimos conectarnos a la red. Las páginas que ya has visitado siguen disponibles desde tu caché.",
     "hint": "Comprueba tu conexión e inténtalo de nuevo.",
     "retry": "Reintentar"
+  },
+  "home": {
+    "hey": "Hola, {name}",
+    "morning": "Buenos días",
+    "afternoon": "Buenas tardes",
+    "evening": "Buenas noches",
+    "prompt1": "Comparte tu idea de Negocio hoy 💡",
+    "prompt2": "¿Qué aprendiste esta Semana? 📚",
+    "prompt3": "Celebra un pequeño Logro hoy 🎉",
+    "writeHere": "Escribe aquí...",
+    "postNow": "Publicar",
+    "quickAccess": "Acceso rápido",
+    "viewAll": "Ver todo",
+    "recentActivity": "Actividad reciente",
+    "forums": "Foros de discusión",
+    "directory": "Directorio de negocios",
+    "tools": "Herramientas de negocio",
+    "promotedPosts": "Publicaciones promocionadas"
   }
 }

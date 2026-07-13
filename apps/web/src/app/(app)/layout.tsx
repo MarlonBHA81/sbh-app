@@ -72,7 +72,7 @@ export default function AppLayout({
           <SidebarNav />
           <div className="flex min-h-dvh w-full min-w-0 flex-1 flex-col">
             <TopBar />
-            <main className="mx-auto w-full max-w-xl flex-1 px-4 py-4 pb-24 md:py-6 md:pb-8">
+            <main className="mx-auto w-full max-w-xl flex-1 px-5 py-4 pb-32 md:py-6 md:pb-8">
               {children}
             </main>
           </div>

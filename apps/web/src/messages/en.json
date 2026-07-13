@@ -12,7 +12,9 @@
     "settings": "Settings",
     "post": "Post",
     "primary": "Primary",
-    "unreadCount": "{count} unread"
+    "unreadCount": "{count} unread",
+    "feeds": "Feeds",
+    "events": "Events"
   },
   "common": {
     "cancel": "Cancel",
@@ -256,5 +258,23 @@
     "body": "We couldn't reach the network. Any pages you've already visited are still available from your cache.",
     "hint": "Check your connection and try again.",
     "retry": "Retry"
+  },
+  "home": {
+    "hey": "Hey {name}",
+    "morning": "Good morning",
+    "afternoon": "Good afternoon",
+    "evening": "Good evening",
+    "prompt1": "Share your Business idea Today 💡",
+    "prompt2": "What did you Learn this week? 📚",
+    "prompt3": "Celebrate a Small win Today 🎉",
+    "writeHere": "Write here...",
+    "postNow": "Post now",
+    "quickAccess": "Quick Access",
+    "viewAll": "View all",
+    "recentActivity": "Recent Activity Feed",
+    "forums": "Discussion Forums",
+    "directory": "Business Directory",
+    "tools": "Business Tools",
+    "promotedPosts": "Promoted Posts"
   }
 }

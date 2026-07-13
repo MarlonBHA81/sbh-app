@@ -16,7 +16,7 @@ export function ComposerFab() {
       size="icon"
       aria-label="New post"
       onClick={() => openComposer()}
-      className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg md:hidden"
+      className="fixed right-5 bottom-[calc(6.25rem+env(safe-area-inset-bottom))] z-40 size-14 rounded-full shadow-lg md:hidden"
     >
       <Plus className="size-6" aria-hidden />
     </Button>

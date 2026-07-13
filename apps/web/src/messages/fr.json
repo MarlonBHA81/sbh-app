@@ -12,7 +12,9 @@
     "settings": "Paramètres",
     "post": "Publier",
     "primary": "Principal",
-    "unreadCount": "{count} non lus"
+    "unreadCount": "{count} non lus",
+    "feeds": "Fils",
+    "events": "Événements"
   },
   "common": {
     "cancel": "Annuler",
@@ -256,5 +258,23 @@
     "body": "Nous n'avons pas pu joindre le réseau. Les pages que vous avez déjà consultées restent accessibles depuis votre cache.",
     "hint": "Vérifiez votre connexion et réessayez.",
     "retry": "Réessayer"
+  },
+  "home": {
+    "hey": "Salut {name}",
+    "morning": "Bonjour",
+    "afternoon": "Bon après-midi",
+    "evening": "Bonsoir",
+    "prompt1": "Partagez votre idée d'Entreprise aujourd'hui 💡",
+    "prompt2": "Qu'avez-vous Appris cette semaine ? 📚",
+    "prompt3": "Célébrez une petite Victoire aujourd'hui 🎉",
+    "writeHere": "Écrivez ici...",
+    "postNow": "Publier",
+    "quickAccess": "Accès rapide",
+    "viewAll": "Tout voir",
+    "recentActivity": "Activité récente",
+    "forums": "Forums de discussion",
+    "directory": "Annuaire des entreprises",
+    "tools": "Outils d'entreprise",
+    "promotedPosts": "Publications sponsorisées"
   }
 }

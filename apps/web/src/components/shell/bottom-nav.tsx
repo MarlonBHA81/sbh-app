@@ -1,77 +1,56 @@
 "use client";
 
+import { CalendarDays, Home, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 import { ProfileAvatar } from "@/components/profile-avatar";
-import { NAV_ITEMS } from "@/components/shell/nav-items";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
-import { useMessagesStore } from "@/lib/stores/messages-store";
-import { useNotificationsStore } from "@/lib/stores/notifications-store";
 import { cn } from "@/lib/utils";
 
-function formatBadge(count: number): string {
-  return count > 99 ? "99+" : String(count);
-}
-
+/**
+ * Floating slate bottom nav (reskin spec): a pill inset 20px from the sides
+ * and 16px from the bottom with Home / Feeds / Events / Profile. Active item
+ * gets a white 12% pill; inactive items are white at 55% opacity.
+ */
 export function BottomNav() {
   const pathname = usePathname();
   const t = useTranslations("nav");
   const activeProfile = useAuthStore((s) => s.activeProfile);
-  const unreadCount = useNotificationsStore((s) => s.unreadCount);
-  const unreadMessages = useMessagesStore((s) => s.unreadTotal);
   const profileHref = activeProfile ? `/${activeProfile.handle}` : "/home";
+
+  const items = [
+    { label: t("home"), href: "/home", icon: Home },
+    { label: t("feeds"), href: "/feeds", icon: Newspaper },
+    { label: t("events"), href: "/events", icon: CalendarDays },
+  ];
+
   const profileActive = activeProfile
-    ? pathname === `/${activeProfile.handle}`
+    ? pathname === profileHref || pathname.startsWith(`${profileHref}/`)
     : false;
 
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-5 bottom-4 z-40 mb-[env(safe-area-inset-bottom)] rounded-full bg-slate shadow-lg md:hidden"
     >
-      <div className="flex h-14">
-        {NAV_ITEMS.map(({ labelKey, href, icon: Icon }) => {
-          const label = t(labelKey);
+      <div className="flex items-stretch justify-between px-3 py-1.5">
+        {items.map(({ label, href, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
-          const badgeCount =
-            href === "/notifications"
-              ? unreadCount
-              : href === "/messages"
-                ? unreadMessages
-                : 0;
-          const showBadge = badgeCount > 0;
           return (
             <Link
               key={href}
               href={href}
-              aria-label={
-                showBadge
-                  ? `${label} (${t("unreadCount", { count: badgeCount })})`
-                  : label
-              }
+              aria-label={label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 text-[10px]",
-                active
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                "flex min-h-11 min-w-16 flex-col items-center justify-center gap-0.5 rounded-full px-3 transition-colors active:scale-[0.98]",
+                active ? "bg-white/12 text-white" : "text-white/55 hover:text-white",
               )}
             >
-              <span className="relative">
-                <Icon
-                  className="size-6"
-                  strokeWidth={active ? 2.5 : 2}
-                  aria-hidden
-                />
-                {showBadge ? (
-                  <span className="absolute -top-1 -end-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground tabular-nums">
-                    {formatBadge(badgeCount)}
-                  </span>
-                ) : null}
-              </span>
-              <span className="sr-only">{label}</span>
+              <Icon className="size-5" strokeWidth={active ? 2.5 : 2} aria-hidden />
+              <span className="font-heading text-[10px] font-medium">{label}</span>
             </Link>
           );
         })}
@@ -79,16 +58,18 @@ export function BottomNav() {
           href={profileHref}
           aria-label={t("profile")}
           aria-current={profileActive ? "page" : undefined}
-          className="flex min-h-11 flex-1 flex-col items-center justify-center"
+          className={cn(
+            "flex min-h-11 min-w-16 flex-col items-center justify-center gap-0.5 rounded-full px-3 transition-colors active:scale-[0.98]",
+            profileActive ? "bg-white/12 text-white" : "text-white/55 hover:text-white",
+          )}
         >
           <ProfileAvatar
             profile={activeProfile}
-            className={cn(
-              "size-7",
-              profileActive && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
-            )}
+            className={cn("size-5", !profileActive && "opacity-70")}
           />
-          <span className="sr-only">{t("profile")}</span>
+          <span className="font-heading text-[10px] font-medium">
+            {t("profile")}
+          </span>
         </Link>
       </div>
     </nav>
