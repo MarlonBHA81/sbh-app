@@ -11,15 +11,34 @@ export function initials(name: string): string {
     .join("");
 }
 
+/**
+ * Kind-colored ring so the active identity reads at a glance across the app:
+ * teal = personal, plum = business. Used on the avatar of whichever profile
+ * the user is currently acting as.
+ */
+const RING: Record<NonNullable<Profile["kind"]>, string> = {
+  personal: "ring-2 ring-teal ring-offset-2 ring-offset-background",
+  business: "ring-2 ring-plum ring-offset-2 ring-offset-background",
+};
+
 export function ProfileAvatar({
   profile,
   className,
+  ring,
 }: {
-  profile: Pick<Profile, "name" | "avatar_url"> | null;
+  profile: (Pick<Profile, "name" | "avatar_url"> & { kind?: Profile["kind"] }) | null;
   className?: string;
+  /** Show the kind-colored active-identity ring. */
+  ring?: boolean;
 }) {
   return (
-    <Avatar className={cn("size-8", className)}>
+    <Avatar
+      className={cn(
+        "size-8",
+        ring && profile?.kind ? RING[profile.kind] : undefined,
+        className,
+      )}
+    >
       {profile?.avatar_url ? (
         <AvatarImage src={profile.avatar_url} alt={profile.name} />
       ) : null}

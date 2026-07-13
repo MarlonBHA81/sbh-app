@@ -88,13 +88,24 @@ export function HomeHeader() {
           aria-label="Switch account"
           className="flex min-w-0 items-center gap-3 text-start active:scale-[0.98]"
         >
-          <ProfileAvatar profile={activeProfile} className="size-11" />
+          <ProfileAvatar profile={activeProfile} className="size-11" ring />
           <span className="flex min-w-0 flex-col">
             <span className="truncate font-heading text-[15px] font-medium text-text-primary">
               {t("hey", { name: firstName })}
             </span>
-            <span className="truncate text-[13px] text-text-secondary">
+            <span className="flex items-center gap-1.5 truncate text-[13px] text-text-secondary">
               {t(contextualGreetingKey())}
+              {activeProfile ? (
+                <span
+                  className={
+                    activeProfile.kind === "business"
+                      ? "shrink-0 rounded-full bg-plum/12 px-1.5 py-0.5 text-[10px] font-medium text-plum-tint"
+                      : "shrink-0 rounded-full bg-teal/12 px-1.5 py-0.5 text-[10px] font-medium text-teal-text"
+                  }
+                >
+                  {activeProfile.kind === "business" ? "Business" : "Personal"}
+                </span>
+              ) : null}
             </span>
           </span>
         </button>

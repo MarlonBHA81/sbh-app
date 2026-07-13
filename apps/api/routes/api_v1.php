@@ -39,6 +39,7 @@ use App\Http\Controllers\Api\V1\PostInteractionController;
 use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\PostSeenController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ProfileImageController;
 use App\Http\Controllers\Api\V1\ProfileLocationController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\Public\PublicPostController;
@@ -113,6 +114,10 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::patch('me/profiles/{profile}', [MyProfileController::class, 'update']);
     Route::delete('me/profiles/{profile}', [MyProfileController::class, 'destroy']);
 
+    Route::post('me/profiles/{profile}/avatar', [ProfileImageController::class, 'storeAvatar']);
+    Route::delete('me/profiles/{profile}/avatar', [ProfileImageController::class, 'destroyAvatar']);
+    Route::post('me/profiles/{profile}/cover', [ProfileImageController::class, 'storeCover']);
+    Route::delete('me/profiles/{profile}/cover', [ProfileImageController::class, 'destroyCover']);
     Route::post('me/profiles/{profile}/location', [ProfileLocationController::class, 'store']);
     Route::delete('me/profiles/{profile}/location', [ProfileLocationController::class, 'destroy']);
 

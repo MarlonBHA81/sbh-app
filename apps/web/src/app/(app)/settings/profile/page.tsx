@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { PushSettings } from "@/components/notifications/push-settings";
+import { ProfileImageUpload } from "@/components/settings/profile-image-upload";
 import { DataPrivacySettings } from "@/components/settings/data-privacy-settings";
 import { LanguagePicker } from "@/components/settings/language-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -479,6 +480,24 @@ export default function ProfileSettingsPage() {
               className="flex flex-col gap-5"
               noValidate
             >
+              {activeProfile.kind === "business" ? (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium">Cover banner</span>
+                  <ProfileImageUpload
+                    profile={activeProfile}
+                    kind="cover"
+                    onUpdated={updateActiveProfile}
+                  />
+                </div>
+              ) : null}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium">Profile photo</span>
+                <ProfileImageUpload
+                  profile={activeProfile}
+                  kind="avatar"
+                  onUpdated={updateActiveProfile}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="name"

@@ -78,6 +78,9 @@ import {
 } from "./quiz-editor";
 import { SuggestedTopics } from "./suggested-topics";
 import { TopicPicker } from "./topic-picker";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { useAuthStore } from "@/lib/stores/auth-store-provider";
+
 import { useSavePost, type SavePostInput } from "./use-save-post";
 
 // The Tiptap editor is heavy; keep it out of the main bundle and off the server.
@@ -188,6 +191,7 @@ export function Composer({
   const isMobile = useIsMobile();
   const t = useTranslations("composer");
   const { save, saving } = useSavePost();
+  const activeProfile = useAuthStore((state) => state.activeProfile);
 
   const parent = quoteParent ?? editPost?.parent ?? null;
   const payload = editPost?.payload ?? null;
@@ -528,6 +532,26 @@ export function Composer({
 
   const form = (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
+      {activeProfile ? (
+        <div className="flex items-center gap-2 rounded-full border border-warmgray bg-muted/40 px-2 py-1.5">
+          <ProfileAvatar profile={activeProfile} className="size-7" ring />
+          <span className="text-xs text-text-secondary">
+            Posting as{" "}
+            <span className="font-medium text-text-primary">
+              {activeProfile.name}
+            </span>
+          </span>
+          <span
+            className={
+              activeProfile.kind === "business"
+                ? "ms-auto rounded-full bg-plum/12 px-2 py-0.5 text-[10px] font-medium text-plum-tint"
+                : "ms-auto rounded-full bg-teal/12 px-2 py-0.5 text-[10px] font-medium text-teal-text"
+            }
+          >
+            {activeProfile.kind === "business" ? "Business" : "Personal"}
+          </span>
+        </div>
+      ) : null}
       {!isQuote && !editing ? (
         <div
           className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [mask-image:linear-gradient(to_right,transparent,black_16px,black_calc(100%-16px),transparent)]"

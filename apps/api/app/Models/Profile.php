@@ -117,7 +117,7 @@ class Profile extends Model
     {
         return $this->avatar_path === null
             ? null
-            : Storage::disk('public')->url($this->avatar_path);
+            : $this->cacheBust(Storage::disk('public')->url($this->avatar_path));
     }
 
     /**
@@ -127,7 +127,15 @@ class Profile extends Model
     {
         return $this->cover_path === null
             ? null
-            : Storage::disk('public')->url($this->cover_path);
+            : $this->cacheBust(Storage::disk('public')->url($this->cover_path));
+    }
+
+    /** Append the profile's updated timestamp so re-uploads bust caches. */
+    private function cacheBust(string $url): string
+    {
+        $version = $this->updated_at?->timestamp;
+
+        return $version === null ? $url : $url.'?v='.$version;
     }
 
     public function followers(): BelongsToMany

@@ -54,6 +54,78 @@ class MediaService
         ]);
     }
 
+    /** Output size of a stored avatar (square), in px. */
+    private const AVATAR_SIZE = 512;
+
+    /** Output size of a stored cover banner (3:1), in px. */
+    private const COVER_WIDTH = 1500;
+
+    private const COVER_HEIGHT = 500;
+
+    /**
+     * Process and store a profile avatar: cover-fit to a 512×512 WebP square.
+     * Replaces (and deletes) any previous avatar. Returns the stored path.
+     */
+    public function storeAvatar(Profile $profile, UploadedFile $file): string
+    {
+        $encoded = Image::decodePath($file->getRealPath())
+            ->cover(self::AVATAR_SIZE, self::AVATAR_SIZE)
+            ->encode(new WebpEncoder(quality: config('media.webp_quality')));
+
+        $path = 'media/avatars/'.$profile->ulid.'.webp';
+
+        $this->replaceProfileImage($profile, 'avatar_path', $path, (string) $encoded);
+
+        return $path;
+    }
+
+    /**
+     * Process and store a business cover banner: cover-fit to a 1500×500 WebP
+     * (3:1). Replaces any previous cover. Returns the stored path.
+     */
+    public function storeCover(Profile $profile, UploadedFile $file): string
+    {
+        $encoded = Image::decodePath($file->getRealPath())
+            ->cover(self::COVER_WIDTH, self::COVER_HEIGHT)
+            ->encode(new WebpEncoder(quality: config('media.webp_quality')));
+
+        $path = 'media/covers/'.$profile->ulid.'.webp';
+
+        $this->replaceProfileImage($profile, 'cover_path', $path, (string) $encoded);
+
+        return $path;
+    }
+
+    /** Remove a stored profile image (avatar or cover) and clear the column. */
+    public function removeProfileImage(Profile $profile, string $column): void
+    {
+        $existing = $profile->getAttribute($column);
+
+        if ($existing) {
+            Storage::disk('public')->delete($existing);
+        }
+
+        $profile->forceFill([$column => null])->save();
+    }
+
+    /**
+     * Write the encoded bytes, delete the previous file if the path changed,
+     * and persist the column. A stable per-profile path means re-uploads
+     * overwrite in place (and dodge CDN cache with a query bump elsewhere).
+     */
+    private function replaceProfileImage(Profile $profile, string $column, string $path, string $bytes): void
+    {
+        $previous = $profile->getAttribute($column);
+
+        Storage::disk('public')->put($path, $bytes);
+
+        if ($previous && $previous !== $path) {
+            Storage::disk('public')->delete($previous);
+        }
+
+        $profile->forceFill([$column => $path])->save();
+    }
+
     /**
      * Generate a WebP thumbnail for a video from an extracted poster frame and
      * store it alongside the media on its disk. Returns the stored thumb path.

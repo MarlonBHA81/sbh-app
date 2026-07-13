@@ -50,7 +50,7 @@ export function TopBar() {
             className="size-11 rounded-full"
             aria-label="Switch account"
           >
-            <ProfileAvatar profile={activeProfile} className="size-8" />
+            <ProfileAvatar profile={activeProfile} className="size-8" ring />
           </Button>
         </AccountSwitcher>
       </div>

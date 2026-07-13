@@ -35,6 +35,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 import { useSettingsStore } from "@/lib/stores/settings-store";
+import { cn } from "@/lib/utils";
 
 export function AccountSwitcher({
   children,
@@ -70,33 +71,63 @@ export function AccountSwitcher({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
         <DropdownMenuContent align={align} className="w-72">
-          <DropdownMenuLabel>Accounts</DropdownMenuLabel>
-          {profiles.map((profile) => (
-            <DropdownMenuItem
-              key={profile.ulid}
-              className="min-h-11 gap-3"
-              onSelect={() => handleSwitch(profile.ulid)}
-            >
-              <ProfileAvatar profile={profile} />
+          {activeProfile ? (
+            <div className="flex items-center gap-2.5 px-2 pt-2 pb-1.5">
+              <ProfileAvatar
+                profile={activeProfile}
+                className="size-9"
+                ring
+              />
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-sm font-medium">
-                  {profile.name}
+                <span className="text-[11px] text-muted-foreground">
+                  You&apos;re using
                 </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  @{profile.handle}
+                <span className="truncate text-sm font-medium">
+                  {activeProfile.name}
                 </span>
               </span>
               <Badge
-                variant={profile.kind === "business" ? "default" : "secondary"}
-                className="shrink-0 text-[10px]"
+                className={
+                  activeProfile.kind === "business"
+                    ? "shrink-0 bg-plum text-[10px] text-white"
+                    : "shrink-0 bg-teal text-[10px] text-white"
+                }
               >
-                {profile.kind === "business" ? "Business" : "Personal"}
+                {activeProfile.kind === "business" ? "Business" : "Personal"}
               </Badge>
-              {profile.ulid === activeProfile?.ulid ? (
-                <Check className="size-4 shrink-0" aria-hidden />
-              ) : null}
-            </DropdownMenuItem>
-          ))}
+            </div>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Switch profile</DropdownMenuLabel>
+          {profiles.map((profile) => {
+            const active = profile.ulid === activeProfile?.ulid;
+            return (
+              <DropdownMenuItem
+                key={profile.ulid}
+                className={cn("min-h-11 gap-3", active && "bg-accent")}
+                onSelect={() => handleSwitch(profile.ulid)}
+              >
+                <ProfileAvatar profile={profile} ring={active} />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-sm font-medium">
+                    {profile.name}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    @{profile.handle}
+                  </span>
+                </span>
+                <Badge
+                  variant={profile.kind === "business" ? "default" : "secondary"}
+                  className="shrink-0 text-[10px]"
+                >
+                  {profile.kind === "business" ? "Business" : "Personal"}
+                </Badge>
+                {active ? (
+                  <Check className="size-4 shrink-0" aria-hidden />
+                ) : null}
+              </DropdownMenuItem>
+            );
+          })}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="min-h-11 gap-3"
