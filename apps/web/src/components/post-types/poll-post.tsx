@@ -114,7 +114,7 @@ export function PollPost({ post, detail }: { post: Post; detail?: boolean }) {
                   event.stopPropagation();
                   void vote(option.id);
                 }}
-                className="flex min-h-11 items-center rounded-lg border px-4 text-left text-sm font-medium transition-colors hover:border-primary hover:bg-accent/50"
+                className="flex min-h-11 items-center rounded-full border border-warmgray px-4 text-left text-sm font-medium transition-colors hover:border-teal hover:bg-accent active:scale-[0.98]"
               >
                 {option.label}
               </button>
@@ -123,12 +123,12 @@ export function PollPost({ post, detail }: { post: Post; detail?: boolean }) {
           return (
             <div
               key={String(option.id)}
-              className="relative overflow-hidden rounded-lg border"
+              className="relative overflow-hidden rounded-full border border-warmgray"
             >
               <div
                 className={cn(
                   "absolute inset-y-0 left-0 transition-[width] duration-500 ease-out",
-                  isChoice ? "bg-primary/25" : "bg-muted",
+                  isChoice ? "bg-teal/30" : "bg-warmgray/40",
                 )}
                 style={{ width: `${option.percent}%` }}
                 aria-hidden

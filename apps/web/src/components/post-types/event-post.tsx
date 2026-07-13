@@ -77,7 +77,7 @@ export function EventPost({ post }: { post: Post }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 overflow-hidden rounded-xl border" data-no-nav>
+    <div className="flex flex-col gap-3 overflow-hidden rounded-(--radius-media) border border-warmgray" data-no-nav>
       {cover ? (
         <div className="bg-muted" style={{ aspectRatio: "16 / 9" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -91,11 +91,11 @@ export function EventPost({ post }: { post: Post }) {
       ) : null}
 
       <div className="flex gap-3 px-4 pt-1">
-        <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-lg border bg-card text-center">
-          <span className="text-[11px] font-medium text-primary uppercase">
+        <div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-full bg-teal text-center text-white">
+          <span className="font-heading text-[10px] font-medium uppercase">
             {month}
           </span>
-          <span className="text-xl font-bold leading-none tabular-nums">
+          <span className="font-heading text-lg leading-none font-semibold tabular-nums">
             {day}
           </span>
         </div>

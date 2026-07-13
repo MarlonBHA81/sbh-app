@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Mulish, Poppins } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import "./globals.css";
@@ -9,8 +9,16 @@ import { Toaster } from "@/components/ui/sonner";
 import { localeDir, type Locale } from "@/i18n/config";
 import { AuthStoreProvider } from "@/lib/stores/auth-store-provider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Brand manual: Poppins for headings/buttons/labels, Avenir for body with
+// Mulish loaded as the web substitute (see --font-sans in globals.css).
+const poppins = Poppins({
+  variable: "--font-poppins",
+  weight: ["500", "600", "700"],
+  subsets: ["latin"],
+});
+
+const mulish = Mulish({
+  variable: "--font-mulish",
   subsets: ["latin"],
 });
 
@@ -63,7 +71,7 @@ export default async function RootLayout({
       lang={locale}
       dir={dir}
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${poppins.variable} ${mulish.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <NextIntlClientProvider>

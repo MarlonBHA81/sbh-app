@@ -1,0 +1,50 @@
+/**
+ * SBH Community design tokens — single source of truth for the reskin.
+ * Brand values from the SBH brand manual; neutrals derived from slate and
+ * warmgray. Components must reference these variables (via the Tailwind
+ * theme mapping in globals.css), never raw hex.
+ *
+ * Dark mode: not in this pass. Add a `.dark { … }` block that swaps the
+ * SEMANTIC variables (surface/text/border) only — brand hues stay put.
+ */
+
+:root {
+  /* ------ Brand (SBH brand manual) ------ */
+  --sbh-teal: #4e8a88;          /* primary accent */
+  --sbh-teal-tint: #447b78;     /* hover/pressed + small teal text (AA) */
+  --sbh-plum: #683f59;          /* secondary accent */
+  --sbh-plum-tint: #5c354f;
+  --sbh-sage: #5d7868;          /* success/positive */
+  --sbh-sage-tint: #50695a;
+  --sbh-slate: #484851;         /* dark UI surfaces, primary buttons, bottom nav */
+  --sbh-slate-tint: #3a3a43;
+  --sbh-warmgray: #e0dedd;      /* borders, dividers, input backgrounds */
+  --sbh-warmgray-tint: #d3cfce;
+  --sbh-white: #ffffff;
+
+  /* ------ Derived neutrals ------ */
+  --sbh-bg: #f6f4f3;            /* app background (warm near-white) */
+  --sbh-surface: #ffffff;       /* card surface */
+  --sbh-text: #26262c;          /* text primary (from slate) */
+  /* Spec value #77777f measured 4.44:1 on white — below AA for small text.
+     Adjusted to the nearest passing shade (4.98:1 white / 4.54:1 app bg). */
+  --sbh-text-secondary: #6f6f78;
+  --sbh-text-muted: #a5a3a2;    /* placeholders/decorative only — 2.5:1 */
+
+  /* Teal for small text: teal-tint passes AA on white (4.83:1) but not on
+     the app background (4.40:1); use this deeper step there (4.83:1). */
+  --sbh-teal-text: #417471;
+
+  /* ------ Washes (low-alpha brand overlays) ------ */
+  --sbh-slate-wash: rgb(72 72 81 / 4%);    /* card header bands */
+  --sbh-teal-wash: rgb(78 138 136 / 10%);  /* selected/hover surfaces */
+  --sbh-warmgray-50: rgb(224 222 221 / 50%); /* composer bar fill */
+
+  /* ------ Elevation ------ */
+  --sbh-shadow-card: 0 1px 3px rgb(38 38 44 / 6%);
+
+  /* ------ Shape ------ */
+  --sbh-radius-card: 1rem;      /* 16px — feed cards */
+  --sbh-radius-tile: 1.25rem;   /* 20px — quick access tiles */
+  --sbh-radius-media: 0.75rem;  /* 12px — media blocks inside cards */
+}

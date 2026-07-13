@@ -1,32 +1,35 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./design-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
-  /* SBH brand: Muted Teal on warm-white, Charcoal Slate ink. */
-  --background: oklch(0.985 0.002 48);
-  --foreground: oklch(0.352 0.015 285.6);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.352 0.015 285.6);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.352 0.015 285.6);
-  /* Muted Teal tint #447b78 — AA (4.8:1) with white text. */
-  --primary: oklch(0.544 0.059 191);
-  --primary-foreground: oklch(0.985 0.002 48);
-  /* Light Warm Gray #e0dedd family. */
-  --secondary: oklch(0.902 0.003 48.7);
-  --secondary-foreground: oklch(0.352 0.015 285.6);
-  --muted: oklch(0.93 0.003 48);
-  --muted-foreground: oklch(0.52 0.012 286);
+  /* 16px base radius: shadcn radius-lg == the feed-card radius. */
+  --radius: 1rem;
+  /* SBH Community reskin — semantic tokens map to design-tokens.css.
+     Dark mode later = swap these (and the sbh-* semantics), not components. */
+  --background: var(--sbh-bg);
+  --foreground: var(--sbh-text);
+  --card: var(--sbh-surface);
+  --card-foreground: var(--sbh-text);
+  --popover: var(--sbh-surface);
+  --popover-foreground: var(--sbh-text);
+  /* Primary actions are slate (white text: 9.05:1). */
+  --primary: var(--sbh-slate);
+  --primary-foreground: var(--sbh-white);
+  /* Warm gray family for secondary surfaces and inputs. */
+  --secondary: var(--sbh-warmgray);
+  --secondary-foreground: var(--sbh-text);
+  --muted: var(--sbh-warmgray-50);
+  --muted-foreground: var(--sbh-text-secondary);
   /* Soft teal wash for hover/selected surfaces. */
-  --accent: oklch(0.94 0.018 193);
-  --accent-foreground: oklch(0.4 0.06 192);
+  --accent: var(--sbh-teal-wash);
+  --accent-foreground: var(--sbh-teal-tint);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.87 0.005 40);
-  --input: oklch(0.87 0.005 40);
-  --ring: oklch(0.592 0.063 192.8);
+  --border: var(--sbh-warmgray);
+  --input: var(--sbh-warmgray);
+  --ring: var(--sbh-teal);
   /* Brand-derived categorical set — CVD/contrast validated (light). */
   --chart-1: oklch(0.58 0.11 193);
   --chart-2: oklch(0.47 0.13 342);
@@ -115,8 +118,36 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: var(--font-geist-sans);
+
+  /* ------ SBH brand utilities (bg-teal, text-plum, border-warmgray…) ------ */
+  --color-teal: var(--sbh-teal);
+  --color-teal-tint: var(--sbh-teal-tint);
+  --color-teal-text: var(--sbh-teal-text);
+  --color-teal-wash: var(--sbh-teal-wash);
+  --color-plum: var(--sbh-plum);
+  --color-plum-tint: var(--sbh-plum-tint);
+  --color-sage: var(--sbh-sage);
+  --color-sage-tint: var(--sbh-sage-tint);
+  --color-slate: var(--sbh-slate);
+  --color-slate-tint: var(--sbh-slate-tint);
+  --color-slate-wash: var(--sbh-slate-wash);
+  --color-warmgray: var(--sbh-warmgray);
+  --color-warmgray-tint: var(--sbh-warmgray-tint);
+  --color-text-primary: var(--sbh-text);
+  --color-text-secondary: var(--sbh-text-secondary);
+  --color-text-muted: var(--sbh-text-muted);
+
+  /* ------ Typography ------ */
+  /* Body: Avenir with Mulish as the loaded web substitute. */
+  --font-sans: Avenir, var(--font-mulish), system-ui, sans-serif;
+  --font-heading: var(--font-poppins), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
+
+  /* ------ Elevation & shape ------ */
+  --shadow-card: var(--sbh-shadow-card);
+  --radius-card: var(--sbh-radius-card);
+  --radius-tile: var(--sbh-radius-tile);
+  --radius-media: var(--sbh-radius-media);
 }
 
 @layer base {
@@ -125,6 +156,15 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Headings, names, buttons and nav labels use Poppins (brand manual). */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
   }
 }
 

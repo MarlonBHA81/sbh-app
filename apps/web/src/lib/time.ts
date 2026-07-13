@@ -48,3 +48,30 @@ export function isoToDatetimeLocal(iso: string): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
+
+/**
+ * Feed-card timestamp per the SBH Community design spec: "Today at 10:30"
+ * / "Yesterday at 10:30" for recent posts, a short date otherwise.
+ */
+export function feedTimestamp(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const now = new Date();
+  const time = date.toLocaleTimeString(undefined, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+  if (sameDay(date, now)) return `Today at ${time}`;
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (sameDay(date, yesterday)) return `Yesterday at ${time}`;
+  return date.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    ...(date.getFullYear() !== now.getFullYear() && { year: "numeric" }),
+  });
+}

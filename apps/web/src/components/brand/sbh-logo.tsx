@@ -103,7 +103,7 @@ export function SbhMark({
         fontWeight={badge ? 500 : 600}
         letterSpacing="-0.5"
         fill={badge ? "#f7f4ec" : "#4e8a88"}
-        style={{ fontFamily: "var(--font-geist-sans), system-ui, sans-serif" }}
+        style={{ fontFamily: "var(--font-poppins), system-ui, sans-serif" }}
       >
         sbh
       </text>
@@ -130,7 +130,7 @@ export function SbhLogo({
       <SbhMark className={cn("size-9", markClassName)} />
       <span
         className={cn(
-          "font-semibold italic tracking-tight text-primary",
+          "font-heading font-semibold italic tracking-tight text-teal-tint",
           textClassName,
         )}
       >

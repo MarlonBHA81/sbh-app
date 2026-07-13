@@ -58,7 +58,7 @@ import { applyVote, formatCount, formatNetVotes } from "@/lib/reactions";
 import { blockProfile, muteProfile } from "@/lib/safety";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 import { useModerationStore } from "@/lib/stores/moderation-store";
-import { relativeTime } from "@/lib/time";
+import { feedTimestamp } from "@/lib/time";
 import { cn } from "@/lib/utils";
 
 import { getPostRenderer, TYPE_BADGES } from "./registry";
@@ -80,27 +80,27 @@ function VotePair({
   onVote: (value: Exclude<Vote, 0>) => void;
 }) {
   return (
-    <div className="flex items-center rounded-lg text-muted-foreground">
+    <div className="flex min-h-11 items-center rounded-full border border-warmgray bg-card text-text-secondary">
       <button
         type="button"
         aria-label="Upvote"
         aria-pressed={vote === 1}
         onClick={() => onVote(1)}
         className={cn(
-          "flex min-h-11 items-center rounded-lg px-1.5 transition-colors hover:text-emerald-600",
-          vote === 1 && "text-emerald-600",
+          "flex h-full min-h-11 items-center rounded-s-full ps-2 pe-0.5 transition-colors hover:text-sage-tint active:scale-[0.98]",
+          vote === 1 && "text-sage-tint",
         )}
       >
         <ArrowBigUp
-          className={cn("size-[19px]", vote === 1 && "fill-current")}
+          className={cn("size-[18px]", vote === 1 && "fill-current")}
           aria-hidden
         />
       </button>
       <span
         className={cn(
           "min-w-4 text-center text-xs font-medium tabular-nums",
-          vote === 1 && "text-emerald-600",
-          vote === -1 && "text-red-600",
+          vote === 1 && "text-sage-tint",
+          vote === -1 && "text-destructive",
         )}
       >
         {formatNetVotes(net)}
@@ -111,12 +111,12 @@ function VotePair({
         aria-pressed={vote === -1}
         onClick={() => onVote(-1)}
         className={cn(
-          "flex min-h-11 items-center rounded-lg px-1.5 transition-colors hover:text-red-600",
-          vote === -1 && "text-red-600",
+          "flex h-full min-h-11 items-center rounded-e-full ps-0.5 pe-2 transition-colors hover:text-destructive active:scale-[0.98]",
+          vote === -1 && "text-destructive",
         )}
       >
         <ArrowBigDown
-          className={cn("size-[19px]", vote === -1 && "fill-current")}
+          className={cn("size-[18px]", vote === -1 && "fill-current")}
           aria-hidden
         />
       </button>
@@ -148,12 +148,12 @@ function ActionButton({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "flex min-h-11 min-w-11 items-center gap-1.5 rounded-lg px-2 text-muted-foreground transition-colors hover:text-foreground",
+        "flex min-h-11 items-center gap-1 rounded-full border border-warmgray bg-card px-2.5 text-xs text-text-secondary transition-colors hover:bg-accent hover:text-text-primary active:scale-[0.98]",
         className,
       )}
     >
-      <Icon className={cn("size-[18px]", iconClassName)} aria-hidden />
-      <span className="text-xs tabular-nums">{formatCount(count)}</span>
+      <Icon className={cn("size-4", iconClassName)} aria-hidden />
+      <span className="tabular-nums">{formatCount(count)}</span>
     </button>
   );
 }
@@ -419,35 +419,40 @@ export function PostCard({
       onClick={handleCardClick}
       onClickCapture={trackPromotedLinkClick}
       className={cn(
-        "flex flex-col gap-3 rounded-xl border bg-card p-4 text-card-foreground",
-        linkToDetail && "cursor-pointer transition-colors hover:bg-accent/30",
+        "flex flex-col overflow-hidden rounded-(--radius-card) border border-warmgray bg-card text-card-foreground shadow-card",
+        linkToDetail && "cursor-pointer transition-colors hover:border-warmgray-tint",
       )}
     >
-      <header className="flex items-center gap-3">
+      <header className="flex items-center gap-2.5 bg-slate-wash px-3 py-2.5">
         <Link
           href={`/${post.profile.handle}`}
           aria-label={`${post.profile.name} (@${post.profile.handle})`}
         >
-          <ProfileAvatar profile={post.profile} className="size-10" />
+          <ProfileAvatar profile={post.profile} className="size-9" />
         </Link>
         <div className="flex min-w-0 flex-1 flex-col">
           <Link
             href={`/${post.profile.handle}`}
-            className="flex items-center gap-1 hover:underline"
+            className="flex items-center gap-1.5 hover:underline"
           >
-            <span className="truncate text-sm font-semibold">
+            <span className="truncate font-heading text-sm font-medium">
               {post.profile.name}
             </span>
             {post.profile.is_verified ? (
-              <BadgeCheck
-                className="size-4 shrink-0 text-sky-500"
+              <span
                 aria-label="Verified"
-              />
+                role="img"
+                className="flex size-4 shrink-0 items-center justify-center rounded-full bg-sage"
+              >
+                <BadgeCheck
+                  className="size-2.5 text-white"
+                  strokeWidth={3}
+                  aria-hidden
+                />
+              </span>
             ) : null}
           </Link>
-          <span className="flex items-center gap-1 truncate text-xs text-muted-foreground">
-            @{post.profile.handle}
-            <span aria-hidden>·</span>
+          <span className="flex items-center gap-1.5 truncate text-xs text-text-secondary">
             {linkToDetail ? (
               <Link
                 href={detailHref}
@@ -455,24 +460,26 @@ export function PostCard({
                 aria-label="View post"
                 onClick={trackPromotedClick}
               >
-                <time dateTime={timestamp}>{relativeTime(timestamp)}</time>
+                <time dateTime={timestamp}>{feedTimestamp(timestamp)}</time>
               </Link>
             ) : (
-              <time dateTime={timestamp}>{relativeTime(timestamp)}</time>
+              <time dateTime={timestamp}>{feedTimestamp(timestamp)}</time>
             )}
             {promoted ? (
-              <>
-                <span aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1 font-medium">
-                  <Megaphone className="size-3" aria-hidden />
-                  {tf("promoted")}
-                </span>
-              </>
+              <span className="inline-flex shrink-0 items-center rounded-full bg-warmgray px-2 py-0.5 text-[11px] font-medium text-text-secondary">
+                {tf("promoted")}
+              </span>
             ) : null}
           </span>
         </div>
         {badge ? (
-          <Badge variant="secondary" className="shrink-0 text-[10px]">
+          <Badge
+            variant="secondary"
+            className={cn(
+              "shrink-0 rounded-full text-[10px]",
+              post.type === "job" && "bg-plum text-white",
+            )}
+          >
             {badge}
           </Badge>
         ) : null}
@@ -552,8 +559,9 @@ export function PostCard({
         </DropdownMenu>
       </header>
 
+      <div className="flex flex-col gap-3 p-3">
       {hidden ? (
-        <div className="relative overflow-hidden rounded-xl">
+        <div className="relative overflow-hidden rounded-(--radius-media)">
           <div
             className="pointer-events-none min-h-32 opacity-60 blur-xl select-none"
             aria-hidden
@@ -586,14 +594,14 @@ export function PostCard({
         </div>
       ) : null}
 
-      <footer className="-mx-2 -mb-2 flex items-center justify-between">
+      <footer className="flex flex-wrap items-center gap-2">
         <ActionButton
           icon={Heart}
           count={likesCount}
           label={liked ? "Unlike" : t("like")}
           active={liked}
           onClick={() => void toggleLike()}
-          className={cn(liked && "text-rose-500 hover:text-rose-500")}
+          className={cn(liked && "border-plum/30 text-plum hover:text-plum")}
           iconClassName={cn(
             "transition-transform",
             liked && "fill-current",
@@ -619,10 +627,10 @@ export function PostCard({
             <button
               type="button"
               aria-label="Repost or quote"
-              className="flex min-h-11 min-w-11 items-center gap-1.5 rounded-lg px-2 text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-11 items-center gap-1 rounded-full border border-warmgray bg-card px-2.5 text-xs text-text-secondary transition-colors hover:bg-accent hover:text-text-primary active:scale-[0.98]"
             >
-              <Repeat2 className="size-[18px]" aria-hidden />
-              <span className="text-xs tabular-nums">
+              <Repeat2 className="size-4" aria-hidden />
+              <span className="tabular-nums">
                 {formatCount(post.reposts_count)}
               </span>
             </button>
@@ -644,8 +652,13 @@ export function PostCard({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <ActionButton icon={Eye} count={post.views_count} label="Views" />
+        <span className="ms-auto flex min-h-11 items-center gap-1 ps-1 text-xs text-text-secondary tabular-nums">
+          <Eye className="size-4" aria-hidden />
+          <span className="sr-only">Views</span>
+          {formatCount(post.views_count)}
+        </span>
       </footer>
+      </div>
 
       <AlertDialog open={repostConfirmOpen} onOpenChange={setRepostConfirmOpen}>
         <AlertDialogContent>
