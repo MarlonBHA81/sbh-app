@@ -31,13 +31,15 @@ export async function generateMetadata({
       type: "profile",
       title: fullTitle,
       description,
-      ...(profile.avatar_url ? { images: [{ url: profile.avatar_url }] } : {}),
+      images: profile.avatar_url
+        ? [{ url: profile.avatar_url }]
+        : [{ url: "/og.png", width: 1200, height: 630 }],
     },
     twitter: {
-      card: "summary",
+      card: profile.avatar_url ? "summary" : "summary_large_image",
       title: fullTitle,
       description,
-      ...(profile.avatar_url ? { images: [profile.avatar_url] } : {}),
+      images: [profile.avatar_url ?? "/og.png"],
     },
   };
 }

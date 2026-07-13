@@ -41,13 +41,15 @@ export async function generateMetadata({
       title,
       description,
       ...(post.published_at ? { publishedTime: post.published_at } : {}),
-      ...(thumb ? { images: [{ url: thumb }] } : {}),
+      images: thumb
+        ? [{ url: thumb }]
+        : [{ url: "/og.png", width: 1200, height: 630 }],
     },
     twitter: {
-      card: thumb ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
-      ...(thumb ? { images: [thumb] } : {}),
+      images: [thumb ?? "/og.png"],
     },
   };
 }
