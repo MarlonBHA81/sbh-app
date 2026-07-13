@@ -5,6 +5,7 @@ import {
   FileClock,
   Gauge,
   LogOut,
+  Monitor,
   Moon,
   Plus,
   Settings,
@@ -23,7 +24,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
@@ -42,7 +48,7 @@ export function AccountSwitcher({
   const switchProfile = useAuthStore((s) => s.switchProfile);
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const lowData = useSettingsStore((s) => s.lowData);
   const setLowData = useSettingsStore((s) => s.setLowData);
   const [createOpen, setCreateOpen] = useState(false);
@@ -130,20 +136,38 @@ export function AccountSwitcher({
               className="pointer-events-none ms-auto"
             />
           </DropdownMenuItem>
-          <DropdownMenuItem
-            className="min-h-11 gap-3"
-            onSelect={(event) => {
-              event.preventDefault();
-              setTheme(resolvedTheme === "dark" ? "light" : "dark");
-            }}
-          >
-            {resolvedTheme === "dark" ? (
-              <Sun className="size-4" aria-hidden />
-            ) : (
-              <Moon className="size-4" aria-hidden />
-            )}
-            {resolvedTheme === "dark" ? "Light mode" : "Dark mode"}
-          </DropdownMenuItem>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="min-h-11 gap-3">
+              {resolvedTheme === "dark" ? (
+                <Moon className="size-4 text-muted-foreground" aria-hidden />
+              ) : (
+                <Sun className="size-4 text-muted-foreground" aria-hidden />
+              )}
+              Appearance
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuRadioGroup
+                value={theme ?? "system"}
+                onValueChange={setTheme}
+              >
+                <DropdownMenuRadioItem value="light" className="min-h-11 gap-3">
+                  <Sun className="size-4" aria-hidden />
+                  Light
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="dark" className="min-h-11 gap-3">
+                  <Moon className="size-4" aria-hidden />
+                  Dark
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value="system"
+                  className="min-h-11 gap-3"
+                >
+                  <Monitor className="size-4" aria-hidden />
+                  System
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"

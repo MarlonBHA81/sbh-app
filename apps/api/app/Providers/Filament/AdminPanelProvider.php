@@ -31,6 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->brandName('SBH Community')
             ->login()
             ->colors([
                 // SBH brand: Muted Teal (#4e8a88 family from the brand manual).

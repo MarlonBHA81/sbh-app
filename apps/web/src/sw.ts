@@ -133,7 +133,7 @@ self.addEventListener("push", (event) => {
     payload = { body: event.data.text() };
   }
 
-  const title = payload.title ?? "SBH";
+  const title = payload.title ?? "SBH Community";
   const url = payload.data?.url ?? "/notifications";
 
   event.waitUntil(

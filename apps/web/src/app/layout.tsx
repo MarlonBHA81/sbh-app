@@ -24,16 +24,16 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "SBH",
-    template: "%s · SBH",
+    default: "SBH Community",
+    template: "%s · SBH Community",
   },
   description:
-    "SBH — the social engagement app for small business owners on the go.",
-  applicationName: "SBH",
+    "SBH Community — the social engagement app for small business owners on the go.",
+  applicationName: "SBH Community App",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SBH",
+    title: "SBH Community",
   },
   formatDetection: {
     telephone: false,

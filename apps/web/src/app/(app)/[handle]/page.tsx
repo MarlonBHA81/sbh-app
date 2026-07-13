@@ -20,11 +20,11 @@ export async function generateMetadata({
 
   const description = profile.bio
     ? truncate(profile.bio, 160)
-    : `${profile.name} (@${profile.handle}) on SBH — the social app for small business owners.`;
-  const fullTitle = `${profile.name} (@${profile.handle}) · SBH`;
+    : `${profile.name} (@${profile.handle}) on SBH Community — the social app for small business owners.`;
+  const fullTitle = `${profile.name} (@${profile.handle}) · SBH Community`;
 
   return {
-    // Root layout's template appends " · SBH".
+    // Root layout's template appends " · SBH Community".
     title: `${profile.name} (@${profile.handle})`,
     description,
     openGraph: {

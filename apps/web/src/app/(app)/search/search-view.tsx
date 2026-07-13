@@ -129,7 +129,7 @@ export function SearchView() {
           <div className="pt-6">
             <EmptyState
               icon={Search}
-              title="Search SBH"
+              title="Search SBH Community"
               description="Find people, topics and posts across the community."
             />
           </div>

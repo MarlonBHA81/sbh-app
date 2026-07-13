@@ -21,11 +21,11 @@ export async function generateMetadata({
   const authorName = post.profile.name;
   const snippet = body ? truncate(body, 60) : "";
   const title = snippet
-    ? `${authorName} on SBH: “${snippet}”`
-    : `${authorName} on SBH`;
+    ? `${authorName} on SBH Community: “${snippet}”`
+    : `${authorName} on SBH Community`;
   const description = body
     ? truncate(body, 160)
-    : `See this post by ${authorName} (@${post.profile.handle}) on SBH.`;
+    : `See this post by ${authorName} (@${post.profile.handle}) on SBH Community.`;
 
   // Omit imagery for sensitive posts.
   const thumb = post.sensitive
@@ -33,7 +33,7 @@ export async function generateMetadata({
     : (post.media[0]?.thumb_url ?? post.media[0]?.url ?? null);
 
   return {
-    // Fully-formed title; bypass the root " · SBH" template.
+    // Fully-formed title; bypass the root " · SBH Community" template.
     title: { absolute: title },
     description,
     openGraph: {

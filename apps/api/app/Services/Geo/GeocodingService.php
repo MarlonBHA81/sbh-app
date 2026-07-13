@@ -112,7 +112,7 @@ class GeocodingService
             $base = rtrim((string) config('services.nominatim.base_url'), '/');
 
             $response = Http::withHeaders([
-                'User-Agent' => 'SBH/1.0 (contact '.config('services.nominatim.contact').')',
+                'User-Agent' => 'SBH-Community/1.0 (contact '.config('services.nominatim.contact').')',
             ])->timeout(5)->get($base.'/reverse', [
                 'format' => 'jsonv2',
                 'lat' => $lat,

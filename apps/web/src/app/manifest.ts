@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "SBH",
-    short_name: "SBH",
+    name: "SBH Community App",
+    short_name: "SBH Community",
     description:
-      "SBH — the social engagement app for small business owners on the go.",
+      "SBH Community — the social engagement app for small business owners on the go.",
     id: "/",
     start_url: "/home",
     scope: "/",

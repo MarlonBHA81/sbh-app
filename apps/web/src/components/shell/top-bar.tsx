@@ -3,6 +3,7 @@
 import { Gauge } from "lucide-react";
 import Link from "next/link";
 
+import { SbhLogo } from "@/components/brand/sbh-logo";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { SearchTrigger } from "@/components/search/search-trigger";
 import { AccountSwitcher } from "@/components/shell/account-switcher";
@@ -17,11 +18,8 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/90 px-4 backdrop-blur md:hidden">
-      <Link href="/home" className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-[10px] font-bold text-primary-foreground">
-          SBH
-        </span>
-        <span className="text-lg font-semibold tracking-tight">SBH</span>
+      <Link href="/home" aria-label="SBH Community — home">
+        <SbhLogo markClassName="size-8" textClassName="text-base" />
       </Link>
       {lowData ? (
         <Badge variant="secondary" className="gap-1 text-[10px]">

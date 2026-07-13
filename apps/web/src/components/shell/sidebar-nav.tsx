@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
+import { SbhLogo } from "@/components/brand/sbh-logo";
 import { useComposer } from "@/components/composer/composer-provider";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { SearchTrigger } from "@/components/search/search-trigger";
@@ -39,11 +40,12 @@ export function SidebarNav() {
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-60 shrink-0 flex-col gap-2 border-r p-4 md:flex">
-      <Link href="/home" className="mb-4 flex items-center gap-2 px-2">
-        <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-[10px] font-bold text-primary-foreground">
-          SBH
-        </span>
-        <span className="text-xl font-semibold tracking-tight">SBH</span>
+      <Link
+        href="/home"
+        aria-label="SBH Community — home"
+        className="mb-4 px-2"
+      >
+        <SbhLogo markClassName="size-9" textClassName="text-lg" />
       </Link>
       <div className="mb-2 px-1">
         <SearchTrigger variant="bar" />

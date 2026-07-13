@@ -76,7 +76,7 @@ function PushBanner() {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">Turn on push notifications</p>
         <p className="text-xs text-muted-foreground">
-          Get alerts for follows, mentions and activity — even when SBH is
+          Get alerts for follows, mentions and activity — even when SBH Community is
           closed.
         </p>
       </div>

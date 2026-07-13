@@ -80,7 +80,7 @@ export function PushSettings() {
                 ? "This browser doesn't support push notifications."
                 : isBlocked
                   ? "Blocked — enable notifications in your browser settings."
-                  : "Delivered to this device, even when SBH is closed."}
+                  : "Delivered to this device, even when SBH Community is closed."}
             </p>
           </div>
           <Switch
