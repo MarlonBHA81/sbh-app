@@ -8,8 +8,12 @@ import {
   Globe,
   Lock,
   MapPin,
+  MessageCircle,
   MoreHorizontal,
+  Pencil,
+  Share2,
   Tag,
+  UserPlus,
   UserX,
   VolumeX,
 } from "lucide-react";
@@ -19,8 +23,10 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { useComposer } from "@/components/composer/composer-provider";
+import { SectionHeader } from "@/components/home/section-header";
+import { ScreenHeader } from "@/components/shell/screen-header";
 import { EmptyState } from "@/components/empty-state";
-import { findRankBadge, RankChip } from "@/components/gamification/rank-chip";
+import { findRankBadge } from "@/components/gamification/rank-chip";
 import { XpProgressCard } from "@/components/gamification/xp-progress-card";
 import { PostList } from "@/components/posts/post-list";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -47,7 +53,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as api from "@/lib/api/client";
-import type { Profile } from "@/lib/api/types";
+import type { Conversation, Profile } from "@/lib/api/types";
 import {
   blockProfile,
   muteProfile,
@@ -130,6 +136,41 @@ export function ProfileClient({ handle }: { handle: string }) {
 
   function setProfile(next: Profile) {
     setState((prev) => ({ ...prev, profile: next }));
+  }
+
+  const [dmBusy, setDmBusy] = useState(false);
+
+  async function messageProfile() {
+    if (!profile || dmBusy) return;
+    setDmBusy(true);
+    try {
+      const res = await api.post<{ data: Conversation }>(
+        "/api/v1/conversations",
+        { kind: "dm", profile_ulid: profile.ulid },
+      );
+      router.push(`/messages/${res.data.ulid}`);
+    } catch (error) {
+      setDmBusy(false);
+      toast.error(
+        error instanceof api.ApiError && error.status === 403
+          ? `@${handle} isn't accepting messages right now`
+          : "Couldn't start the chat",
+      );
+    }
+  }
+
+  async function shareProfile() {
+    const url = `${window.location.origin}/${handle}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied");
+    } catch {
+      // Share sheet dismissed — nothing to do.
+    }
   }
 
   async function toggleFollow() {
@@ -273,195 +314,247 @@ export function ProfileClient({ handle }: { handle: string }) {
     profile.relationship !== "self";
 
   let followLabel = "Follow";
-  let followVariant: "default" | "outline" = "default";
   if (profile.relationship === "following") {
     followLabel = "Following";
-    followVariant = "outline";
   } else if (profile.relationship === "pending") {
     followLabel = "Requested";
-    followVariant = "outline";
   }
+
+  const menuContent = (
+    <DropdownMenuContent align="end" className="w-52">
+      {isSelf ? (
+        <>
+          <DropdownMenuItem className="min-h-11 gap-3" onSelect={() => router.push("/settings/profile")}>
+            <Pencil className="size-4" aria-hidden />
+            Edit profile
+          </DropdownMenuItem>
+          <DropdownMenuItem className="min-h-11 gap-3" onSelect={() => void shareProfile()}>
+            <Share2 className="size-4" aria-hidden />
+            Share profile
+          </DropdownMenuItem>
+        </>
+      ) : (
+        <>
+          <DropdownMenuItem className="min-h-11 gap-3" onSelect={() => void shareProfile()}>
+            <Share2 className="size-4" aria-hidden />
+            Share profile
+          </DropdownMenuItem>
+          <DropdownMenuItem className="min-h-11 gap-3" onSelect={() => setReportOpen(true)}>
+            <Flag className="size-4" aria-hidden />
+            Report @{handle}
+          </DropdownMenuItem>
+          {!isBlocked ? (
+            <DropdownMenuItem
+              className="min-h-11 gap-3"
+              disabled={modBusy}
+              onSelect={(event) => {
+                event.preventDefault();
+                void toggleMute();
+              }}
+            >
+              <VolumeX className="size-4" aria-hidden />
+              {muted ? `Unmute @${handle}` : `Mute @${handle}`}
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          {isBlocked ? (
+            <DropdownMenuItem
+              className="min-h-11 gap-3"
+              disabled={modBusy}
+              onSelect={(event) => {
+                event.preventDefault();
+                void unblock();
+              }}
+            >
+              <Ban className="size-4" aria-hidden />
+              Unblock @{handle}
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              variant="destructive"
+              className="min-h-11 gap-3"
+              onSelect={() => setBlockConfirmOpen(true)}
+            >
+              <Ban className="size-4" aria-hidden />
+              Block @{handle}
+            </DropdownMenuItem>
+          )}
+        </>
+      )}
+    </DropdownMenuContent>
+  );
+
+  const actionPillBase =
+    "flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-warmgray bg-card font-heading text-[13px] font-medium transition-colors hover:bg-accent active:scale-[0.98] disabled:opacity-50";
+  const actionPill = `${actionPillBase} text-text-primary`;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col">
-        <div className="h-32 w-full overflow-hidden rounded-xl bg-muted sm:h-44">
-          {profile.cover_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={profile.cover_url}
-              alt=""
-              className="size-full object-cover"
-            />
-          ) : null}
+      <ScreenHeader
+        title="Profile"
+        right={
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={`More options for @${handle}`}
+                className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-warmgray bg-card text-text-primary transition-colors hover:bg-accent active:scale-[0.98]"
+              >
+                <MoreHorizontal className="size-5" aria-hidden />
+              </button>
+            </DropdownMenuTrigger>
+            {menuContent}
+          </DropdownMenu>
+        }
+      />
+
+      {!isPrivateHidden && !isBlocked && profile.cover_url ? (
+        <div className="h-28 w-full overflow-hidden rounded-(--radius-card) bg-muted sm:h-40">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={profile.cover_url} alt="" className="size-full object-cover" />
         </div>
-        <div className="flex flex-col gap-3 px-2">
-          <div className="-mt-10 flex items-end justify-between">
-            <ProfileAvatar
-              profile={profile}
-              className="size-20 border-4 border-background text-lg"
-            />
-            {isSelf ? (
-              <Button asChild variant="outline" className="h-11">
-                <Link href="/settings/profile">Edit profile</Link>
-              </Button>
-            ) : (
-              <div className="flex items-center gap-2">
-                {isBlocked ? (
-                  <Button
-                    variant="outline"
-                    className="h-11 min-w-28"
-                    disabled={modBusy}
-                    onClick={() => void unblock()}
-                  >
-                    {modBusy ? "Working…" : "Unblock"}
-                  </Button>
-                ) : (
-                  <Button
-                    variant={followVariant}
-                    className="h-11 min-w-28"
-                    disabled={followBusy}
-                    onClick={() => void toggleFollow()}
-                  >
-                    {followLabel}
-                  </Button>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="size-11 shrink-0"
-                      aria-label={`More options for @${handle}`}
-                    >
-                      <MoreHorizontal className="size-5" aria-hidden />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52">
-                    <DropdownMenuItem
-                      className="min-h-11 gap-3"
-                      onSelect={() => setReportOpen(true)}
-                    >
-                      <Flag className="size-4" aria-hidden />
-                      Report @{handle}
-                    </DropdownMenuItem>
-                    {!isBlocked ? (
-                      <DropdownMenuItem
-                        className="min-h-11 gap-3"
-                        disabled={modBusy}
-                        onSelect={(event) => {
-                          event.preventDefault();
-                          void toggleMute();
-                        }}
-                      >
-                        <VolumeX className="size-4" aria-hidden />
-                        {muted ? `Unmute @${handle}` : `Mute @${handle}`}
-                      </DropdownMenuItem>
-                    ) : null}
-                    <DropdownMenuSeparator />
-                    {isBlocked ? (
-                      <DropdownMenuItem
-                        className="min-h-11 gap-3"
-                        disabled={modBusy}
-                        onSelect={(event) => {
-                          event.preventDefault();
-                          void unblock();
-                        }}
-                      >
-                        <Ban className="size-4" aria-hidden />
-                        Unblock @{handle}
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuItem
-                        variant="destructive"
-                        className="min-h-11 gap-3"
-                        onSelect={() => setBlockConfirmOpen(true)}
-                      >
-                        <Ban className="size-4" aria-hidden />
-                        Block @{handle}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col gap-0.5">
-            <h1 className="flex items-center gap-1.5 text-xl font-semibold tracking-tight">
-              {profile.name}
-              {profile.is_verified ? (
-                <BadgeCheck
-                  className="size-5 shrink-0 text-sky-500"
-                  aria-label="Verified"
-                />
-              ) : null}
-            </h1>
-            <p className="text-sm text-muted-foreground">@{profile.handle}</p>
-          </div>
-          {!isPrivateHidden && !isBlocked && profile.bio ? (
-            <p className="text-sm leading-relaxed">{profile.bio}</p>
-          ) : null}
-          {!isPrivateHidden && !isBlocked ? (
-            <>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                {profile.category ? (
-                  <span className="flex items-center gap-1">
-                    <Tag className="size-3.5" aria-hidden />
-                    {profile.category}
-                  </span>
-                ) : null}
-                {profile.location ? (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="size-3.5" aria-hidden />
-                    {profile.location}
-                  </span>
-                ) : null}
-                {profile.website ? (
-                  <a
-                    href={profile.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1 text-foreground underline-offset-4 hover:underline"
-                  >
-                    <Globe className="size-3.5" aria-hidden />
-                    {profile.website.replace(/^https?:\/\//, "")}
-                  </a>
-                ) : null}
-              </div>
-              <div className="flex gap-5 text-sm">
-                <span>
-                  <strong className="font-semibold tabular-nums">
-                    {formatCount(profile.posts_count)}
-                  </strong>{" "}
-                  <span className="text-muted-foreground">Posts</span>
-                </span>
-                <span>
-                  <strong className="font-semibold tabular-nums">
-                    {formatCount(profile.followers_count)}
-                  </strong>{" "}
-                  <span className="text-muted-foreground">Followers</span>
-                </span>
-                <span>
-                  <strong className="font-semibold tabular-nums">
-                    {formatCount(profile.following_count)}
-                  </strong>{" "}
-                  <span className="text-muted-foreground">Following</span>
-                </span>
-              </div>
-              {rankBadge || profile.xp_total > 0 ? (
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  {rankBadge ? <RankChip badge={rankBadge} /> : null}
-                  {profile.xp_total > 0 ? (
-                    <span className="text-muted-foreground tabular-nums">
-                      {formatCount(profile.xp_total)} XP
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-            </>
-          ) : null}
+      ) : null}
+
+      <div className="flex flex-col items-center gap-2 text-center">
+        <ProfileAvatar
+          profile={profile}
+          className="size-22 text-xl ring-2 ring-teal ring-offset-4 ring-offset-background"
+        />
+        <div className="mt-1 flex flex-col items-center gap-0.5">
+          <h2 className="flex items-center gap-1.5 font-heading text-xl font-semibold text-text-primary">
+            {profile.name}
+            {profile.is_verified ? (
+              <span
+                aria-label="Verified"
+                role="img"
+                className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sage"
+              >
+                <BadgeCheck className="size-3 text-white" strokeWidth={3} aria-hidden />
+              </span>
+            ) : null}
+          </h2>
+          <p className="text-sm text-text-secondary">@{profile.handle}</p>
         </div>
+        {rankBadge || profile.xp_total > 0 ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-teal px-3 py-1 font-heading text-xs font-medium text-white">
+            {rankBadge?.icon ? <span aria-hidden>{rankBadge.icon}</span> : null}
+            {rankBadge
+              ? `${rankBadge.name} · ${formatCount(profile.xp_total)} XP`
+              : `${formatCount(profile.xp_total)} XP`}
+          </span>
+        ) : null}
+        {!isPrivateHidden && !isBlocked && profile.location ? (
+          <span className="flex items-center gap-1 text-[13px] text-text-secondary">
+            <MapPin className="size-3.5" aria-hidden />
+            {profile.location}
+          </span>
+        ) : null}
       </div>
+
+      <div className="flex items-center gap-2">
+        {isSelf ? (
+          <>
+            <Link href="/settings/profile" className={actionPill}>
+              <Pencil className="size-4" aria-hidden />
+              Edit Profile
+            </Link>
+            <button type="button" className={actionPill} onClick={() => void shareProfile()}>
+              <Share2 className="size-4" aria-hidden />
+              Share
+            </button>
+          </>
+        ) : isBlocked ? (
+          <button
+            type="button"
+            className={actionPill}
+            disabled={modBusy}
+            onClick={() => void unblock()}
+          >
+            {modBusy ? "Working…" : "Unblock"}
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              disabled={followBusy}
+              onClick={() => void toggleFollow()}
+              className={
+                profile.relationship === "following"
+                  ? "flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-teal font-heading text-[13px] font-medium text-white transition-colors hover:bg-teal-tint active:scale-[0.98] disabled:opacity-50"
+                  : `${actionPillBase} text-teal-tint`
+              }
+            >
+              <UserPlus className="size-4" aria-hidden />
+              {followLabel}
+            </button>
+            <button
+              type="button"
+              className={actionPill}
+              disabled={dmBusy}
+              onClick={() => void messageProfile()}
+            >
+              <MessageCircle className="size-4" aria-hidden />
+              Message
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button type="button" className={actionPill}>
+                  <MoreHorizontal className="size-4" aria-hidden />
+                  More
+                </button>
+              </DropdownMenuTrigger>
+              {menuContent}
+            </DropdownMenu>
+          </>
+        )}
+      </div>
+
+      {!isPrivateHidden && !isBlocked ? (
+        <div className="flex flex-col items-center gap-3">
+          {profile.bio ? (
+            <p className="max-w-sm text-center text-sm leading-relaxed">{profile.bio}</p>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-text-secondary">
+            {profile.category ? (
+              <span className="flex items-center gap-1">
+                <Tag className="size-3.5" aria-hidden />
+                {profile.category}
+              </span>
+            ) : null}
+            {profile.website ? (
+              <a
+                href={profile.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-teal-text underline-offset-4 hover:underline"
+              >
+                <Globe className="size-3.5" aria-hidden />
+                {profile.website.replace(/^https?:\/\//, "")}
+              </a>
+            ) : null}
+          </div>
+          <div className="flex gap-6 text-sm">
+            <span>
+              <strong className="font-heading font-semibold tabular-nums">
+                {formatCount(profile.posts_count)}
+              </strong>{" "}
+              <span className="text-text-secondary">Posts</span>
+            </span>
+            <span>
+              <strong className="font-heading font-semibold tabular-nums">
+                {formatCount(profile.followers_count)}
+              </strong>{" "}
+              <span className="text-text-secondary">Followers</span>
+            </span>
+            <span>
+              <strong className="font-heading font-semibold tabular-nums">
+                {formatCount(profile.following_count)}
+              </strong>{" "}
+              <span className="text-text-secondary">Following</span>
+            </span>
+          </div>
+        </div>
+      ) : null}
 
       {isBlocked ? (
         <Card>
@@ -497,6 +590,8 @@ export function ProfileClient({ handle }: { handle: string }) {
           </CardContent>
         </Card>
       ) : (
+        <div className="flex flex-col gap-3">
+        <SectionHeader title="Activity" />
         <Tabs defaultValue="posts">
           <TabsList className="w-full">
             <TabsTrigger value="posts" className="h-10 flex-1">
@@ -576,6 +671,7 @@ export function ProfileClient({ handle }: { handle: string }) {
             </Card>
           </TabsContent>
         </Tabs>
+        </div>
       )}
 
       <ReportDialog
