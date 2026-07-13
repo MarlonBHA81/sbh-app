@@ -25,6 +25,10 @@ class PublicProfileResource extends JsonResource
             'cover_url' => $this->coverUrl(),
             'kind' => $this->kind,
             'is_verified' => (bool) $this->is_verified,
+            'bio' => $this->bio,
+            'social_links' => $this->social_links,
+            'website' => $this->website,
+            'location' => $this->location,
             'followers_count' => $this->followers_count,
             'posts_count' => $this->posts_count,
             'business_category' => $this->when(

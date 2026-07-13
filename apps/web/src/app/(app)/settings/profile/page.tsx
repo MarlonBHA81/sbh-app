@@ -60,6 +60,30 @@ const schema = z.object({
     .optional(),
   location: z.string().max(120),
   is_private: z.boolean(),
+  linkedin: z
+    .union([
+      z.string().regex(/^https:\/\/(www\.)?linkedin\.com\/.+/i, "Enter a full LinkedIn URL (https://linkedin.com/...)"),
+      z.literal(""),
+    ])
+    .optional(),
+  facebook: z
+    .union([
+      z.string().regex(/^https:\/\/(www\.)?(facebook\.com|fb\.com)\/.+/i, "Enter a full Facebook URL (https://facebook.com/...)"),
+      z.literal(""),
+    ])
+    .optional(),
+  instagram: z
+    .union([
+      z.string().regex(/^https:\/\/(www\.)?instagram\.com\/.+/i, "Enter a full Instagram URL (https://instagram.com/...)"),
+      z.literal(""),
+    ])
+    .optional(),
+  whatsapp: z
+    .union([
+      z.string().regex(/^(\+?[0-9 ()\-]{6,20}|https:\/\/wa\.me\/[0-9]{6,15})$/, "Enter a WhatsApp number (e.g. +27 82 123 4567) or wa.me link"),
+      z.literal(""),
+    ])
+    .optional(),
 });
 
 type Values = z.infer<typeof schema>;
@@ -72,6 +96,10 @@ function valuesFromProfile(profile: Profile): Values {
     website: profile.website ?? "",
     location: profile.location ?? "",
     is_private: profile.is_private,
+    linkedin: profile.social_links?.linkedin ?? "",
+    facebook: profile.social_links?.facebook ?? "",
+    instagram: profile.social_links?.instagram ?? "",
+    whatsapp: profile.social_links?.whatsapp ?? "",
   };
 }
 
@@ -369,6 +397,10 @@ export default function ProfileSettingsPage() {
       website: "",
       location: "",
       is_private: false,
+      linkedin: "",
+      facebook: "",
+      instagram: "",
+      whatsapp: "",
     },
   });
 
@@ -399,6 +431,12 @@ export default function ProfileSettingsPage() {
           website: values.website || null,
           location: values.location || null,
           is_private: values.is_private,
+          social_links: {
+            linkedin: values.linkedin || null,
+            facebook: values.facebook || null,
+            instagram: values.instagram || null,
+            whatsapp: values.whatsapp || null,
+          },
         },
       );
       updateActiveProfile(res.data);
@@ -513,6 +551,34 @@ export default function ProfileSettingsPage() {
                   </FormItem>
                 )}
               />
+              {(
+                [
+                  ["linkedin", "LinkedIn", "https://linkedin.com/in/yourname"],
+                  ["facebook", "Facebook", "https://facebook.com/yourpage"],
+                  ["instagram", "Instagram", "https://instagram.com/yourhandle"],
+                  ["whatsapp", "WhatsApp", "+27 82 123 4567"],
+                ] as const
+              ).map(([fieldName, label, placeholder]) => (
+                <FormField
+                  key={fieldName}
+                  control={form.control}
+                  name={fieldName}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{label}</FormLabel>
+                      <FormControl>
+                        <Input
+                          inputMode={fieldName === "whatsapp" ? "tel" : "url"}
+                          placeholder={placeholder}
+                          className="h-11"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ))}
               <FormField
                 control={form.control}
                 name="location"

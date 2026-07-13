@@ -41,6 +41,12 @@ export interface Profile {
   cover_url: string | null;
   category: string | null;
   website: string | null;
+  social_links?: {
+    linkedin?: string | null;
+    facebook?: string | null;
+    instagram?: string | null;
+    whatsapp?: string | null;
+  } | null;
   location: string | null;
   is_private: boolean;
   is_verified: boolean;

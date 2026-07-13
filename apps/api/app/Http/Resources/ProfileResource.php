@@ -64,6 +64,7 @@ class ProfileResource extends JsonResource
                 ],
             ),
             'website' => $this->website,
+            'social_links' => $this->social_links,
             'location' => $this->location,
             'country_code' => $this->country_code,
             'city' => $this->city,

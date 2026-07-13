@@ -53,6 +53,14 @@ class ProfileService
 
     public function updateProfile(Profile $profile, array $data): Profile
     {
+        if (array_key_exists('social_links', $data)) {
+            $links = array_filter(
+                $data['social_links'] ?? [],
+                fn ($value) => is_string($value) && $value !== '',
+            );
+            $data['social_links'] = $links === [] ? null : $links;
+        }
+
         $profile->fill($data)->save();
 
         return $profile->refresh();

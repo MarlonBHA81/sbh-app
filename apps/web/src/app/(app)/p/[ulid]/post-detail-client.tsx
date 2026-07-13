@@ -16,7 +16,9 @@ import {
 } from "@/components/post-types/post-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GuestCta, PublicPostCard } from "@/components/posts/public-post-card";
 import * as api from "@/lib/api/client";
+import type { PublicPost } from "@/lib/api/public-types";
 import type { Comment, Post } from "@/lib/api/types";
 import { useEchoChannel } from "@/lib/echo";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
@@ -43,6 +45,12 @@ function DetailSkeleton() {
 
 export function PostDetailClient({ ulid }: { ulid: string }) {
   const activeUlid = useAuthStore((s) => s.activeProfile?.ulid ?? null);
+  const authStatus = useAuthStore((s) => s.status);
+  const [publicState, setPublicState] = useState<{
+    ulid: string;
+    post: PublicPost | null;
+    phase: "loading" | "loaded" | "error";
+  }>({ ulid, post: null, phase: "loading" });
 
   const [state, setState] = useState<{
     ulid: string;
@@ -59,6 +67,7 @@ export function PostDetailClient({ ulid }: { ulid: string }) {
   }
 
   useEffect(() => {
+    if (authStatus !== "authed") return;
     let cancelled = false;
     api
       .get<{ data: Post }>(`/api/v1/posts/${ulid}`)
@@ -71,7 +80,26 @@ export function PostDetailClient({ ulid }: { ulid: string }) {
     return () => {
       cancelled = true;
     };
-  }, [ulid]);
+  }, [ulid, authStatus]);
+
+  // Logged-out visitors get the public, read-only shape (SEO pages).
+  useEffect(() => {
+    if (authStatus !== "guest") return;
+    let cancelled = false;
+    api
+      .get<{ data: PublicPost }>(`/api/v1/public/posts/${ulid}`)
+      .then((res) => {
+        if (!cancelled) {
+          setPublicState({ ulid, post: res.data, phase: "loaded" });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPublicState({ ulid, post: null, phase: "error" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [ulid, authStatus]);
 
   function bumpCommentCount(delta: number) {
     setState((prev) =>
@@ -119,6 +147,31 @@ export function PostDetailClient({ ulid }: { ulid: string }) {
   function handleCommentCreated(comment: Comment) {
     listRef.current?.prepend(comment);
     bumpCommentCount(1);
+  }
+
+  if (authStatus === "guest") {
+    return (
+      <div className="flex flex-col gap-4">
+        {publicState.phase === "loading" ? <DetailSkeleton /> : null}
+        {publicState.phase === "error" ? (
+          <EmptyState
+            icon={FileWarning}
+            title="Post not found"
+            description="This post may have been removed or is only visible to members."
+          >
+            <Button asChild variant="outline" className="mt-2 h-11">
+              <Link href="/login">Sign in to view more</Link>
+            </Button>
+          </EmptyState>
+        ) : null}
+        {publicState.phase === "loaded" && publicState.post ? (
+          <>
+            <PublicPostCard post={publicState.post} linkToDetail={false} />
+            <GuestCta message="Sign in to like, reply and follow small business owners in your community." />
+          </>
+        ) : null}
+      </div>
+    );
   }
 
   return (

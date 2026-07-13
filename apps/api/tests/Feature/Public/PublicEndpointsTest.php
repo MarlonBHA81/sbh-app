@@ -27,6 +27,9 @@ test('the public profile endpoint returns the limited public shape', function ()
             'cover_url' => null,
             'kind' => Profile::KIND_BUSINESS,
             'is_verified' => false,
+            'social_links' => null,
+            'website' => null,
+            'location' => null,
             'followers_count' => 0,
             'posts_count' => 0,
             'business_category' => ['slug' => 'cafes', 'name' => 'Cafés'],
@@ -132,4 +135,60 @@ test('the public endpoints require no authentication', function () {
 
     // No actingAs — a guest gets a 200, not a 401.
     $this->getJson('/api/v1/public/profiles/anon_ok')->assertOk();
+});
+
+test('the public profile posts endpoint lists only public published posts', function () {
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+
+    Post::factory()->create(['profile_id' => $profile->id, 'body' => 'Public one']);
+    Post::factory()->create([
+        'profile_id' => $profile->id,
+        'visibility' => Post::VISIBILITY_FOLLOWERS,
+        'body' => 'Followers only',
+    ]);
+    Post::factory()->create([
+        'profile_id' => $profile->id,
+        'status' => Post::STATUS_DRAFT,
+        'published_at' => null,
+        'body' => 'Draft',
+    ]);
+
+    $response = $this->getJson("/api/v1/public/profiles/{$profile->handle}/posts")
+        ->assertOk();
+
+    $bodies = collect($response->json('data'))->pluck('body');
+
+    expect($bodies)->toContain('Public one')
+        ->not->toContain('Followers only')
+        ->not->toContain('Draft');
+});
+
+test('the public posts endpoint of a private profile is a 404', function () {
+    $user = userWithProfile();
+    $user->personalProfile->update(['is_private' => true]);
+
+    $this->getJson("/api/v1/public/profiles/{$user->personalProfile->handle}/posts")
+        ->assertNotFound();
+});
+
+test('the public sitemap lists public profiles and posts only', function () {
+    $public = userWithProfile();
+    $post = Post::factory()->create(['profile_id' => $public->personalProfile->id]);
+
+    $private = userWithProfile();
+    $private->personalProfile->update(['is_private' => true]);
+    $hidden = Post::factory()->create([
+        'profile_id' => $private->personalProfile->id,
+    ]);
+
+    $response = $this->getJson('/api/v1/public/sitemap')->assertOk();
+
+    $handles = collect($response->json('data.profiles'))->pluck('handle');
+    $ulids = collect($response->json('data.posts'))->pluck('ulid');
+
+    expect($handles)->toContain($public->personalProfile->handle)
+        ->not->toContain($private->personalProfile->handle)
+        ->and($ulids)->toContain($post->ulid)
+        ->not->toContain($hidden->ulid);
 });

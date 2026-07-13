@@ -245,6 +245,16 @@ class DemoContentSeeder extends Seeder
 
             $this->attachProfileImages($profile, withCover: true);
 
+            // Outbound social links so the profile icon row has demo data.
+            $profile->forceFill([
+                'social_links' => [
+                    'linkedin' => 'https://linkedin.com/company/'.$handle,
+                    'facebook' => 'https://facebook.com/'.$handle,
+                    'instagram' => 'https://instagram.com/'.$handle,
+                    'whatsapp' => 'https://wa.me/2782'.str_pad((string) (crc32($handle) % 10000000), 7, '0', STR_PAD_LEFT),
+                ],
+            ])->save();
+
             $this->profiles[$handle] = $profile;
         }
     }

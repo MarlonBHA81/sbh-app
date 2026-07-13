@@ -41,6 +41,7 @@ class Profile extends Model
         'category',
         'business_category_id',
         'website',
+        'social_links',
         'location',
         'lat',
         'lng',
@@ -55,6 +56,7 @@ class Profile extends Model
     protected function casts(): array
     {
         return [
+            'social_links' => 'array',
             'is_private' => 'boolean',
             'is_verified' => 'boolean',
             'share_location' => 'boolean',

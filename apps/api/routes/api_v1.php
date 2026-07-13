@@ -41,6 +41,7 @@ use App\Http\Controllers\Api\V1\ProfileLocationController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\Public\PublicPostController;
 use App\Http\Controllers\Api\V1\Public\PublicProfileController;
+use App\Http\Controllers\Api\V1\Public\PublicSitemapController;
 use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\SearchController;
@@ -80,7 +81,9 @@ Route::get('status', StatusController::class);
 // active-profile resolution; privacy walls are enforced inside the controllers.
 Route::prefix('public')->middleware('throttle:60,1')->group(function () {
     Route::get('profiles/{handle}', [PublicProfileController::class, 'show']);
+    Route::get('profiles/{handle}/posts', [PublicProfileController::class, 'posts']);
     Route::get('posts/{ulid}', [PublicPostController::class, 'show']);
+    Route::get('sitemap', PublicSitemapController::class);
 });
 
 // Public business category taxonomy (cached).

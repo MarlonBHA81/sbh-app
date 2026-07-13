@@ -10,15 +10,9 @@ import { SearchTrigger } from "@/components/search/search-trigger";
 import { AccountSwitcher } from "@/components/shell/account-switcher";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RESERVED_SEGMENTS } from "@/lib/public-routes";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 import { useSettingsStore } from "@/lib/stores/settings-store";
-
-/** Top-level segments that are NOT profile handles. */
-const RESERVED_SEGMENTS = new Set([
-  "home", "feeds", "events", "discover", "business", "messages",
-  "notifications", "leaderboard", "insights", "map", "search",
-  "settings", "topics", "drafts", "ads", "p",
-]);
 
 /** Screens that render their own reskin header instead of the top bar. */
 function hasOwnHeader(pathname: string): boolean {

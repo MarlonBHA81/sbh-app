@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { PromoteProvider } from "@/components/ads/promote-provider";
@@ -12,10 +12,12 @@ import { MessagesProvider } from "@/components/messages/messages-provider";
 import { NotificationsProvider } from "@/components/notifications/notifications-provider";
 import { SearchDialog } from "@/components/search/search-dialog";
 import { BottomNav } from "@/components/shell/bottom-nav";
+import { GuestShell } from "@/components/shell/guest-shell";
 import { MaintenanceBanner } from "@/components/shell/maintenance-banner";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
 import { TopBar } from "@/components/shell/top-bar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isPublicRoute } from "@/lib/public-routes";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 
 function ShellSkeleton() {
@@ -52,10 +54,19 @@ export default function AppLayout({
 }) {
   const status = useAuthStore((s) => s.status);
   const router = useRouter();
+  const pathname = usePathname();
+  // Post permalinks and profile pages stay viewable logged-out (SEO).
+  const publicView = status === "guest" && isPublicRoute(pathname);
 
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
-  }, [status, router]);
+    if (status === "guest" && !isPublicRoute(pathname)) {
+      router.replace("/login");
+    }
+  }, [status, pathname, router]);
+
+  if (publicView) {
+    return <GuestShell>{children}</GuestShell>;
+  }
 
   if (status !== "authed") {
     return <ShellSkeleton />;

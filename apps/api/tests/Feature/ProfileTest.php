@@ -141,3 +141,46 @@ test('profile lookup by handle is case insensitive', function () {
 
     $this->getJson('/api/v1/profiles/MixedCase')->assertOk();
 });
+
+test('social links can be set, are normalised and surfaced on the profile', function () {
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+
+    $this->actingAs($user)
+        ->patchJson("/api/v1/me/profiles/{$profile->ulid}", [
+            'social_links' => [
+                'linkedin' => 'https://linkedin.com/in/thabo',
+                'facebook' => 'https://www.facebook.com/thabosbakery',
+                'instagram' => 'https://instagram.com/thabosbakery',
+                'whatsapp' => '+27 82 123 4567',
+            ],
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.social_links.linkedin', 'https://linkedin.com/in/thabo')
+        ->assertJsonPath('data.social_links.whatsapp', 'https://wa.me/27821234567');
+});
+
+test('social links reject URLs from the wrong domain', function () {
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+
+    $this->actingAs($user)
+        ->patchJson("/api/v1/me/profiles/{$profile->ulid}", [
+            'social_links' => ['linkedin' => 'https://evil.example/phish'],
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('social_links.linkedin');
+});
+
+test('empty social links clear the stored value', function () {
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+    $profile->forceFill(['social_links' => ['linkedin' => 'https://linkedin.com/in/x']])->save();
+
+    $this->actingAs($user)
+        ->patchJson("/api/v1/me/profiles/{$profile->ulid}", [
+            'social_links' => ['linkedin' => null],
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.social_links', null);
+});

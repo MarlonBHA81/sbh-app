@@ -22,7 +22,14 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  FacebookIcon,
+  InstagramIcon,
+  LinkedinIcon,
+  WhatsappIcon,
+} from "@/components/brand/social-icons";
 import { useComposer } from "@/components/composer/composer-provider";
+import { GuestCta, PublicPostCard } from "@/components/posts/public-post-card";
 import { SectionHeader } from "@/components/home/section-header";
 import { ScreenHeader } from "@/components/shell/screen-header";
 import { EmptyState } from "@/components/empty-state";
@@ -53,6 +60,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import * as api from "@/lib/api/client";
+import type { PublicPost } from "@/lib/api/public-types";
 import type { Conversation, Profile } from "@/lib/api/types";
 import {
   blockProfile,
@@ -83,6 +91,121 @@ function ProfileSkeleton() {
 
 function formatCount(n: number): string {
   return Intl.NumberFormat("en", { notation: "compact" }).format(n);
+}
+
+/** Read-only public posts list for logged-out visitors (SEO pages). */
+function PublicProfilePosts({ handle }: { handle: string }) {
+  const [posts, setPosts] = useState<PublicPost[] | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<{ data: PublicPost[]; meta: { next_cursor: string | null } }>(
+        `/api/v1/public/profiles/${encodeURIComponent(handle)}/posts`,
+      )
+      .then((res) => {
+        if (cancelled) return;
+        setPosts(res.data);
+        setCursor(res.meta.next_cursor);
+      })
+      .catch(() => {
+        if (!cancelled) setPosts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [handle]);
+
+  async function loadMore() {
+    if (!cursor || busy) return;
+    setBusy(true);
+    try {
+      const res = await api.get<{
+        data: PublicPost[];
+        meta: { next_cursor: string | null };
+      }>(
+        `/api/v1/public/profiles/${encodeURIComponent(handle)}/posts?cursor=${encodeURIComponent(cursor)}`,
+      );
+      setPosts((prev) => [...(prev ?? []), ...res.data]);
+      setCursor(res.meta.next_cursor);
+    } catch {
+      // Keep what we have; the button stays for a retry.
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (posts === null) {
+    return (
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-40 w-full rounded-(--radius-card)" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {posts.map((post) => (
+        <PublicPostCard key={post.ulid} post={post} />
+      ))}
+      {cursor ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11"
+          disabled={busy}
+          onClick={() => void loadMore()}
+        >
+          {busy ? "Loading…" : "Load more"}
+        </Button>
+      ) : null}
+      <GuestCta message="Sign in to follow, message and see the full conversation." />
+    </div>
+  );
+}
+
+/** Outbound LinkedIn / Facebook / Instagram / WhatsApp links as 40px circle buttons. */
+function SocialLinkRow({
+  profile,
+  hidden,
+}: {
+  profile: Profile;
+  hidden: boolean;
+}) {
+  const links = profile.social_links;
+  if (hidden || !links) return null;
+
+  const entries = (
+    [
+      ["LinkedIn", links.linkedin, LinkedinIcon],
+      ["Facebook", links.facebook, FacebookIcon],
+      ["Instagram", links.instagram, InstagramIcon],
+      ["WhatsApp", links.whatsapp, WhatsappIcon],
+    ] as const
+  ).filter(([, url]) => Boolean(url));
+
+  if (entries.length === 0) return null;
+
+  return (
+    <div className="mt-1 flex items-center gap-2">
+      {entries.map(([label, url, Icon]) => (
+        <a
+          key={label}
+          href={url as string}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${profile.name} on ${label}`}
+          className="flex size-10 items-center justify-center rounded-full border border-warmgray bg-card text-teal-tint transition-colors hover:bg-accent active:scale-[0.98]"
+        >
+          <Icon />
+        </a>
+      ))}
+    </div>
+  );
 }
 
 export function ProfileClient({ handle }: { handle: string }) {
@@ -141,6 +264,10 @@ export function ProfileClient({ handle }: { handle: string }) {
   const [dmBusy, setDmBusy] = useState(false);
 
   async function messageProfile() {
+    if (status === "guest") {
+      router.push("/login");
+      return;
+    }
     if (!profile || dmBusy) return;
     setDmBusy(true);
     try {
@@ -304,6 +431,7 @@ export function ProfileClient({ handle }: { handle: string }) {
     );
   }
 
+  const isGuest = status === "guest";
   const isSelf = profile.relationship === "self";
   const isBlocked = profile.relationship === "blocked";
   const rankBadge = findRankBadge(profile);
@@ -322,7 +450,12 @@ export function ProfileClient({ handle }: { handle: string }) {
 
   const menuContent = (
     <DropdownMenuContent align="end" className="w-52">
-      {isSelf ? (
+      {isGuest ? (
+        <DropdownMenuItem className="min-h-11 gap-3" onSelect={() => void shareProfile()}>
+          <Share2 className="size-4" aria-hidden />
+          Share profile
+        </DropdownMenuItem>
+      ) : isSelf ? (
         <>
           <DropdownMenuItem className="min-h-11 gap-3" onSelect={() => router.push("/settings/profile")}>
             <Pencil className="size-4" aria-hidden />
@@ -449,6 +582,7 @@ export function ProfileClient({ handle }: { handle: string }) {
             {profile.location}
           </span>
         ) : null}
+        <SocialLinkRow profile={profile} hidden={isPrivateHidden || isBlocked} />
       </div>
 
       <div className="flex items-center gap-2">
@@ -602,6 +736,9 @@ export function ProfileClient({ handle }: { handle: string }) {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="posts" className="pt-2">
+            {isGuest ? (
+              <PublicProfilePosts handle={handle} />
+            ) : (
             <PostList
               buildUrl={(cursor) =>
                 `/api/v1/profiles/${encodeURIComponent(handle)}/posts${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`
@@ -628,6 +765,7 @@ export function ProfileClient({ handle }: { handle: string }) {
                 </EmptyState>
               }
             />
+            )}
           </TabsContent>
           <TabsContent value="about" className="flex flex-col gap-3 pt-2">
             {isSelf ? <XpProgressCard /> : null}
