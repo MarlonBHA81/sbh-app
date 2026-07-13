@@ -4,7 +4,7 @@ use App\Models\Topic;
 use App\Services\SafetyService;
 
 test('combined search returns matching profiles and topics in the expected shape', function () {
-    $me = userWithProfile(['handle' => 'me']);
+    $me = userWithProfile(['handle' => 'me', 'name' => 'Quiet Owl']);
     userWithProfile(['handle' => 'traveler', 'name' => 'Trav Eler']);
     Topic::factory()->create(['slug' => 'travel', 'name' => 'Travel']);
     Topic::factory()->create(['slug' => 'cooking', 'name' => 'Cooking']);
@@ -23,7 +23,7 @@ test('combined search returns matching profiles and topics in the expected shape
 });
 
 test('combined search matches profile name substrings', function () {
-    $me = userWithProfile(['handle' => 'me']);
+    $me = userWithProfile(['handle' => 'me', 'name' => 'Quiet Owl']);
     userWithProfile(['handle' => 'xyz', 'name' => 'Captain Nemo']);
 
     $res = $this->actingAs($me)->getJson('/api/v1/search?q=nemo')->assertOk();
@@ -32,7 +32,7 @@ test('combined search matches profile name substrings', function () {
 });
 
 test('combined search caps each bucket at six', function () {
-    $me = userWithProfile(['handle' => 'me']);
+    $me = userWithProfile(['handle' => 'me', 'name' => 'Quiet Owl']);
     foreach (range(1, 8) as $i) {
         userWithProfile(['handle' => 'match'.$i]);
         Topic::factory()->create(['slug' => 'match-topic-'.$i, 'name' => 'Match Topic '.$i]);
@@ -45,7 +45,7 @@ test('combined search caps each bucket at six', function () {
 });
 
 test('combined search excludes blocked profiles in either direction', function () {
-    $me = userWithProfile(['handle' => 'me']);
+    $me = userWithProfile(['handle' => 'me', 'name' => 'Quiet Owl']);
     $iBlocked = userWithProfile(['handle' => 'blockone']);
     $blockedMe = userWithProfile(['handle' => 'blocktwo']);
 
