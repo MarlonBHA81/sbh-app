@@ -175,12 +175,15 @@ export function Composer({
   quoteParent,
   editPost,
   onSaved,
+  onPublished,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   quoteParent: Post | null;
   editPost: Post | null;
   onSaved: () => void;
+  /** Fires when the post goes live immediately (not draft/scheduled). */
+  onPublished?: (post: Post) => void;
 }) {
   const isMobile = useIsMobile();
   const t = useTranslations("composer");
@@ -508,6 +511,7 @@ export function Composer({
     if (saved) {
       onSaved();
       onOpenChange(false);
+      if (status === "published") onPublished?.(saved);
     }
   }
 

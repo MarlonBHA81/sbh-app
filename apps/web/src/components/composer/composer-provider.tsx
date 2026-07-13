@@ -17,6 +17,11 @@ export interface ComposerOpenOptions {
   quoteParent?: Post;
   /** Open prefilled to edit this draft/scheduled post. */
   post?: Post;
+  /**
+   * Called with the saved post when it is published immediately (not saved
+   * as a draft or scheduled) — e.g. the Ad Center's create-and-promote flow.
+   */
+  onPublished?: (post: Post) => void;
 }
 
 interface ComposerContextValue {
@@ -70,6 +75,7 @@ export function ComposerProvider({ children }: { children: React.ReactNode }) {
           quoteParent={options.quoteParent ?? null}
           editPost={options.post ?? null}
           onSaved={notifyPostsMutated}
+          onPublished={options.onPublished}
         />
       ) : null}
     </ComposerContext.Provider>

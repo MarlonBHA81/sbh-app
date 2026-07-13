@@ -1,10 +1,11 @@
 "use client";
 
-import { Megaphone } from "lucide-react";
+import { Megaphone, PenSquare } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { CampaignCard } from "@/components/ads/campaign-card";
 import { usePromote } from "@/components/ads/promote-provider";
+import { useComposer } from "@/components/composer/composer-provider";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,7 +23,14 @@ interface ListState {
 
 export function AdsView() {
   const { openPromote, campaignMutationCount } = usePromote();
+  const { openComposer } = useComposer();
   const isAdmin = useAuthStore((st) => Boolean(st.user?.is_admin));
+
+  // Compose a brand-new post, then jump straight into the promote wizard
+  // with it preselected the moment it publishes.
+  const createAndPromote = useCallback(() => {
+    openComposer({ onPublished: (post) => openPromote(post) });
+  }, [openComposer, openPromote]);
   const [state, setState] = useState<ListState>({
     key: campaignMutationCount,
     phase: "loading",
@@ -120,17 +128,27 @@ export function AdsView() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col">
           <h1 className="text-xl font-semibold tracking-tight">Ad Center</h1>
           <p className="text-sm text-muted-foreground">
             Promote your posts and track their performance.
           </p>
         </div>
-        <Button className="h-10 shrink-0" onClick={() => openPromote()}>
-          <Megaphone className="size-4" aria-hidden />
-          Promote a post
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            className="h-10 shrink-0"
+            onClick={createAndPromote}
+          >
+            <PenSquare className="size-4" aria-hidden />
+            Create &amp; promote
+          </Button>
+          <Button className="h-10 shrink-0" onClick={() => openPromote()}>
+            <Megaphone className="size-4" aria-hidden />
+            Promote a post
+          </Button>
+        </div>
       </div>
 
       {phase === "loading" ? (
@@ -149,10 +167,16 @@ export function AdsView() {
           title="No campaigns yet"
           description="Promote your posts to reach more people in the For You feed."
         >
-          <Button className="mt-2 h-11" onClick={() => openPromote()}>
-            <Megaphone className="size-4" aria-hidden />
-            Promote a post
-          </Button>
+          <div className="mt-2 flex flex-wrap justify-center gap-2">
+            <Button variant="outline" className="h-11" onClick={createAndPromote}>
+              <PenSquare className="size-4" aria-hidden />
+              Create &amp; promote
+            </Button>
+            <Button className="h-11" onClick={() => openPromote()}>
+              <Megaphone className="size-4" aria-hidden />
+              Promote a post
+            </Button>
+          </div>
         </EmptyState>
       ) : (
         <div className="flex flex-col gap-3">
