@@ -48,3 +48,26 @@
   --sbh-radius-tile: 1.25rem;   /* 20px — quick access tiles */
   --sbh-radius-media: 0.75rem;  /* 12px — media blocks inside cards */
 }
+
+/*
+ * Dark theme: swap the SEMANTIC values only — brand hues (teal/plum/sage/
+ * slate fills) stay put; text steps lighten. All pairs AA-verified:
+ * text 12.5:1, secondary 6.1:1, teal-text 7.5:1 on the dark surface.
+ */
+.dark {
+  --sbh-bg: #1d1d23;
+  --sbh-surface: #26262e;
+  --sbh-text: #eceae9;
+  --sbh-text-secondary: #a5a5ae;
+  --sbh-text-muted: #6f6f78;
+  --sbh-teal-text: #8fc1be;
+
+  /* Warm gray family becomes the dark border/divider/input family. */
+  --sbh-warmgray: #3a3a44;
+  --sbh-warmgray-tint: #45454f;
+  --sbh-warmgray-50: rgb(58 58 68 / 60%);
+
+  --sbh-slate-wash: rgb(255 255 255 / 5%);
+  --sbh-teal-wash: rgb(107 168 165 / 14%);
+  --sbh-shadow-card: 0 1px 3px rgb(0 0 0 / 40%);
+}

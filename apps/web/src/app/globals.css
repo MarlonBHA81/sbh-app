@@ -47,39 +47,41 @@
 }
 
 .dark {
-  /* SBH brand dark: Charcoal Slate surfaces, brightened teal. */
-  --background: oklch(0.24 0.012 286);
-  --foreground: oklch(0.902 0.003 48.7);
-  --card: oklch(0.3 0.014 286);
-  --card-foreground: oklch(0.902 0.003 48.7);
-  --popover: oklch(0.3 0.014 286);
-  --popover-foreground: oklch(0.902 0.003 48.7);
-  --primary: oklch(0.72 0.1 193);
-  --primary-foreground: oklch(0.22 0.012 286);
-  --secondary: oklch(0.35 0.015 286);
-  --secondary-foreground: oklch(0.902 0.003 48.7);
-  --muted: oklch(0.35 0.015 286);
-  --muted-foreground: oklch(0.72 0.008 60);
-  --accent: oklch(0.37 0.03 193);
-  --accent-foreground: oklch(0.93 0.01 193);
+  /* Semantic tokens re-mapped to the dark values in design-tokens.css.
+     Brand fills (teal/plum/sage/slate) intentionally unchanged. */
+  --background: var(--sbh-bg);
+  --foreground: var(--sbh-text);
+  --card: var(--sbh-surface);
+  --card-foreground: var(--sbh-text);
+  --popover: var(--sbh-surface);
+  --popover-foreground: var(--sbh-text);
+  /* Slate buttons, one step lighter so they read against dark cards. */
+  --primary: #55555f;
+  --primary-foreground: var(--sbh-white);
+  --secondary: var(--sbh-warmgray);
+  --secondary-foreground: var(--sbh-text);
+  --muted: var(--sbh-warmgray-50);
+  --muted-foreground: var(--sbh-text-secondary);
+  --accent: var(--sbh-teal-wash);
+  --accent-foreground: var(--sbh-teal-text);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 12%);
-  --input: oklch(1 0 0 / 16%);
-  --ring: oklch(0.72 0.1 193);
+  --border: var(--sbh-warmgray);
+  --input: var(--sbh-warmgray);
+  --ring: #6ba8a5;
   /* Brand-derived categorical set — CVD/contrast validated (dark). */
   --chart-1: oklch(0.65 0.12 193);
   --chart-2: oklch(0.53 0.14 342);
   --chart-3: oklch(0.66 0.115 150);
   --chart-4: oklch(0.66 0.11 75);
   --chart-5: oklch(0.57 0.11 286);
-  --sidebar: oklch(0.28 0.013 286);
-  --sidebar-foreground: oklch(0.902 0.003 48.7);
-  --sidebar-primary: oklch(0.72 0.1 193);
-  --sidebar-primary-foreground: oklch(0.22 0.012 286);
-  --sidebar-accent: oklch(0.37 0.03 193);
-  --sidebar-accent-foreground: oklch(0.93 0.01 193);
-  --sidebar-border: oklch(1 0 0 / 12%);
-  --sidebar-ring: oklch(0.72 0.1 193);
+  --sidebar: #202027;
+  --sidebar-foreground: var(--sbh-text);
+  --sidebar-primary: #55555f;
+  --sidebar-primary-foreground: var(--sbh-white);
+  --sidebar-accent: var(--sbh-teal-wash);
+  --sidebar-accent-foreground: var(--sbh-teal-text);
+  --sidebar-border: var(--sbh-warmgray);
+  --sidebar-ring: #6ba8a5;
 }
 
 @theme inline {

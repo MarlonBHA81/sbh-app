@@ -199,7 +199,7 @@ function SocialLinkRow({
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${profile.name} on ${label}`}
-          className="flex size-10 items-center justify-center rounded-full border border-warmgray bg-card text-teal-tint transition-colors hover:bg-accent active:scale-[0.98]"
+          className="flex size-10 items-center justify-center rounded-full border border-warmgray bg-card text-teal-text transition-colors hover:bg-accent active:scale-[0.98]"
         >
           <Icon />
         </a>
@@ -615,7 +615,7 @@ export function ProfileClient({ handle }: { handle: string }) {
               className={
                 profile.relationship === "following"
                   ? "flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-teal font-heading text-[13px] font-medium text-white transition-colors hover:bg-teal-tint active:scale-[0.98] disabled:opacity-50"
-                  : `${actionPillBase} text-teal-tint`
+                  : `${actionPillBase} text-teal-text`
               }
             >
               <UserPlus className="size-4" aria-hidden />

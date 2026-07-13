@@ -130,7 +130,7 @@ export function SbhLogo({
       <SbhMark className={cn("size-9", markClassName)} />
       <span
         className={cn(
-          "font-heading font-semibold italic tracking-tight text-teal-tint",
+          "font-heading font-semibold italic tracking-tight text-teal-text",
           textClassName,
         )}
       >
