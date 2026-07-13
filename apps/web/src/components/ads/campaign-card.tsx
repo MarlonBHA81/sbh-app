@@ -2,6 +2,8 @@
 
 import {
   BarChart3,
+  ExternalLink,
+  Eye,
   MousePointerClick,
   Pause,
   Play,
@@ -24,9 +26,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import * as api from "@/lib/api/client";
-import { formatCompact, formatRand } from "@/lib/ads/format";
+import { formatCompact } from "@/lib/ads/format";
 import type { Campaign, CampaignStatus, PostType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
@@ -94,10 +95,6 @@ export function CampaignCard({
   const [busy, setBusy] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
   const status = STATUS_META[campaign.status];
-  const spentPct =
-    campaign.budget_cents > 0
-      ? Math.min(100, (campaign.spent_cents / campaign.budget_cents) * 100)
-      : 0;
   const remaining = daysRemaining(campaign.ends_at);
 
   async function toggleStatus() {
@@ -152,27 +149,21 @@ export function CampaignCard({
         </Badge>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Progress value={spentPct} />
-        <div className="flex items-center justify-between text-xs text-muted-foreground tabular-nums">
-          <span>
-            {formatRand(campaign.spent_cents)} of{" "}
-            {formatRand(campaign.budget_cents)}
-          </span>
-          <span>{Math.round(spentPct)}%</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat
-          icon={BarChart3}
+          icon={Eye}
           label="Impressions"
           value={formatCompact(campaign.impressions)}
         />
         <Stat
           icon={MousePointerClick}
-          label="Clicks"
+          label="Post opens"
           value={formatCompact(campaign.clicks)}
+        />
+        <Stat
+          icon={ExternalLink}
+          label="Link clicks"
+          value={formatCompact(campaign.link_clicks)}
         />
         <Stat
           icon={BarChart3}
@@ -237,8 +228,8 @@ export function CampaignCard({
           <AlertDialogHeader>
             <AlertDialogTitle>End this campaign?</AlertDialogTitle>
             <AlertDialogDescription>
-              Promotion stops immediately and the remaining budget won&apos;t be
-              spent. This can&apos;t be undone.
+              Promotion stops immediately and its metrics are kept. This
+              can&apos;t be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

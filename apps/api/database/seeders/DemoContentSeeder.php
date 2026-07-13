@@ -1042,15 +1042,13 @@ class DemoContentSeeder extends Seeder
 
     private function seedAds(): void
     {
-        // Active campaign promoting a public Braai Bros post.
+        // Active metrics-only campaign promoting a public Braai Bros post.
         $active = $this->campaigns->create($this->profiles['braai_bros'], $this->posts['image_braai'], [
-            'budget_cents' => 50000, // R500
             'duration_days' => 14,
         ]);
 
-        // Completed campaign for Durban Spice (ran, spent out, closed).
+        // Completed campaign for Durban Spice (ran its window, closed).
         $completed = $this->campaigns->create($this->profiles['durban_spice'], $this->posts['text_spice_promo'], [
-            'budget_cents' => 20000, // R200
             'duration_days' => 7,
         ]);
         $completed->forceFill([
@@ -1066,6 +1064,7 @@ class DemoContentSeeder extends Seeder
         foreach ([[$active, 0, 13], [$completed, 7, 14]] as [$campaign, $fromDaysAgo, $toDaysAgo]) {
             $impressions = 0;
             $clicks = 0;
+            $linkClicks = 0;
 
             for ($daysAgo = $toDaysAgo; $daysAgo >= $fromDaysAgo; $daysAgo--) {
                 // A gentle curve: busier towards the campaign midpoint.
@@ -1073,24 +1072,35 @@ class DemoContentSeeder extends Seeder
 
                 for ($i = 0; $i < $daily; $i++) {
                     $isClick = ($i === $daily - 1 && $daysAgo % 2 === 0);
+                    $isLinkClick = ! $isClick && $i === 0 && $daysAgo % 3 === 0;
                     $viewer = $this->profiles[$viewers[($daysAgo + $i) % count($viewers)]];
+
+                    $kind = $isClick
+                        ? AdEvent::KIND_CLICK
+                        : ($isLinkClick ? AdEvent::KIND_LINK_CLICK : AdEvent::KIND_IMPRESSION);
 
                     $rows[] = [
                         'campaign_id' => $campaign->id,
                         'ad_slot_id' => null,
-                        'kind' => $isClick ? AdEvent::KIND_CLICK : AdEvent::KIND_IMPRESSION,
+                        'kind' => $kind,
                         'profile_id' => $viewer->id,
                         'created_at' => now()->subDays($daysAgo)->setTime(10 + ($i % 10), 5 * $i % 60),
                     ];
 
-                    $isClick ? $clicks++ : $impressions++;
+                    if ($isClick) {
+                        $clicks++;
+                    } elseif ($isLinkClick) {
+                        $linkClicks++;
+                    } else {
+                        $impressions++;
+                    }
                 }
             }
 
             $campaign->forceFill([
                 'impressions_count' => $impressions,
                 'clicks_count' => $clicks,
-                'spent_cents' => min($impressions * $campaign->cpi_cents, $campaign->budget_cents),
+                'link_clicks_count' => $linkClicks,
             ])->save();
         }
 

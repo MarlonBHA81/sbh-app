@@ -17,18 +17,21 @@ class CampaignInfolist
             TextEntry::make('status')->badge(),
             TextEntry::make('budget_cents')
                 ->label('Budget')
-                ->formatStateUsing(fn (int $state) => 'R'.number_format($state / 100, 2)),
+                ->placeholder('No budget (metrics only)')
+                ->formatStateUsing(fn (?int $state) => $state === null ? null : 'R'.number_format($state / 100, 2)),
             TextEntry::make('spent_cents')
                 ->label('Spent')
-                ->formatStateUsing(fn (int $state) => 'R'.number_format($state / 100, 2)),
-            TextEntry::make('cpi_cents')
-                ->label('CPI')
+                ->visible(fn (Campaign $record) => $record->budget_cents !== null)
                 ->formatStateUsing(fn (int $state) => 'R'.number_format($state / 100, 2)),
             TextEntry::make('impressions_count')->label('Impressions'),
-            TextEntry::make('clicks_count')->label('Clicks'),
+            TextEntry::make('clicks_count')->label('Post opens'),
+            TextEntry::make('link_clicks_count')->label('Link clicks'),
             TextEntry::make('ctr')
                 ->label('CTR')
                 ->state(fn (Campaign $record) => $record->ctrPct().'%'),
+            TextEntry::make('link_ctr')
+                ->label('Link CTR')
+                ->state(fn (Campaign $record) => $record->linkCtrPct().'%'),
             TextEntry::make('starts_at')->dateTime(),
             TextEntry::make('ends_at')->dateTime(),
         ]);

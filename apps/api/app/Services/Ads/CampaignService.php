@@ -17,7 +17,7 @@ class CampaignService
     /**
      * Create an active campaign promoting one of the profile's own posts.
      *
-     * @param  array{budget_cents: int, duration_days: int}  $data
+     * @param  array{budget_cents?: int|null, duration_days: int}  $data
      */
     public function create(Profile $advertiser, Post $post, array $data): Campaign
     {
@@ -46,7 +46,7 @@ class CampaignService
             'profile_id' => $advertiser->id,
             'post_id' => $post->id,
             'status' => Campaign::STATUS_ACTIVE,
-            'budget_cents' => (int) $data['budget_cents'],
+            'budget_cents' => isset($data['budget_cents']) ? (int) $data['budget_cents'] : null,
             'spent_cents' => 0,
             'cpi_cents' => (int) config('ads.cpi_cents'),
             'starts_at' => $now,
@@ -92,7 +92,8 @@ class CampaignService
             return false;
         }
 
-        $exhausted = $campaign->spent_cents >= $campaign->budget_cents;
+        $exhausted = $campaign->budget_cents !== null
+            && $campaign->spent_cents >= $campaign->budget_cents;
         $expired = $campaign->ends_at !== null && Carbon::now()->greaterThan($campaign->ends_at);
 
         if ($exhausted || $expired) {

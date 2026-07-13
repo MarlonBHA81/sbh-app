@@ -32,6 +32,7 @@ class Campaign extends Model
         'ends_at',
         'impressions_count',
         'clicks_count',
+        'link_clicks_count',
     ];
 
     /**
@@ -42,6 +43,7 @@ class Campaign extends Model
         'spent_cents' => 0,
         'impressions_count' => 0,
         'clicks_count' => 0,
+        'link_clicks_count' => 0,
     ];
 
     protected function casts(): array
@@ -52,6 +54,7 @@ class Campaign extends Model
             'cpi_cents' => 'integer',
             'impressions_count' => 'integer',
             'clicks_count' => 'integer',
+            'link_clicks_count' => 'integer',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
         ];
@@ -89,8 +92,12 @@ class Campaign extends Model
         return $this->status === self::STATUS_COMPLETED;
     }
 
-    public function remainingCents(): int
+    public function remainingCents(): ?int
     {
+        if ($this->budget_cents === null) {
+            return null;
+        }
+
         // Counter attributes may be absent on a freshly created model (DB
         // defaults not yet hydrated), hence the int casts throughout.
         return max(0, (int) $this->budget_cents - (int) $this->spent_cents);
@@ -105,6 +112,15 @@ class Campaign extends Model
         return round((int) $this->clicks_count / (int) $this->impressions_count * 100, 2);
     }
 
+    public function linkCtrPct(): float
+    {
+        if ((int) $this->impressions_count === 0) {
+            return 0.0;
+        }
+
+        return round((int) $this->link_clicks_count / (int) $this->impressions_count * 100, 2);
+    }
+
     /**
      * A non-completed campaign that is within its window and still has budget.
      */
@@ -112,7 +128,10 @@ class Campaign extends Model
     {
         return $query
             ->where('status', self::STATUS_ACTIVE)
-            ->whereColumn('spent_cents', '<', 'budget_cents')
+            ->where(function (Builder $q) {
+                // Unbudgeted campaigns serve for their whole window.
+                $q->whereNull('budget_cents')->orWhereColumn('spent_cents', '<', 'budget_cents');
+            })
             ->where(function (Builder $q) {
                 $q->whereNull('starts_at')->orWhere('starts_at', '<=', now());
             })

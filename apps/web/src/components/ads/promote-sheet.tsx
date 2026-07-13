@@ -25,16 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import * as api from "@/lib/api/client";
-import {
-  BUDGET_MAX_CENTS,
-  BUDGET_MIN_CENTS,
-  BUDGET_STEP_CENTS,
-  DURATION_MAX_DAYS,
-  DURATION_MIN_DAYS,
-  estimatedReach,
-  formatCompact,
-  formatRand,
-} from "@/lib/ads/format";
+import { DURATION_MAX_DAYS, DURATION_MIN_DAYS } from "@/lib/ads/format";
 import type { Campaign, CampaignPost, Paginated, Post } from "@/lib/api/types";
 import { formatCount } from "@/lib/reactions";
 
@@ -159,40 +150,14 @@ function PickStep({
 }
 
 function ConfigStep({
-  budgetCents,
   durationDays,
-  onBudget,
   onDuration,
 }: {
-  budgetCents: number;
   durationDays: number;
-  onBudget: (cents: number) => void;
   onDuration: (days: number) => void;
 }) {
-  const reach = estimatedReach(budgetCents);
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between">
-          <label className="text-sm font-medium">Budget</label>
-          <span className="text-lg font-semibold tabular-nums">
-            {formatRand(budgetCents)}
-          </span>
-        </div>
-        <Slider
-          value={[budgetCents]}
-          min={BUDGET_MIN_CENTS}
-          max={BUDGET_MAX_CENTS}
-          step={BUDGET_STEP_CENTS}
-          onValueChange={([value]) => onBudget(value)}
-          aria-label="Budget"
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{formatRand(BUDGET_MIN_CENTS)}</span>
-          <span>{formatRand(BUDGET_MAX_CENTS)}</span>
-        </div>
-      </div>
-
       <div className="flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
           <label className="text-sm font-medium">Duration</label>
@@ -218,11 +183,12 @@ function ConfigStep({
         <Sparkles className="size-5 shrink-0 text-primary" aria-hidden />
         <div className="flex flex-col">
           <span className="text-sm font-medium">
-            Estimated reach: ~{formatCompact(reach)} impressions
+            Shown in the For You feed for {durationDays}{" "}
+            {durationDays === 1 ? "day" : "days"}
           </span>
           <span className="text-xs text-muted-foreground">
-            Shown in the For You feed over {durationDays}{" "}
-            {durationDays === 1 ? "day" : "days"}.
+            You&apos;ll see impressions, post opens, link clicks and reach in
+            the Ad Center.
           </span>
         </div>
       </div>
@@ -232,17 +198,15 @@ function ConfigStep({
 
 function ReviewStep({
   post,
-  budgetCents,
   durationDays,
 }: {
   post: Post;
-  budgetCents: number;
   durationDays: number;
 }) {
   const rows: [string, string][] = [
-    ["Budget", formatRand(budgetCents)],
     ["Duration", `${durationDays} ${durationDays === 1 ? "day" : "days"}`],
-    ["Estimated reach", `~${formatCompact(estimatedReach(budgetCents))}`],
+    ["Placement", "For You feed"],
+    ["Tracking", "Impressions · opens · link clicks"],
   ];
   return (
     <div className="flex flex-col gap-4">
@@ -261,8 +225,7 @@ function ReviewStep({
         ))}
       </dl>
       <p className="text-xs text-muted-foreground">
-        Your card won&apos;t be charged in this demo. The campaign starts
-        immediately and you can pause or end it any time.
+        The campaign starts immediately and you can pause or end it any time.
       </p>
     </div>
   );
@@ -294,8 +257,8 @@ function SuccessStep({ post }: { post: CampaignPost }) {
 const STEP_META = [
   { title: "Choose a post", description: "Pick a public post to promote." },
   {
-    title: "Set your budget",
-    description: "Choose how much to spend and for how long.",
+    title: "Set the duration",
+    description: "Choose how long the promotion runs.",
   },
   { title: "Review & promote", description: "Confirm the details below." },
 ] as const;
@@ -313,7 +276,6 @@ export function PromoteSheet({
 }) {
   const [step, setStep] = useState<1 | 2 | 3>(preselected ? 2 : 1);
   const [selected, setSelected] = useState<Post | null>(preselected);
-  const [budgetCents, setBudgetCents] = useState(50_000);
   const [durationDays, setDurationDays] = useState(7);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -327,7 +289,6 @@ export function PromoteSheet({
         "/api/v1/ads/campaigns",
         {
           post_ulid: selected.ulid,
-          budget_cents: budgetCents,
           duration_days: durationDays,
         },
       );
@@ -416,17 +377,11 @@ export function PromoteSheet({
                 />
               ) : step === 2 ? (
                 <ConfigStep
-                  budgetCents={budgetCents}
                   durationDays={durationDays}
-                  onBudget={setBudgetCents}
                   onDuration={setDurationDays}
                 />
               ) : selected ? (
-                <ReviewStep
-                  post={selected}
-                  budgetCents={budgetCents}
-                  durationDays={durationDays}
-                />
+                <ReviewStep post={selected} durationDays={durationDays} />
               ) : null}
             </div>
 

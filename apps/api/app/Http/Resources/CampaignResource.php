@@ -13,16 +13,26 @@ use Illuminate\Support\Str;
 class CampaignResource extends JsonResource
 {
     /**
-     * Optional per-day impression/click series, attached by the controller when
+     * Optional per-day event series, attached by the controller when
      * ?series=1 is requested.
      *
-     * @var list<array{date: string, impressions: int, clicks: int}>|null
+     * @var list<array{date: string, impressions: int, clicks: int, link_clicks: int}>|null
      */
     public ?array $series = null;
+
+    /** Unique profiles reached (distinct impression viewers); detail only. */
+    public ?int $reach = null;
 
     public function withSeries(array $series): static
     {
         $this->series = $series;
+
+        return $this;
+    }
+
+    public function withReach(int $reach): static
+    {
+        $this->reach = $reach;
 
         return $this;
     }
@@ -38,7 +48,9 @@ class CampaignResource extends JsonResource
             'cpi_cents' => $this->cpi_cents,
             'impressions' => $this->impressions_count,
             'clicks' => $this->clicks_count,
+            'link_clicks' => $this->link_clicks_count,
             'ctr_pct' => $this->ctrPct(),
+            'link_ctr_pct' => $this->linkCtrPct(),
             'starts_at' => $this->starts_at?->toISOString(),
             'ends_at' => $this->ends_at?->toISOString(),
             'post' => $this->whenLoaded('post', fn () => $this->postLite()),
@@ -47,6 +59,10 @@ class CampaignResource extends JsonResource
 
         if ($this->series !== null) {
             $data['series'] = $this->series;
+        }
+
+        if ($this->reach !== null) {
+            $data['reach'] = $this->reach;
         }
 
         return $data;
@@ -65,6 +81,11 @@ class CampaignResource extends JsonResource
             'ulid' => $this->post->ulid,
             'type' => $this->post->type,
             'body' => $this->post->body === null ? null : Str::limit($this->post->body, 140),
+            // Engagement on the promoted post — what advertisers care about.
+            'likes_count' => (int) $this->post->likes_count,
+            'comments_count' => (int) $this->post->comments_count,
+            'reposts_count' => (int) $this->post->reposts_count,
+            'views_count' => (int) $this->post->views_count,
         ];
     }
 }

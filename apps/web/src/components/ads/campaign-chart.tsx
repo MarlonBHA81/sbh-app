@@ -21,10 +21,11 @@ import type { CampaignSeriesPoint } from "@/lib/api/types";
 
 const SERIES = [
   { key: "impressions", label: "Impressions", slot: 1 },
-  { key: "clicks", label: "Clicks", slot: 2 },
+  { key: "clicks", label: "Post opens", slot: 2 },
+  { key: "link_clicks", label: "Link clicks", slot: 3 },
 ] as const;
 
-/** Daily impressions & clicks for a campaign's detail view. */
+/** Daily impressions, post opens & link clicks for a campaign's detail view. */
 export function CampaignChart({ data }: { data: CampaignSeriesPoint[] }) {
   return (
     <div className="flex flex-col gap-3">

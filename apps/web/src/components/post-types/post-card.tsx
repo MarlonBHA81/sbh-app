@@ -50,6 +50,7 @@ import {
 import {
   trackCampaignClick,
   trackCampaignImpression,
+  trackCampaignLinkClick,
 } from "@/lib/ads/track";
 import * as api from "@/lib/api/client";
 import type { Post, Vote } from "@/lib/api/types";
@@ -230,6 +231,15 @@ export function PostCard({
     if (promoted && campaignUlid) trackCampaignClick(campaignUlid);
   };
 
+  // Outbound link clicks anywhere in a promoted card (capture phase, so it
+  // sees clicks on anchors the card-navigation handler ignores).
+  const trackPromotedLinkClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!promoted || !campaignUlid) return;
+    const target = event.target as HTMLElement;
+    const href = target.closest("a[href]")?.getAttribute("href") ?? "";
+    if (/^https?:\/\//.test(href)) trackCampaignLinkClick(campaignUlid);
+  };
+
   // Live counts are authoritative server totals — apply (during render, guarded
   // against re-applying the same broadcast) without touching the viewer's own
   // liked/vote flags.
@@ -407,6 +417,7 @@ export function PostCard({
     <article
       ref={articleRef}
       onClick={handleCardClick}
+      onClickCapture={trackPromotedLinkClick}
       className={cn(
         "flex flex-col gap-3 rounded-xl border bg-card p-4 text-card-foreground",
         linkToDetail && "cursor-pointer transition-colors hover:bg-accent/30",

@@ -6,7 +6,7 @@ import * as api from "@/lib/api/client";
  * subject (campaign or slot); clicks always fire.
  */
 
-type TrackKind = "impression" | "click";
+type TrackKind = "impression" | "click" | "link_click";
 
 interface TrackTarget {
   campaign_ulid?: string;
@@ -30,9 +30,14 @@ export function trackCampaignImpression(campaignUlid: string): void {
   send("impression", { campaign_ulid: campaignUlid });
 }
 
-/** Track a click on a promoted post's campaign (not deduped). */
+/** Track a post-open click on a promoted post's campaign (not deduped). */
 export function trackCampaignClick(campaignUlid: string): void {
   send("click", { campaign_ulid: campaignUlid });
+}
+
+/** Track an outbound link click on a promoted post (not deduped). */
+export function trackCampaignLinkClick(campaignUlid: string): void {
+  send("link_click", { campaign_ulid: campaignUlid });
 }
 
 /** Track a sponsor-slot impression at most once per session. */

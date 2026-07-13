@@ -53,6 +53,7 @@ class CampaignController extends Controller
 
         if ($request->boolean('series')) {
             $resource->withSeries($this->series($campaign));
+            $resource->withReach($this->reach($campaign));
         }
 
         return $resource;
@@ -77,9 +78,22 @@ class CampaignController extends Controller
     }
 
     /**
+     * Unique profiles that recorded an impression (logged-in reach).
+     */
+    private function reach(Campaign $campaign): int
+    {
+        return (int) AdEvent::query()
+            ->where('campaign_id', $campaign->id)
+            ->where('kind', AdEvent::KIND_IMPRESSION)
+            ->whereNotNull('profile_id')
+            ->distinct()
+            ->count('profile_id');
+    }
+
+    /**
      * Per-day impression/click counts across the campaign window, zero-filled.
      *
-     * @return list<array{date: string, impressions: int, clicks: int}>
+     * @return list<array{date: string, impressions: int, clicks: int, link_clicks: int}>
      */
     private function series(Campaign $campaign): array
     {
@@ -108,6 +122,7 @@ class CampaignController extends Controller
                 'date' => $key,
                 'impressions' => (int) ($dayRows->firstWhere('kind', AdEvent::KIND_IMPRESSION)->total ?? 0),
                 'clicks' => (int) ($dayRows->firstWhere('kind', AdEvent::KIND_CLICK)->total ?? 0),
+                'link_clicks' => (int) ($dayRows->firstWhere('kind', AdEvent::KIND_LINK_CLICK)->total ?? 0),
             ];
         }
 

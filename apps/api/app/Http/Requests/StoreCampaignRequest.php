@@ -15,8 +15,11 @@ class StoreCampaignRequest extends FormRequest
     {
         return [
             'post_ulid' => ['required', 'string'],
+            // Budgets are optional — campaigns are metrics-first and run for
+            // their duration; a budget (when given) still caps impressions.
             'budget_cents' => [
-                'required',
+                'sometimes',
+                'nullable',
                 'integer',
                 'min:'.(int) config('ads.min_budget_cents'),
                 'max:'.(int) config('ads.max_budget_cents'),

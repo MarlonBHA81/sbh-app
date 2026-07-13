@@ -25,10 +25,11 @@ class AdTrackingService
     public function __construct(private CampaignService $campaigns) {}
 
     /**
-     * Record an impression or click against a campaign. Impressions are deduped
-     * per profile per campaign within a short window; clicks are never deduped.
-     * A recorded impression bills one CPI against the budget and completes the
-     * campaign once the budget is exhausted. No-op for non-active campaigns.
+     * Record an impression, post-open click or outbound link click against a
+     * campaign. Impressions are deduped per profile per campaign within a
+     * short window; clicks are never deduped. On budgeted campaigns an
+     * impression bills one CPI and exhaustion completes the campaign;
+     * unbudgeted campaigns just count. No-op for non-active campaigns.
      */
     public function trackCampaign(Campaign $campaign, string $kind, ?Profile $viewer): void
     {
@@ -54,9 +55,17 @@ class AdTrackingService
             ]);
 
             if ($kind === AdEvent::KIND_IMPRESSION) {
+                $update = ['impressions_count' => DB::raw('impressions_count + 1')];
+
+                // Unbudgeted (metrics-only) campaigns never accrue spend.
+                if ($campaign->budget_cents !== null) {
+                    $update['spent_cents'] = DB::raw('spent_cents + '.(int) $campaign->cpi_cents);
+                }
+
+                Campaign::query()->whereKey($campaign->id)->update($update);
+            } elseif ($kind === AdEvent::KIND_LINK_CLICK) {
                 Campaign::query()->whereKey($campaign->id)->update([
-                    'impressions_count' => DB::raw('impressions_count + 1'),
-                    'spent_cents' => DB::raw('spent_cents + '.(int) $campaign->cpi_cents),
+                    'link_clicks_count' => DB::raw('link_clicks_count + 1'),
                 ]);
             } else {
                 Campaign::query()->whereKey($campaign->id)->update([

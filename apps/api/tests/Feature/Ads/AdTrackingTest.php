@@ -148,3 +148,70 @@ test('a non-admin can still track ad impressions', function () {
 
     expect($campaign->refresh()->impressions_count)->toBe(1);
 });
+
+test('an impression on an unbudgeted campaign counts but never spends', function () {
+    $advertiser = userWithProfile();
+    $viewer = userWithProfile();
+    $campaign = campaignFor($advertiser, ['budget_cents' => null, 'cpi_cents' => 2]);
+
+    $this->actingAs($viewer)->postJson('/api/v1/ads/track', [
+        'kind' => 'impression',
+        'campaign_ulid' => $campaign->ulid,
+    ])->assertNoContent();
+
+    $campaign->refresh();
+
+    expect($campaign->impressions_count)->toBe(1)
+        ->and($campaign->spent_cents)->toBe(0)
+        ->and($campaign->status)->toBe(Campaign::STATUS_ACTIVE);
+});
+
+test('a link click increments its own counter and records an event', function () {
+    $advertiser = userWithProfile();
+    $viewer = userWithProfile();
+    $campaign = campaignFor($advertiser, ['budget_cents' => null]);
+
+    $this->actingAs($viewer)->postJson('/api/v1/ads/track', [
+        'kind' => 'link_click',
+        'campaign_ulid' => $campaign->ulid,
+    ])->assertNoContent();
+
+    $campaign->refresh();
+
+    expect($campaign->link_clicks_count)->toBe(1)
+        ->and($campaign->clicks_count)->toBe(0)
+        ->and(AdEvent::query()->where('campaign_id', $campaign->id)
+            ->where('kind', AdEvent::KIND_LINK_CLICK)->count())->toBe(1);
+});
+
+test('the campaign detail includes link clicks, reach and daily series', function () {
+    $advertiser = adminWithProfile();
+    $viewerA = userWithProfile();
+    $viewerB = userWithProfile();
+    $campaign = campaignFor($advertiser, ['budget_cents' => null]);
+
+    foreach ([$viewerA, $viewerB] as $viewer) {
+        $this->actingAs($viewer)->postJson('/api/v1/ads/track', [
+            'kind' => 'impression',
+            'campaign_ulid' => $campaign->ulid,
+        ])->assertNoContent();
+    }
+
+    $this->actingAs($viewerA)->postJson('/api/v1/ads/track', [
+        'kind' => 'link_click',
+        'campaign_ulid' => $campaign->ulid,
+    ])->assertNoContent();
+
+    $response = $this->actingAs($advertiser)
+        ->getJson("/api/v1/ads/campaigns/{$campaign->ulid}?series=1")
+        ->assertOk()
+        ->assertJsonPath('data.impressions', 2)
+        ->assertJsonPath('data.link_clicks', 1)
+        ->assertJsonPath('data.reach', 2);
+
+    $today = collect($response->json('data.series'))->firstWhere('date', now()->toDateString());
+
+    expect($today)->not->toBeNull()
+        ->and($today['impressions'])->toBe(2)
+        ->and($today['link_clicks'])->toBe(1);
+});

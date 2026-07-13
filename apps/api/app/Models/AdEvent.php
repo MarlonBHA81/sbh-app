@@ -11,6 +11,9 @@ class AdEvent extends Model
 
     public const KIND_CLICK = 'click';
 
+    /** An outbound click on the promoted post's link (advertiser site). */
+    public const KIND_LINK_CLICK = 'link_click';
+
     public const UPDATED_AT = null;
 
     protected $fillable = [

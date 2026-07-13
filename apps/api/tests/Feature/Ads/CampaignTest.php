@@ -31,6 +31,21 @@ test('a creator can promote their own published public post', function () {
     expect(Campaign::query()->where('post_id', $post->id)->exists())->toBeTrue();
 });
 
+test('a campaign can be created without a budget (metrics only)', function () {
+    $user = adminWithProfile();
+    $post = ownPost($user);
+
+    $this->actingAs($user)->postJson('/api/v1/ads/campaigns', [
+        'post_ulid' => $post->ulid,
+        'duration_days' => 7,
+    ])->assertCreated()
+        ->assertJsonPath('data.budget_cents', null)
+        ->assertJsonPath('data.remaining_cents', null)
+        ->assertJsonPath('data.link_clicks', 0)
+        ->assertJsonPath('data.ctr_pct', 0)
+        ->assertJsonPath('data.link_ctr_pct', 0);
+});
+
 test('a creator cannot promote a post they do not own', function () {
     $user = adminWithProfile();
     $other = adminWithProfile();

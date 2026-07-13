@@ -598,33 +598,45 @@ export interface CampaignPost {
   ulid: string;
   type: PostType;
   body: string | null;
+  likes_count: number;
+  comments_count: number;
+  reposts_count: number;
+  views_count: number;
 }
 
 /**
- * A promotion of one post. Monetary fields are integer cents (ZAR); reach
- * metrics are lifetime totals. Returned by the /ads/campaigns endpoints.
+ * A promotion of one post. Campaigns are metrics-first: budget fields are
+ * null for metrics-only campaigns. Counts are lifetime totals. Returned by
+ * the /ads/campaigns endpoints.
  */
 export interface Campaign {
   ulid: string;
   status: CampaignStatus;
-  budget_cents: number;
+  budget_cents: number | null;
   spent_cents: number;
-  remaining_cents: number;
+  remaining_cents: number | null;
   impressions: number;
+  /** Post opens (click-throughs to the post detail). */
   clicks: number;
+  /** Outbound clicks on the post's link. */
+  link_clicks: number;
   ctr_pct: number;
+  link_ctr_pct: number;
   starts_at: string;
   ends_at: string;
   post: CampaignPost;
-  /** Daily reach series; present only on the detail endpoint (`?series=1`). */
+  /** Daily event series; present only on the detail endpoint (`?series=1`). */
   series?: CampaignSeriesPoint[];
+  /** Unique signed-in viewers reached; present only on the detail endpoint. */
+  reach?: number;
 }
 
-/** One day of a campaign's reach, for the detail chart. */
+/** One day of a campaign's events, for the detail chart. */
 export interface CampaignSeriesPoint {
   date: string;
   impressions: number;
   clicks: number;
+  link_clicks: number;
 }
 
 /**

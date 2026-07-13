@@ -8,7 +8,7 @@ import { CampaignCard } from "@/components/ads/campaign-card";
 import { CampaignChart } from "@/components/ads/campaign-chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
-import { formatRand } from "@/lib/ads/format";
+import { formatCompact } from "@/lib/ads/format";
 import type { Campaign } from "@/lib/api/types";
 
 type Phase = "loading" | "loaded" | "error";
@@ -64,10 +64,14 @@ export function CampaignDetailView({ ulid }: { ulid: string }) {
   const { phase, campaign } = state;
 
   const handleUpdated = useCallback((updated: Campaign) => {
-    // PATCH/DELETE responses omit the series — keep the one already loaded.
+    // PATCH/DELETE responses omit the series/reach — keep those already loaded.
     setState((prev) => ({
       ...prev,
-      campaign: { ...updated, series: prev.campaign?.series },
+      campaign: {
+        ...updated,
+        series: prev.campaign?.series,
+        reach: prev.campaign?.reach,
+      },
     }));
   }, []);
 
@@ -123,15 +127,27 @@ export function CampaignDetailView({ ulid }: { ulid: string }) {
               <dd className="font-medium">{formatDate(campaign.ends_at)}</dd>
             </div>
             <div className="flex flex-col gap-0.5">
-              <dt className="text-xs text-muted-foreground">Spent</dt>
+              <dt className="text-xs text-muted-foreground">Unique reach</dt>
               <dd className="font-medium tabular-nums">
-                {formatRand(campaign.spent_cents)}
+                {campaign.reach !== undefined
+                  ? formatCompact(campaign.reach)
+                  : "—"}
               </dd>
             </div>
             <div className="flex flex-col gap-0.5">
-              <dt className="text-xs text-muted-foreground">Remaining</dt>
+              <dt className="text-xs text-muted-foreground">Link CTR</dt>
               <dd className="font-medium tabular-nums">
-                {formatRand(campaign.remaining_cents)}
+                {campaign.link_ctr_pct.toFixed(1)}%
+              </dd>
+            </div>
+            <div className="col-span-2 flex flex-col gap-0.5">
+              <dt className="text-xs text-muted-foreground">
+                Engagement on the post
+              </dt>
+              <dd className="font-medium tabular-nums">
+                {formatCompact(campaign.post.likes_count)} likes ·{" "}
+                {formatCompact(campaign.post.comments_count)} comments ·{" "}
+                {formatCompact(campaign.post.reposts_count)} reposts
               </dd>
             </div>
           </dl>
