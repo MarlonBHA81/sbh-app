@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ParentCard } from "@/components/post-types/parent-card";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,11 @@ import {
   mostUsedPostType,
   nextSaturdayAt10Local,
 } from "@/lib/composer-defaults";
+import {
+  clearComposeDraft,
+  readComposeDraft,
+  writeComposeDraft,
+} from "@/lib/compose-draft";
 import { cn } from "@/lib/utils";
 
 import { MediaUpload } from "./media-upload";
@@ -210,9 +215,14 @@ export function Composer({
     // and use it here instead of the static fallback.
     return mostUsedPostType() ?? "text";
   });
+  // A fresh compose restores any autosaved draft body (UX pattern 4): text
+  // survives closing the composer and, crucially, the signup wall.
+  const isFreshCompose = !editPost && !quoteParent;
   const [body, setBody] = useState(() => {
     if (editPost?.type === "poll") return editPost.poll?.question ?? "";
-    return editPost?.body ?? "";
+    if (editPost?.body) return editPost.body;
+    if (isFreshCompose) return readComposeDraft();
+    return "";
   });
   const [linkUrl, setLinkUrl] = useState(payloadString(payload, "url"));
   const [linkTitle, setLinkTitle] = useState(payloadString(payload, "title"));
@@ -526,6 +536,13 @@ export function Composer({
     return input;
   }
 
+  // Autosave the in-progress body for a fresh compose so it's never lost
+  // (UX pattern 4). Writing to localStorage here is a side effect, not setState.
+  useEffect(() => {
+    if (!isFreshCompose) return;
+    writeComposeDraft(body);
+  }, [body, isFreshCompose]);
+
   async function submit(kind: "primary" | "draft") {
     // Publishing while transcoding is rejected server-side (422); block early.
     if (kind === "primary" && mediaProcessing) return;
@@ -533,6 +550,8 @@ export function Composer({
       kind === "draft" ? "draft" : scheduledLocal ? "scheduled" : "published";
     const saved = await save(buildInput(status), editPost?.ulid);
     if (saved) {
+      // The draft is safely persisted server-side now; drop the local copy.
+      if (isFreshCompose) clearComposeDraft();
       onSaved();
       onOpenChange(false);
       if (status === "published") onPublished?.(saved);
