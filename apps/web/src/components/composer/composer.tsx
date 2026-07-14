@@ -61,6 +61,11 @@ import type {
   TypewriterSpeed,
 } from "@/lib/api/types";
 import { formatLocalDateTime, isoToDatetimeLocal } from "@/lib/time";
+import {
+  addHoursToLocal,
+  mostUsedPostType,
+  nextSaturdayAt10Local,
+} from "@/lib/composer-defaults";
 import { cn } from "@/lib/utils";
 
 import { MediaUpload } from "./media-upload";
@@ -199,7 +204,11 @@ export function Composer({
   const [type, setType] = useState<ComposerType>(() => {
     if (quoteParent) return "quote";
     if (editPost && editPost.type !== "repost") return editPost.type;
-    return "text";
+    // Smart defaults (UX pattern 1): default to the user's most-used post
+    // type. SBH has no "Discussion" type, so the honest fallback is "text".
+    // BACKEND-TODO: read the most-used type from `me/stats` (see mostUsedPostType)
+    // and use it here instead of the static fallback.
+    return mostUsedPostType() ?? "text";
   });
   const [body, setBody] = useState(() => {
     if (editPost?.type === "poll") return editPost.poll?.question ?? "";
@@ -270,23 +279,34 @@ export function Composer({
     return [emptyQuizQuestion()];
   });
 
+  // Smart defaults (UX pattern 1): a fresh event opens seeded with the next
+  // Saturday at 10:00, a one-hour duration, and the profile's location as the
+  // venue — never a blank date/venue the user has to fill from scratch.
+  const profileCity = activeProfile?.location?.trim() ?? "";
+  const defaultEventStart = editPost ? "" : nextSaturdayAt10Local();
   const [eventTitle, setEventTitle] = useState(editPost?.event?.title ?? "");
   const [eventStart, setEventStart] = useState(
     editPost?.event?.starts_at
       ? isoToDatetimeLocal(editPost.event.starts_at)
-      : "",
+      : defaultEventStart,
   );
   const [eventEnd, setEventEnd] = useState(
-    editPost?.event?.ends_at ? isoToDatetimeLocal(editPost.event.ends_at) : "",
+    editPost?.event?.ends_at
+      ? isoToDatetimeLocal(editPost.event.ends_at)
+      : addHoursToLocal(defaultEventStart, 1),
   );
-  const [eventVenue, setEventVenue] = useState(editPost?.event?.venue ?? "");
+  const [eventVenue, setEventVenue] = useState(
+    editPost?.event?.venue ?? profileCity,
+  );
   const [eventCover, setEventCover] = useState<Media[]>(
     editPost?.type === "event" ? editPost.media.slice(0, 1) : [],
   );
 
   const [jobTitle, setJobTitle] = useState(editPost?.job?.title ?? "");
   const [jobCompany, setJobCompany] = useState(editPost?.job?.company ?? "");
-  const [jobLocation, setJobLocation] = useState(editPost?.job?.location ?? "");
+  const [jobLocation, setJobLocation] = useState(
+    editPost?.job?.location ?? profileCity,
+  );
   const [jobEmployment, setJobEmployment] = useState<EmploymentType>(
     editPost?.job?.employment_type ?? "full_time",
   );
@@ -524,11 +544,27 @@ export function Composer({
     : isQuote
       ? t("quotePost")
       : t("newPost");
+  // Outcome-stating primary button (UX pattern 1): never a bare "Post".
+  // For a followers-only audience we can state a real count; for a public
+  // post we state the honest outcome (no fabricated member count exists yet —
+  // BACKEND-TODO: once a member/audience count endpoint lands, switch the
+  // public case to "Post to {N} members").
+  const followersCount = activeProfile?.followers_count ?? 0;
+  const outcomeLabel = () => {
+    if (type === "event") return t("publishEvent");
+    if (type === "job") return t("publishJob");
+    if (visibility === "followers" && followersCount > 0) {
+      return t("postToFollowers", {
+        count: new Intl.NumberFormat("en").format(followersCount),
+      });
+    }
+    return t("shareWithCommunity");
+  };
   const primaryLabel = saving
     ? t("saving")
     : scheduledLocal
       ? t("schedule")
-      : t("post");
+      : outcomeLabel();
 
   const form = (
     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
