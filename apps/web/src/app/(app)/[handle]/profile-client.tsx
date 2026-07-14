@@ -35,6 +35,7 @@ import { ScreenHeader } from "@/components/shell/screen-header";
 import { EmptyState } from "@/components/empty-state";
 import { findRankBadge } from "@/components/gamification/rank-chip";
 import { XpProgressCard } from "@/components/gamification/xp-progress-card";
+import { ProfileStrengthMeter } from "@/components/profile-strength-meter";
 import { PostList } from "@/components/posts/post-list";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { ReportDialog } from "@/components/safety/report-dialog";
@@ -576,6 +577,7 @@ export function ProfileClient({ handle }: { handle: string }) {
               : `${formatCount(profile.xp_total)} XP`}
           </span>
         ) : null}
+        {isSelf ? <ProfileStrengthMeter profile={profile} /> : null}
         {!isPrivateHidden && !isBlocked && profile.location ? (
           <span className="flex items-center gap-1 text-[13px] text-text-secondary">
             <MapPin className="size-3.5" aria-hidden />

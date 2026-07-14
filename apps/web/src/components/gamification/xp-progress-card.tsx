@@ -120,7 +120,11 @@ export function XpProgressCard() {
 
         {next_rank ? (
           <div className="flex flex-col gap-1.5">
-            <Progress value={next_rank.progress_pct} />
+            {/* Goal gradient (UX pattern 2): the bar shows progress *into* the
+                current level and never reads empty — floored to a visible sliver
+                right after a level-up so the user is never shown at zero. The
+                caption stays truthful about the real XP numbers. */}
+            <Progress value={Math.max(next_rank.progress_pct, 4)} />
             <p className="text-xs text-muted-foreground tabular-nums">
               {formatXp(xp_total)} / {formatXp(next_rank.min_xp)} XP to{" "}
               {next_rank.name}
