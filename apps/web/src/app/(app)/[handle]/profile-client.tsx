@@ -94,7 +94,13 @@ function formatCount(n: number): string {
 }
 
 /** Read-only public posts list for logged-out visitors (SEO pages). */
-function PublicProfilePosts({ handle }: { handle: string }) {
+function PublicProfilePosts({
+  handle,
+  profileName,
+}: {
+  handle: string;
+  profileName?: string;
+}) {
   const [posts, setPosts] = useState<PublicPost[] | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -163,7 +169,11 @@ function PublicProfilePosts({ handle }: { handle: string }) {
           {busy ? "Loading…" : "Load more"}
         </Button>
       ) : null}
-      <GuestCta message="Sign in to follow, message and see the full conversation." />
+      <GuestCta
+        personName={profileName}
+        action="follow"
+        message="Sign in to follow, message and see the full conversation."
+      />
     </div>
   );
 }
@@ -737,7 +747,7 @@ export function ProfileClient({ handle }: { handle: string }) {
           </TabsList>
           <TabsContent value="posts" className="pt-2">
             {isGuest ? (
-              <PublicProfilePosts handle={handle} />
+              <PublicProfilePosts handle={handle} profileName={profile.name} />
             ) : (
             <PostList
               buildUrl={(cursor) =>

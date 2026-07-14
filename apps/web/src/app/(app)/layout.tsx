@@ -60,7 +60,11 @@ export default function AppLayout({
 
   useEffect(() => {
     if (status === "guest" && !isPublicRoute(pathname)) {
-      router.replace("/login");
+      // Value-first (reciprocity, UX pattern 3): send guests hitting the main
+      // entry points to the public feed, not a sign-in wall. Truly private
+      // areas (settings, messages, …) still route to sign-in.
+      const toFeed = pathname === "/" || pathname === "/home";
+      router.replace(toFeed ? "/explore" : "/login");
     }
   }, [status, pathname, router]);
 

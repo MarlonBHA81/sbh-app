@@ -160,11 +160,28 @@ export function PublicPostCard({
   );
 }
 
-/** "Sign in to interact" call-to-action card for logged-out visitors. */
-export function GuestCta({ message }: { message: string }) {
+/**
+ * Reciprocity CTA for logged-out visitors (UX pattern 3): it appears only when
+ * a guest tries to *act*, and names the specific benefit — "Join to reply to
+ * Thabo" — rather than a generic wall. Pass `personName` + `action` for the
+ * contextual headline, or `message` for a plain fallback.
+ */
+export function GuestCta({
+  message,
+  personName,
+  action = "reply",
+}: {
+  message?: string;
+  personName?: string;
+  action?: string;
+}) {
+  const headline = personName
+    ? `Join SBH to ${action} ${personName}`
+    : (message ??
+      "Join SBH to like, reply and follow small business owners in your community.");
   return (
     <div className="flex flex-col items-center gap-3 rounded-(--radius-card) border border-warmgray bg-card p-6 text-center shadow-card">
-      <p className="text-sm text-text-secondary">{message}</p>
+      <p className="text-sm text-text-secondary">{headline}</p>
       <div className="flex gap-2">
         <Link
           href="/login"
