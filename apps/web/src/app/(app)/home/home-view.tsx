@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import { useComposer } from "@/components/composer/composer-provider";
+import { StreakChip } from "@/components/gamification/streak-chip";
 import { ComposerBar } from "@/components/home/composer-bar";
 import { HeroPrompt } from "@/components/home/hero-prompt";
 import { HomeHeader } from "@/components/home/home-header";
@@ -31,6 +32,7 @@ export function HomeView() {
   return (
     <div className="flex flex-col gap-5">
       <HomeHeader />
+      <StreakChip />
       <HeroPrompt />
       <ComposerBar />
       <OnboardingChecklist />
