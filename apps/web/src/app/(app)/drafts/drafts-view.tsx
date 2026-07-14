@@ -26,7 +26,7 @@ function StatusList({ status }: { status: "draft" | "scheduled" }) {
           <EmptyState
             icon={FileText}
             title="No drafts"
-            description="Posts you save as drafts will show up here."
+            description="Posts you save as drafts wait here — they never expire, so there's no rush to finish."
           />
         ) : (
           <EmptyState

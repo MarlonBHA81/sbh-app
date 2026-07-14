@@ -20,7 +20,9 @@ export interface SavePostInput {
 }
 
 function successMessage(status: PostStatus, editing: boolean): string {
-  if (status === "draft") return "Draft saved";
+  // Honest reassurance (UX pattern 5): drafts persist indefinitely — we tell
+  // the user it's safe, never that it's about to expire (it can't).
+  if (status === "draft") return "Draft saved — it'll be here when you're back";
   if (status === "scheduled") return "Post scheduled";
   return editing ? "Post updated" : "Posted";
 }
