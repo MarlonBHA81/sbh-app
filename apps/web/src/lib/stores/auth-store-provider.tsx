@@ -38,3 +38,16 @@ export function useAuthStore<T>(selector: (store: AuthStore) => T): T {
   }
   return useStore(store, selector);
 }
+
+/**
+ * The raw store API (getState/setState) for reading fresh state imperatively —
+ * e.g. the active profile right after register()/fetchMe() resolves, before a
+ * re-render would surface it through the selector hook.
+ */
+export function useAuthStoreApi(): AuthStoreApi {
+  const store = useContext(AuthStoreContext);
+  if (!store) {
+    throw new Error("useAuthStoreApi must be used within AuthStoreProvider");
+  }
+  return store;
+}
