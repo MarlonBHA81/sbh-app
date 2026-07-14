@@ -28,6 +28,7 @@ import * as api from "@/lib/api/client";
 import { DURATION_MAX_DAYS, DURATION_MIN_DAYS } from "@/lib/ads/format";
 import type { Campaign, CampaignPost, Paginated, Post } from "@/lib/api/types";
 import { formatCount } from "@/lib/reactions";
+import { cn } from "@/lib/utils";
 
 /** A short human label for a post's type (badge or capitalized fallback). */
 function typeLabel(type: Post["type"]): string {
@@ -149,6 +150,19 @@ function PickStep({
   );
 }
 
+/**
+ * Contrast-effect duration tiers (UX pattern 6): three options side by side so
+ * the shorter and longer runs anchor the middle one, which is pre-selected and
+ * tagged "Most popular". No price is shown (promotion is free / metrics-first),
+ * so the sub-label is an honest plain-language framing of the same duration —
+ * never an invented per-day cost.
+ */
+const DURATION_TIERS: { days: number; label: string; popular?: boolean }[] = [
+  { days: 7, label: "1 week" },
+  { days: 14, label: "2 weeks", popular: true },
+  { days: 30, label: "1 month" },
+];
+
 function ConfigStep({
   durationDays,
   onDuration,
@@ -159,23 +173,60 @@ function ConfigStep({
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-3">
-        <div className="flex items-baseline justify-between">
-          <label className="text-sm font-medium">Duration</label>
-          <span className="text-lg font-semibold tabular-nums">
-            {durationDays} {durationDays === 1 ? "day" : "days"}
-          </span>
+        <label className="text-sm font-medium">Duration</label>
+        <div className="grid grid-cols-3 gap-2">
+          {DURATION_TIERS.map((tier) => {
+            const selected = durationDays === tier.days;
+            return (
+              <button
+                key={tier.days}
+                type="button"
+                onClick={() => onDuration(tier.days)}
+                aria-pressed={selected}
+                className={cn(
+                  "relative flex flex-col items-center gap-0.5 rounded-xl border p-3 text-center transition-colors",
+                  selected
+                    ? "border-primary bg-primary/8 ring-1 ring-primary"
+                    : "border-border hover:bg-muted/40",
+                )}
+              >
+                {tier.popular ? (
+                  <span className="absolute -top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-primary-foreground">
+                    Most popular
+                  </span>
+                ) : null}
+                <span className="mt-1 text-lg font-semibold tabular-nums">
+                  {tier.days}
+                </span>
+                <span className="text-[11px] text-muted-foreground">days</span>
+                <span className="text-xs font-medium text-foreground">
+                  {tier.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <Slider
-          value={[durationDays]}
-          min={DURATION_MIN_DAYS}
-          max={DURATION_MAX_DAYS}
-          step={1}
-          onValueChange={([value]) => onDuration(value)}
-          aria-label="Duration"
-        />
-        <div className="flex justify-between text-xs text-muted-foreground">
-          <span>{DURATION_MIN_DAYS} day</span>
-          <span>{DURATION_MAX_DAYS} days</span>
+        <div className="flex flex-col gap-2 pt-1">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xs text-muted-foreground">
+              Fine-tune the exact length
+            </span>
+            <span className="text-sm font-semibold tabular-nums">
+              {durationDays} {durationDays === 1 ? "day" : "days"}
+            </span>
+          </div>
+          <Slider
+            value={[durationDays]}
+            min={DURATION_MIN_DAYS}
+            max={DURATION_MAX_DAYS}
+            step={1}
+            onValueChange={([value]) => onDuration(value)}
+            aria-label="Duration"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{DURATION_MIN_DAYS} day</span>
+            <span>{DURATION_MAX_DAYS} days</span>
+          </div>
         </div>
       </div>
 
@@ -276,7 +327,9 @@ export function PromoteSheet({
 }) {
   const [step, setStep] = useState<1 | 2 | 3>(preselected ? 2 : 1);
   const [selected, setSelected] = useState<Post | null>(preselected);
-  const [durationDays, setDurationDays] = useState(7);
+  // Contrast effect (UX pattern 6): the middle tier is pre-selected so the
+  // shorter and longer options anchor around it.
+  const [durationDays, setDurationDays] = useState(14);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [created, setCreated] = useState<Campaign | null>(null);
