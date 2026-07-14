@@ -167,7 +167,11 @@ export function PostDetailClient({ ulid }: { ulid: string }) {
         {publicState.phase === "loaded" && publicState.post ? (
           <>
             <PublicPostCard post={publicState.post} linkToDetail={false} />
-            <GuestCta message="Sign in to like, reply and follow small business owners in your community." />
+            <GuestCta
+              personName={publicState.post.profile.name}
+              action="reply to"
+              message="Sign in to like, reply and follow small business owners in your community."
+            />
           </>
         ) : null}
       </div>
