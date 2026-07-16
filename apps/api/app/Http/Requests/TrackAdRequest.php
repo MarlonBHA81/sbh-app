@@ -17,8 +17,9 @@ class TrackAdRequest extends FormRequest
     {
         return [
             'kind' => ['required', Rule::in([AdEvent::KIND_IMPRESSION, AdEvent::KIND_CLICK, AdEvent::KIND_LINK_CLICK])],
-            'campaign_ulid' => ['required_without:slot_key', 'prohibits:slot_key', 'string'],
-            'slot_key' => ['required_without:campaign_ulid', 'string'],
+            'campaign_ulid' => ['required_without_all:slot_key,opportunity_ulid', 'prohibits:slot_key,opportunity_ulid', 'string'],
+            'slot_key' => ['required_without_all:campaign_ulid,opportunity_ulid', 'prohibits:opportunity_ulid', 'string'],
+            'opportunity_ulid' => ['required_without_all:campaign_ulid,slot_key', 'string'],
         ];
     }
 }

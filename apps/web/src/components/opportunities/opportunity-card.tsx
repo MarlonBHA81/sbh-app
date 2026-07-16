@@ -9,10 +9,11 @@ import {
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import * as api from "@/lib/api/client";
+import { trackOpportunityImpression } from "@/lib/ads/track";
 import type { Opportunity } from "@/lib/api/types";
 import { closesLabel, opportunityTypeLabel } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,13 @@ export function OpportunityCard({
 }) {
   const [saved, setSaved] = useState(opportunity.is_saved);
   const [busy, setBusy] = useState(false);
+
+  // Metrics-first: count a sponsored impression once per session (V3).
+  useEffect(() => {
+    if (opportunity.is_sponsored) {
+      trackOpportunityImpression(opportunity.ulid);
+    }
+  }, [opportunity.is_sponsored, opportunity.ulid]);
 
   async function toggleSave() {
     if (busy) return;
@@ -75,6 +83,13 @@ export function OpportunityCard({
           <span className="flex items-center gap-1 text-[11px] text-text-secondary">
             <MapPin className="size-3" aria-hidden />
             {opportunity.province}
+          </span>
+        ) : null}
+        {opportunity.is_sponsored ? (
+          <span className="text-[11px] font-medium text-text-secondary">
+            {opportunity.sponsor_name
+              ? `Sponsored · ${opportunity.sponsor_name}`
+              : "Sponsored"}
           </span>
         ) : null}
         <button

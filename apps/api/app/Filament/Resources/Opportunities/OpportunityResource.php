@@ -63,6 +63,14 @@ class OpportunityResource extends Resource
             Toggle::make('is_official')
                 ->default(false)
                 ->helperText('On shows an "Official" badge. Only enable for verified, trusted sources.'),
+            // Value-aligned monetisation (V3 · GROW): metrics-first, no price/budget.
+            Toggle::make('is_sponsored')
+                ->default(false)
+                ->helperText('On shows a subtle "Sponsored" label and leads the feed. Reach is measured, never charged.'),
+            TextInput::make('sponsor_name')->maxLength(255)
+                ->helperText('Partner name shown on the label, e.g. "In partnership with Acme".'),
+            TextInput::make('sponsor_url')->url()->maxLength(500)
+                ->helperText('Optional partner link.'),
             TextInput::make('industry')->maxLength(255)
                 ->helperText('Optional industry filter, e.g. "Retail".'),
             TextInput::make('province')->maxLength(255)
@@ -86,6 +94,14 @@ class OpportunityResource extends Resource
                 TextColumn::make('organisation')->toggleable()->searchable(),
                 TextColumn::make('source')->toggleable()->placeholder('—')->searchable(),
                 IconColumn::make('is_official')->boolean()->label('Official')->sortable(),
+                IconColumn::make('is_sponsored')->boolean()->label('Sponsored')->sortable(),
+                // Metrics-first: partner reach measured through ad_events, never billed.
+                TextColumn::make('impressions')->label('Impr.')->state(
+                    fn (Opportunity $record): int => $record->adEvents()->where('kind', 'impression')->count(),
+                )->toggleable(),
+                TextColumn::make('clicks')->label('Clicks')->state(
+                    fn (Opportunity $record): int => $record->adEvents()->where('kind', 'click')->count(),
+                )->toggleable(),
                 TextColumn::make('closes_at')->date()->sortable()->placeholder('—'),
                 IconColumn::make('is_published')->boolean()->label('Published')->sortable(),
             ])
@@ -94,6 +110,7 @@ class OpportunityResource extends Resource
                     ->mapWithKeys(fn (string $t) => [$t => Str::headline($t)])
                     ->all()),
                 TernaryFilter::make('is_official')->label('Official'),
+                TernaryFilter::make('is_sponsored')->label('Sponsored'),
             ])
             ->defaultSort('created_at', 'desc');
     }

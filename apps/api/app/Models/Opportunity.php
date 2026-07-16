@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -36,6 +37,9 @@ class Opportunity extends Model
         'source_url',
         'source_ref',
         'is_official',
+        'is_sponsored',
+        'sponsor_name',
+        'sponsor_url',
         'industry',
         'province',
         'amount',
@@ -51,6 +55,7 @@ class Opportunity extends Model
             'closes_at' => 'date',
             'is_published' => 'boolean',
             'is_official' => 'boolean',
+            'is_sponsored' => 'boolean',
             'published_at' => 'datetime',
         ];
     }
@@ -78,6 +83,12 @@ class Opportunity extends Model
     {
         return $this->belongsToMany(Profile::class, 'opportunity_saves')
             ->withTimestamps();
+    }
+
+    /** Metrics-first ad events (impressions/clicks) for a sponsored opportunity. */
+    public function adEvents(): HasMany
+    {
+        return $this->hasMany(AdEvent::class);
     }
 
     /**

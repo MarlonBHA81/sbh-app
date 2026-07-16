@@ -19,6 +19,7 @@ class AdEvent extends Model
     protected $fillable = [
         'campaign_id',
         'ad_slot_id',
+        'opportunity_id',
         'kind',
         'profile_id',
     ];
@@ -31,6 +32,11 @@ class AdEvent extends Model
     public function adSlot(): BelongsTo
     {
         return $this->belongsTo(AdSlot::class);
+    }
+
+    public function opportunity(): BelongsTo
+    {
+        return $this->belongsTo(Opportunity::class);
     }
 
     public function profile(): BelongsTo

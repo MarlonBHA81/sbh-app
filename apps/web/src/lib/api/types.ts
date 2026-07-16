@@ -751,6 +751,10 @@ export interface Opportunity {
   source_url: string | null;
   /** Verified as coming from an official/trusted source (V3). */
   is_official: boolean;
+  /** Partner-featured (metrics-first, no price/budget) — V3. */
+  is_sponsored: boolean;
+  sponsor_name: string | null;
+  sponsor_url: string | null;
   industry: string | null;
   province: string | null;
   amount: string | null;

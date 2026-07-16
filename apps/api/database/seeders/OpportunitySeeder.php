@@ -51,6 +51,18 @@ class OpportunitySeeder extends Seeder
                 'is_published' => true,
             ],
             [
+                'type' => 'programme',
+                'title' => 'Partner-backed growth bootcamp',
+                'description' => 'A free 6-week bootcamp on cash flow, pricing and marketing, run with a partner organisation. Places are limited each intake.',
+                'organisation' => 'Acme Foundation',
+                'industry' => 'Services',
+                'province' => 'National',
+                'is_sponsored' => true,
+                'sponsor_name' => 'Acme Foundation',
+                'sponsor_url' => 'https://example.org',
+                'is_published' => true,
+            ],
+            [
                 'type' => 'grant',
                 'title' => 'Women in business micro-grant',
                 'description' => 'Micro-grants of R10,000 for women-led businesses under two years old. Quick application, no repayment.',
