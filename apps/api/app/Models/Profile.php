@@ -177,6 +177,12 @@ class Profile extends Model
             ->withPivot('awarded_at');
     }
 
+    public function savedOpportunities(): BelongsToMany
+    {
+        return $this->belongsToMany(Opportunity::class, 'opportunity_saves')
+            ->withTimestamps();
+    }
+
     public function rank(): BelongsTo
     {
         return $this->belongsTo(Rank::class);

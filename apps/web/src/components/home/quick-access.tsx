@@ -3,6 +3,7 @@
 import {
   Megaphone,
   MessagesSquare,
+  Sparkles,
   Store,
   Wrench,
   type LucideIcon,
@@ -14,7 +15,7 @@ import { SwirlWatermark } from "@/components/brand/swirl-watermark";
 import { SectionHeader } from "@/components/home/section-header";
 
 interface Tile {
-  labelKey: "forums" | "directory" | "tools" | "promotedPosts";
+  labelKey: "opportunities" | "forums" | "directory" | "tools" | "promotedPosts";
   href: string;
   icon: LucideIcon;
   /** Brand gradient (design tokens via Tailwind theme). */
@@ -22,6 +23,12 @@ interface Tile {
 }
 
 const TILES: Tile[] = [
+  {
+    labelKey: "opportunities",
+    href: "/opportunities",
+    icon: Sparkles,
+    gradient: "from-teal to-sage",
+  },
   {
     labelKey: "forums",
     href: "/discover",

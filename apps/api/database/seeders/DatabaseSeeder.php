@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             TopicSeeder::class,
             BusinessCategorySeeder::class,
             SettingSeeder::class,
+            OpportunitySeeder::class,
         ]);
     }
 }

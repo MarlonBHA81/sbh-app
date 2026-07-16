@@ -723,3 +723,30 @@ export interface ChallengeDetail extends Challenge {
   entries: LeaderboardRow[];
   me: LeaderboardViewer | null;
 }
+
+/** Opportunity kinds (V1 · GROW). */
+export type OpportunityType =
+  | "tender"
+  | "funding"
+  | "grant"
+  | "procurement"
+  | "programme"
+  | "competition";
+
+/** A growth opportunity surfaced to members (tenders, funding, grants…). */
+export interface Opportunity {
+  ulid: string;
+  type: OpportunityType;
+  title: string;
+  description: string;
+  organisation: string | null;
+  url: string | null;
+  industry: string | null;
+  province: string | null;
+  amount: string | null;
+  /** ISO date (YYYY-MM-DD) or null when it never closes. */
+  closes_at: string | null;
+  is_open: boolean;
+  is_saved: boolean;
+  published_at: string | null;
+}

@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\BusinessNeedController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\ChallengeController;
+use App\Http\Controllers\Api\V1\OpportunityController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
 use App\Http\Controllers\Api\V1\ConversationController;
@@ -190,6 +191,13 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('challenges/{challenge}/join', [ChallengeController::class, 'join']);
     Route::delete('challenges/{challenge}/join', [ChallengeController::class, 'leave']);
     Route::get('gamification/ranks', [GamificationController::class, 'ranks']);
+
+    // Opportunities (V1 · GROW) — admin-curated tenders, funding, grants.
+    Route::get('opportunities', [OpportunityController::class, 'index']);
+    Route::get('me/opportunities/saved', [OpportunityController::class, 'saved']);
+    Route::get('opportunities/{opportunity}', [OpportunityController::class, 'show']);
+    Route::post('opportunities/{opportunity}/save', [OpportunityController::class, 'save']);
+    Route::delete('opportunities/{opportunity}/save', [OpportunityController::class, 'unsave']);
 
     Route::get('me/topics', [TopicController::class, 'mine']);
     Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);
