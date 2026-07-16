@@ -698,6 +698,14 @@ export function ProfileClient({ handle }: { handle: string }) {
               </strong>{" "}
               <span className="text-text-secondary">Following</span>
             </span>
+            {profile.helpful_count && profile.helpful_count > 0 ? (
+              <span>
+                <strong className="font-heading font-semibold tabular-nums text-teal-text">
+                  {formatCount(profile.helpful_count)}
+                </strong>{" "}
+                <span className="text-text-secondary">Helpful</span>
+              </span>
+            ) : null}
           </div>
         </div>
       ) : null}

@@ -11,14 +11,17 @@ class XpActionSeeder extends Seeder
     public function run(): void
     {
         $actions = [
+            // Contribution outweighs popularity (V1): being helpful and
+            // answering pay the most; gaining a follower pays less than helping.
+            [G::HELPFUL_RECEIVED, 'A comment was marked helpful', 20, null],
+            [G::DAILY_ACTION_COMPLETED, 'Completed the daily challenge', 15, 1],
             [G::POST_PUBLISHED, 'Published a post', 10, 5],
             [G::COMMENT_CREATED, 'Wrote a comment', 5, 20],
+            [G::QUIZ_COMPLETED, 'Completed a quiz', 3, 10],
+            [G::FOLLOWER_GAINED, 'Gained a follower', 3, 20],
             [G::LIKE_RECEIVED, 'Received a like', 2, 50],
             [G::UPVOTE_RECEIVED, 'Received an upvote', 2, 50],
-            [G::FOLLOWER_GAINED, 'Gained a follower', 5, 20],
             [G::POLL_VOTE_CAST, 'Voted in a poll', 1, 10],
-            [G::QUIZ_COMPLETED, 'Completed a quiz', 3, 10],
-            [G::DAILY_ACTION_COMPLETED, 'Completed the daily challenge', 15, 1],
         ];
 
         foreach ($actions as [$key, $label, $points, $cap]) {

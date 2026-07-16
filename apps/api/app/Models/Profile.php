@@ -67,6 +67,7 @@ class Profile extends Model
         'dm_privacy',
         'streak_count',
         'streak_last_day',
+        'helpful_count',
     ];
 
     protected function casts(): array
@@ -84,6 +85,7 @@ class Profile extends Model
             'xp_total' => 'integer',
             'streak_count' => 'integer',
             'streak_last_day' => 'date',
+            'helpful_count' => 'integer',
         ];
     }
 

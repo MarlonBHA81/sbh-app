@@ -28,6 +28,7 @@ class Comment extends Model
         'parent_comment_id',
         'body',
         'depth',
+        'helpful_at',
     ];
 
     protected function casts(): array
@@ -38,7 +39,13 @@ class Comment extends Model
             'downvotes_count' => 'integer',
             'likes_count' => 'integer',
             'replies_count' => 'integer',
+            'helpful_at' => 'datetime',
         ];
+    }
+
+    public function isHelpful(): bool
+    {
+        return $this->helpful_at !== null;
     }
 
     protected static function booted(): void

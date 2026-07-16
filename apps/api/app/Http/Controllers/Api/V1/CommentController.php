@@ -8,12 +8,14 @@ use App\Models\Comment;
 use App\Models\Post;
 use App\Models\Profile;
 use App\Services\Engagement\CommentService;
+use App\Services\Gamification\GamificationService;
 use App\Services\SafetyService;
 use App\Support\ViewerReactions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class CommentController extends Controller
 {
@@ -21,7 +23,56 @@ class CommentController extends Controller
 
     private const PRELOADED_REPLIES = 2;
 
-    public function __construct(private CommentService $comments, private SafetyService $safety) {}
+    public function __construct(
+        private CommentService $comments,
+        private SafetyService $safety,
+        private GamificationService $gamification,
+    ) {}
+
+    /**
+     * Post author marks a comment on their post as helpful (V1 · BELONG):
+     * the answerer earns XP and the mark is tallied on their profile.
+     */
+    public function markHelpful(Request $request, Comment $comment): CommentResource
+    {
+        abort_unless($this->isPostAuthor($request, $comment), 403);
+        abort_if($this->isAuthor($request, $comment), 422, "You can't mark your own comment as helpful.");
+
+        if (! $comment->isHelpful()) {
+            $comment->forceFill(['helpful_at' => now()])->save();
+
+            Profile::query()->whereKey($comment->profile_id)
+                ->update(['helpful_count' => DB::raw('helpful_count + 1')]);
+
+            // Idempotent by subject: re-marking never double-awards.
+            $this->gamification->award(
+                $comment->profile,
+                GamificationService::HELPFUL_RECEIVED,
+                $comment,
+            );
+        }
+
+        ViewerReactions::hydrate([$comment], $request->attributes->get('activeProfile'));
+
+        return new CommentResource($comment->load('profile'));
+    }
+
+    public function unmarkHelpful(Request $request, Comment $comment): CommentResource
+    {
+        abort_unless($this->isPostAuthor($request, $comment), 403);
+
+        if ($comment->isHelpful()) {
+            $comment->forceFill(['helpful_at' => null])->save();
+
+            Profile::query()->whereKey($comment->profile_id)
+                ->where('helpful_count', '>', 0)
+                ->update(['helpful_count' => DB::raw('helpful_count - 1')]);
+        }
+
+        ViewerReactions::hydrate([$comment], $request->attributes->get('activeProfile'));
+
+        return new CommentResource($comment->load('profile'));
+    }
 
     /**
      * Top-level comments (newest first) with the first replies preloaded.

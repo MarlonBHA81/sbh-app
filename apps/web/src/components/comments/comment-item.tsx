@@ -8,6 +8,7 @@ import {
   Heart,
   MessageSquare,
   MoreHorizontal,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
@@ -68,6 +69,9 @@ export function CommentItem({
   const likeBusy = useRef(false);
   const voteBusy = useRef(false);
 
+  const [isHelpful, setIsHelpful] = useState(comment.is_helpful);
+  const helpfulBusy = useRef(false);
+
   const [tombstoned, setTombstoned] = useState(isTombstone(comment));
   const [replyOpen, setReplyOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -87,6 +91,12 @@ export function CommentItem({
   const canReport =
     !tombstoned && activeUlid !== null && comment.profile.ulid !== activeUlid;
   const hasMenu = canReport || canDelete;
+  // Only the post author can mark helpful, and never their own comment.
+  const canMarkHelpful =
+    !tombstoned &&
+    activeUlid !== null &&
+    postAuthorUlid === activeUlid &&
+    comment.profile.ulid !== activeUlid;
 
   const hasMore = fetchedReplies
     ? repliesCursor !== null
@@ -164,6 +174,22 @@ export function CommentItem({
     setReplyOpen(false);
   }
 
+  async function toggleHelpful() {
+    if (helpfulBusy.current) return;
+    helpfulBusy.current = true;
+    const next = !isHelpful;
+    setIsHelpful(next);
+    try {
+      if (next) await api.post(`/api/v1/comments/${comment.ulid}/helpful`);
+      else await api.del(`/api/v1/comments/${comment.ulid}/helpful`);
+    } catch {
+      setIsHelpful(!next);
+      toast.error("Couldn't update — try again.");
+    } finally {
+      helpfulBusy.current = false;
+    }
+  }
+
   async function confirmDelete() {
     try {
       await api.del(`/api/v1/comments/${comment.ulid}`);
@@ -211,6 +237,12 @@ export function CommentItem({
             >
               {relativeTime(comment.created_at)}
             </time>
+            {isHelpful ? (
+              <span className="flex items-center gap-1 rounded-full bg-teal/12 px-1.5 py-0.5 text-[10px] font-medium text-teal-text">
+                <Sparkles className="size-3" aria-hidden />
+                Helpful
+              </span>
+            ) : null}
           </div>
 
           {tombstoned ? (
@@ -290,6 +322,24 @@ export function CommentItem({
                 >
                   <MessageSquare className="size-4" aria-hidden />
                   Reply
+                </button>
+              ) : null}
+
+              {canMarkHelpful ? (
+                <button
+                  type="button"
+                  aria-pressed={isHelpful}
+                  onClick={() => void toggleHelpful()}
+                  className={cn(
+                    "flex min-h-9 items-center gap-1 rounded-md px-1.5 text-xs transition-colors hover:text-teal-text",
+                    isHelpful && "text-teal-text",
+                  )}
+                >
+                  <Sparkles
+                    className={cn("size-4", isHelpful && "fill-current")}
+                    aria-hidden
+                  />
+                  {isHelpful ? "Helpful" : "Mark helpful"}
                 </button>
               ) : null}
 

@@ -24,6 +24,7 @@ class CommentResource extends JsonResource
             'replies_count' => $this->replies_count,
             'liked' => $this->viewerLiked(),
             'my_vote' => $this->viewerVote(),
+            'is_helpful' => $this->isHelpful(),
             'parent_comment_ulid' => $this->parent_comment_id === null
                 ? null
                 : $this->whenLoaded('parent', fn () => $this->parent?->ulid),

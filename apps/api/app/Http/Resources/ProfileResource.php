@@ -73,6 +73,7 @@ class ProfileResource extends JsonResource
             'following_count' => $this->following_count,
             'posts_count' => $this->posts_count,
             'xp_total' => $this->xp_total,
+            'helpful_count' => $this->helpful_count,
             'badges' => BadgeResource::collection($this->whenLoaded('badges')),
             'created_at' => $this->created_at,
         ];

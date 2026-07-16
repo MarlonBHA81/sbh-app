@@ -59,6 +59,8 @@ export interface Profile {
   posts_count: number;
   /** Lifetime experience points (gamification, Milestone 8). */
   xp_total: number;
+  /** Times this profile's comments were marked helpful (V1 · contribution). */
+  helpful_count?: number;
   /** Profile badges; the rank surfaces here with `kind: "rank"`. */
   badges: ProfileBadge[];
   relationship: Relationship;
@@ -333,6 +335,8 @@ export interface Comment {
   replies_count: number;
   liked: boolean;
   my_vote: Vote;
+  /** Marked helpful by the post author (V1 · contribution recognition). */
+  is_helpful: boolean;
   profile: Profile;
   parent_comment_ulid: string | null;
   created_at: string;

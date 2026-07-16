@@ -41,6 +41,8 @@ class GamificationService
 
     public const DAILY_ACTION_COMPLETED = 'daily_action_completed';
 
+    public const HELPFUL_RECEIVED = 'helpful_received';
+
     /**
      * Award XP to $profile for $actionKey, optionally bound to a subject.
      *

@@ -232,6 +232,10 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
         Route::patch('comments/{comment}', [CommentController::class, 'update']);
         Route::delete('comments/{comment}', [CommentController::class, 'destroy']);
+
+        // Post author marks a reply helpful (V1 · contribution recognition).
+        Route::post('comments/{comment}/helpful', [CommentController::class, 'markHelpful']);
+        Route::delete('comments/{comment}/helpful', [CommentController::class, 'unmarkHelpful']);
     });
 
     // Comments.

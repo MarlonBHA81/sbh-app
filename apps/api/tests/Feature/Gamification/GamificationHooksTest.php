@@ -90,7 +90,7 @@ test('following a public profile awards the followed profile', function () {
 
     $this->actingAs($follower)->postJson('/api/v1/profiles/target/follow')->assertCreated();
 
-    expect(xpOf($target->personalProfile))->toBe(5)
+    expect(xpOf($target->personalProfile))->toBe(3)
         ->and(xpOf($follower->personalProfile))->toBe(0);
 });
 
@@ -106,7 +106,7 @@ test('accepting a follow request awards the followed profile', function () {
 
     $this->actingAs($target)->postJson("/api/v1/me/follow-requests/{$follow->id}/accept")->assertOk();
 
-    expect(xpOf($target->personalProfile))->toBe(5);
+    expect(xpOf($target->personalProfile))->toBe(3);
 });
 
 test('casting a poll vote awards the voter', function () {
