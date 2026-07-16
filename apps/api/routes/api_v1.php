@@ -19,6 +19,8 @@ use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\ChallengeController;
 use App\Http\Controllers\Api\V1\ConnectionController;
 use App\Http\Controllers\Api\V1\DailyController;
+use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\GoalController;
 use App\Http\Controllers\Api\V1\OpportunityController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
@@ -201,6 +203,13 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/daily', [DailyController::class, 'today']);
     Route::post('me/daily/complete', [DailyController::class, 'complete']);
     Route::get('me/streak', [DailyController::class, 'streak']);
+
+    // Business dashboard & goals (V3 · PROGRESS) — a member's growth view.
+    Route::get('me/dashboard', [DashboardController::class, 'show']);
+    Route::get('me/goals', [GoalController::class, 'index']);
+    Route::post('me/goals', [GoalController::class, 'store']);
+    Route::patch('goals/{goal}', [GoalController::class, 'update']);
+    Route::delete('goals/{goal}', [GoalController::class, 'destroy']);
 
     // Opportunities (V1 · GROW) — admin-curated tenders, funding, grants.
     Route::get('opportunities', [OpportunityController::class, 'index']);

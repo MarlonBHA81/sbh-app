@@ -755,6 +755,34 @@ export interface Opportunity {
   published_at: string | null;
 }
 
+/** A member-set goal or milestone (V3 · PROGRESS). */
+export interface Goal {
+  ulid: string;
+  title: string;
+  target: string | null;
+  /** ISO date (YYYY-MM-DD) or null when there's no deadline. */
+  due_on: string | null;
+  is_done: boolean;
+  completed_at: string | null;
+  created_at: string | null;
+}
+
+/** Growth stats shown on the business dashboard (V3 · PROGRESS). */
+export interface DashboardStats {
+  posts_count: number;
+  helpful_count: number;
+  xp_total: number;
+  streak_days: number;
+  goals_completed: number;
+  goals_total: number;
+}
+
+/** The full dashboard payload (GET /api/v1/me/dashboard). */
+export interface DashboardData {
+  stats: DashboardStats;
+  goals: Goal[];
+}
+
 /** Streak snapshot (V1 · PROGRESS) — powers the streak chip. */
 export interface StreakSnapshot {
   current_days: number;

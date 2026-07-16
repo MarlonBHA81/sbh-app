@@ -3,6 +3,7 @@ export const RESERVED_SEGMENTS = new Set([
   "home", "feeds", "events", "discover", "business", "messages",
   "notifications", "leaderboard", "insights", "map", "search",
   "settings", "topics", "drafts", "ads", "p", "explore", "opportunities",
+  "dashboard",
 ]);
 
 /**
