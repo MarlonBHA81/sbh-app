@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\BusinessNeedController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\ChallengeController;
+use App\Http\Controllers\Api\V1\DailyController;
 use App\Http\Controllers\Api\V1\OpportunityController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
@@ -191,6 +192,11 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('challenges/{challenge}/join', [ChallengeController::class, 'join']);
     Route::delete('challenges/{challenge}/join', [ChallengeController::class, 'leave']);
     Route::get('gamification/ranks', [GamificationController::class, 'ranks']);
+
+    // Daily challenge + streak (V1 · PROGRESS).
+    Route::get('me/daily', [DailyController::class, 'today']);
+    Route::post('me/daily/complete', [DailyController::class, 'complete']);
+    Route::get('me/streak', [DailyController::class, 'streak']);
 
     // Opportunities (V1 · GROW) — admin-curated tenders, funding, grants.
     Route::get('opportunities', [OpportunityController::class, 'index']);

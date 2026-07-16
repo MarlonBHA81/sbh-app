@@ -750,3 +750,16 @@ export interface Opportunity {
   is_saved: boolean;
   published_at: string | null;
 }
+
+/** Streak snapshot (V1 · PROGRESS) — powers the streak chip. */
+export interface StreakSnapshot {
+  current_days: number;
+  ends_today: boolean;
+}
+
+/** Today's daily challenge + the viewer's completion + streak (GET me/daily). */
+export interface DailyChallenge {
+  action: { ulid: string; title: string; description: string | null } | null;
+  completed: boolean;
+  streak: StreakSnapshot;
+}

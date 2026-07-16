@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useComposer } from "@/components/composer/composer-provider";
 import { StreakChip } from "@/components/gamification/streak-chip";
 import { ComposerBar } from "@/components/home/composer-bar";
+import { DailyChallengeCard } from "@/components/home/daily-challenge-card";
 import { HeroPrompt } from "@/components/home/hero-prompt";
 import { HomeHeader } from "@/components/home/home-header";
 import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
@@ -35,6 +36,7 @@ export function HomeView() {
       <StreakChip />
       <HeroPrompt />
       <ComposerBar />
+      <DailyChallengeCard />
       <OnboardingChecklist />
       <QuickAccess />
       <section className="flex flex-col gap-3">

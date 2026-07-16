@@ -65,6 +65,8 @@ class Profile extends Model
         'share_location',
         'is_private',
         'dm_privacy',
+        'streak_count',
+        'streak_last_day',
     ];
 
     protected function casts(): array
@@ -80,7 +82,58 @@ class Profile extends Model
             'following_count' => 'integer',
             'posts_count' => 'integer',
             'xp_total' => 'integer',
+            'streak_count' => 'integer',
+            'streak_last_day' => 'date',
         ];
+    }
+
+    /**
+     * Advance the engagement streak for a qualifying action today (V1).
+     * Same-day repeats are a no-op; a consecutive day increments; a gap resets
+     * to 1. Persists immediately.
+     */
+    public function advanceStreak(): void
+    {
+        $today = now()->toDateString();
+        $last = $this->streak_last_day?->toDateString();
+
+        if ($last === $today) {
+            return;
+        }
+
+        $yesterday = now()->subDay()->toDateString();
+        $this->streak_count = $last === $yesterday ? $this->streak_count + 1 : 1;
+        $this->streak_last_day = $today;
+        $this->save();
+    }
+
+    /**
+     * Honest streak snapshot for the chip: the live count plus whether it
+     * truly lapses at end of day. A streak older than yesterday reads as zero.
+     *
+     * @return array{current_days:int, ends_today:bool}
+     */
+    public function streakSnapshot(): array
+    {
+        $last = $this->streak_last_day?->toDateString();
+
+        if ($last === null) {
+            return ['current_days' => 0, 'ends_today' => false];
+        }
+
+        $today = now()->toDateString();
+        $yesterday = now()->subDay()->toDateString();
+
+        if ($last === $today) {
+            return ['current_days' => $this->streak_count, 'ends_today' => false];
+        }
+
+        if ($last === $yesterday) {
+            // Acted yesterday, not yet today — alive but at risk tonight.
+            return ['current_days' => $this->streak_count, 'ends_today' => true];
+        }
+
+        return ['current_days' => 0, 'ends_today' => false];
     }
 
     protected static function booted(): void

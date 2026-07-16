@@ -18,6 +18,7 @@ class XpActionSeeder extends Seeder
             [G::FOLLOWER_GAINED, 'Gained a follower', 5, 20],
             [G::POLL_VOTE_CAST, 'Voted in a poll', 1, 10],
             [G::QUIZ_COMPLETED, 'Completed a quiz', 3, 10],
+            [G::DAILY_ACTION_COMPLETED, 'Completed the daily challenge', 15, 1],
         ];
 
         foreach ($actions as [$key, $label, $points, $cap]) {

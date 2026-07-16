@@ -39,6 +39,8 @@ class GamificationService
 
     public const QUIZ_COMPLETED = 'quiz_completed';
 
+    public const DAILY_ACTION_COMPLETED = 'daily_action_completed';
+
     /**
      * Award XP to $profile for $actionKey, optionally bound to a subject.
      *
