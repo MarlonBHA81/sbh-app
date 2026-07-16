@@ -64,6 +64,7 @@ class UpdateProfileRequest extends FormRequest
             ],
             'bio' => ['sometimes', 'nullable', 'string', 'max:1000'],
             'category' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'journey_stage' => ['sometimes', 'nullable', Rule::in(Profile::JOURNEY_STAGES)],
             'website' => ['sometimes', 'nullable', 'url', 'max:255'],
             'social_links' => ['sometimes', 'nullable', 'array:linkedin,facebook,instagram,whatsapp'],
             'social_links.linkedin' => ['nullable', 'string', 'max:255', 'regex:#^https://(www\.)?linkedin\.com/.+#i'],

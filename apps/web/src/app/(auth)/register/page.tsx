@@ -35,6 +35,7 @@ import * as api from "@/lib/api/client";
 import type { AppStatus, Profile } from "@/lib/api/types";
 import { BRAND_COLORS, brandColorByKey } from "@/lib/brand-colors";
 import { BUSINESS_CATEGORIES } from "@/lib/categories";
+import { JOURNEY_STAGES, journeyLabel } from "@/lib/journey";
 import { hasComposeDraft } from "@/lib/compose-draft";
 import { applyServerErrors, errorMessage } from "@/lib/forms";
 import {
@@ -58,14 +59,17 @@ type Credentials = z.infer<typeof credentialsSchema>;
 function ProfilePreview({
   name,
   industry,
+  stage,
   colorKey,
 }: {
   name: string;
   industry: string;
+  stage: string;
   colorKey: string;
 }) {
   const color = brandColorByKey(colorKey);
   const display = name.trim() || "Your business";
+  const stageLabel = journeyLabel(stage);
   return (
     <div className="overflow-hidden rounded-(--radius-card) border border-warmgray bg-card shadow-card">
       <div className="h-14 w-full" style={{ backgroundColor: color.hex }} />
@@ -91,6 +95,9 @@ function ProfilePreview({
             Pick an industry to start
           </span>
         )}
+        {stageLabel ? (
+          <span className="text-[12px] text-text-secondary">{stageLabel}</span>
+        ) : null}
       </div>
     </div>
   );
@@ -112,6 +119,7 @@ export default function RegisterPage() {
   // (the skeleton covers hydration), so there's no SSR/client mismatch.
   const [step, setStep] = useState(1);
   const [industry, setIndustry] = useState(() => readSignupDraft().industry ?? "");
+  const [stage, setStage] = useState(() => readSignupDraft().stage ?? "");
   const [name, setName] = useState(() => readSignupDraft().name ?? "");
   const [colorKey, setColorKey] = useState(
     () => readSignupDraft().color ?? BRAND_COLORS[0].key,
@@ -119,8 +127,8 @@ export default function RegisterPage() {
   const [rootError, setRootError] = useState<string | null>(null);
 
   useEffect(() => {
-    writeSignupDraft({ industry, name, color: colorKey });
-  }, [industry, name, colorKey]);
+    writeSignupDraft({ industry, stage, name, color: colorKey });
+  }, [industry, stage, name, colorKey]);
 
   useEffect(() => {
     let cancelled = false;
@@ -150,13 +158,17 @@ export default function RegisterPage() {
     try {
       await register({ name: name.trim(), email: values.email, password: values.password });
 
-      // Hydrate the industry the user picked onto their new profile.
+      // Hydrate the industry + journey stage the user picked onto their new
+      // profile so Home and opportunities can personalise from the start.
       const profile = storeApi.getState().activeProfile;
-      if (profile && industry) {
+      if (profile && (industry || stage)) {
         try {
           await api.patch<{ data: Profile }>(
             `/api/v1/me/profiles/${profile.ulid}`,
-            { category: industry },
+            {
+              ...(industry ? { category: industry } : {}),
+              ...(stage ? { journey_stage: stage } : {}),
+            },
           );
         } catch {
           // Non-fatal: they can set it later in profile settings.
@@ -225,9 +237,10 @@ export default function RegisterPage() {
     );
   }
 
-  const totalSteps = 4;
-  const canContinueStep1 = industry.length > 0;
-  const canContinueStep2 = name.trim().length >= 2;
+  const totalSteps = 5;
+  const canContinueIndustry = industry.length > 0;
+  const canContinueStage = stage.length > 0;
+  const canContinueName = name.trim().length >= 2;
 
   return (
     <Card className="w-full max-w-sm">
@@ -264,7 +277,12 @@ export default function RegisterPage() {
 
       <CardContent className="flex flex-col gap-4">
         {step >= 2 ? (
-          <ProfilePreview name={name} industry={industry} colorKey={colorKey} />
+          <ProfilePreview
+            name={name}
+            industry={industry}
+            stage={stage}
+            colorKey={colorKey}
+          />
         ) : null}
 
         {step === 1 ? (
@@ -297,7 +315,7 @@ export default function RegisterPage() {
             <Button
               type="button"
               className="h-11 w-full"
-              disabled={!canContinueStep1}
+              disabled={!canContinueIndustry}
               onClick={() => setStep(2)}
             >
               Next
@@ -306,6 +324,47 @@ export default function RegisterPage() {
         ) : null}
 
         {step === 2 ? (
+          <div className="flex flex-col gap-3">
+            <p className="text-sm font-medium text-text-primary">
+              Where are you in your journey?
+            </p>
+            <p className="-mt-1 text-[13px] text-text-secondary">
+              We&apos;ll tailor your opportunities and learning to this.
+            </p>
+            <div className="grid grid-cols-1 gap-2">
+              {JOURNEY_STAGES.map((s) => {
+                const selected = s.key === stage;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => setStage(s.key)}
+                    className={
+                      selected
+                        ? "flex min-h-11 items-center justify-between gap-1 rounded-xl border-2 border-teal bg-teal/8 px-3 py-2 text-start text-[13px] font-medium text-teal-text"
+                        : "flex min-h-11 items-center rounded-xl border border-warmgray bg-card px-3 py-2 text-start text-[13px] text-text-primary transition-colors hover:bg-accent"
+                    }
+                  >
+                    <span className="min-w-0 flex-1 truncate">{s.label}</span>
+                    {selected ? (
+                      <Check className="size-4 shrink-0" aria-hidden />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              type="button"
+              className="h-11 w-full"
+              disabled={!canContinueStage}
+              onClick={() => setStep(3)}
+            >
+              Next
+            </Button>
+          </div>
+        ) : null}
+
+        {step === 3 ? (
           <div className="flex flex-col gap-3">
             <label
               htmlFor="signup-name"
@@ -324,15 +383,15 @@ export default function RegisterPage() {
             <Button
               type="button"
               className="h-11 w-full"
-              disabled={!canContinueStep2}
-              onClick={() => setStep(3)}
+              disabled={!canContinueName}
+              onClick={() => setStep(4)}
             >
               Next
             </Button>
           </div>
         ) : null}
 
-        {step === 3 ? (
+        {step === 4 ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-text-primary">
               Choose your brand colour
@@ -363,14 +422,14 @@ export default function RegisterPage() {
             <Button
               type="button"
               className="h-11 w-full"
-              onClick={() => setStep(4)}
+              onClick={() => setStep(5)}
             >
               Next
             </Button>
           </div>
         ) : null}
 
-        {step === 4 ? (
+        {step === 5 ? (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-text-secondary">
               Looks great. Create your login to save{" "}

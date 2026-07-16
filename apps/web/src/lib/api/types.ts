@@ -50,6 +50,8 @@ export interface Profile {
     whatsapp?: string | null;
   } | null;
   location: string | null;
+  /** Business journey stage (V1) — where the member is in their journey. */
+  journey_stage?: string | null;
   is_private: boolean;
   is_verified: boolean;
   followers_count: number;

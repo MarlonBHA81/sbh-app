@@ -30,6 +30,19 @@ class Profile extends Model
 
     public const DM_PRIVACY_NO_ONE = 'no_one';
 
+    /**
+     * Business Journey stages (V1). Where the member is in their journey;
+     * drives personalisation of Home, opportunities and learning.
+     */
+    public const JOURNEY_STAGES = [
+        'starting',
+        'finding_customers',
+        'growing_sales',
+        'hiring',
+        'expanding',
+        'exporting',
+    ];
+
     protected $fillable = [
         'user_id',
         'kind',
@@ -39,6 +52,7 @@ class Profile extends Model
         'avatar_path',
         'cover_path',
         'category',
+        'journey_stage',
         'business_category_id',
         'website',
         'social_links',

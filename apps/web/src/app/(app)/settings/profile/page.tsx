@@ -49,6 +49,7 @@ import { useBusinessCategories } from "@/hooks/use-business-categories";
 import * as api from "@/lib/api/client";
 import type { DmPrivacy, Profile } from "@/lib/api/types";
 import { BUSINESS_CATEGORIES } from "@/lib/categories";
+import { JOURNEY_STAGES } from "@/lib/journey";
 import { applyServerErrors, errorMessage } from "@/lib/forms";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 import { useLocationSharing } from "@/lib/use-location-sharing";
@@ -57,6 +58,7 @@ const schema = z.object({
   name: z.string().min(2, "Enter a name"),
   bio: z.string().max(500, "Keep it under 500 characters"),
   category: z.string(),
+  journey_stage: z.string(),
   website: z
     .union([z.url("Enter a valid URL (include https://)"), z.literal("")])
     .optional(),
@@ -95,6 +97,7 @@ function valuesFromProfile(profile: Profile): Values {
     name: profile.name,
     bio: profile.bio ?? "",
     category: profile.category ?? "",
+    journey_stage: profile.journey_stage ?? "",
     website: profile.website ?? "",
     location: profile.location ?? "",
     is_private: profile.is_private,
@@ -396,6 +399,7 @@ export default function ProfileSettingsPage() {
       name: "",
       bio: "",
       category: "",
+      journey_stage: "",
       website: "",
       location: "",
       is_private: false,
@@ -430,6 +434,7 @@ export default function ProfileSettingsPage() {
           name: values.name,
           bio: values.bio || null,
           category: values.category || null,
+          journey_stage: values.journey_stage || null,
           website: values.website || null,
           location: values.location || null,
           is_private: values.is_private,
@@ -548,6 +553,33 @@ export default function ProfileSettingsPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="journey_stage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business journey stage</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-11 w-full">
+                          <SelectValue placeholder="Where are you in your journey?" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {JOURNEY_STAGES.map((s) => (
+                          <SelectItem key={s.key} value={s.key}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Tailors your Home, opportunities and learning.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -73,6 +73,45 @@ test('a user can update their own profile including the handle', function () {
         ->assertJsonPath('data.is_private', true);
 });
 
+test('a user can set their business journey stage', function () {
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+
+    $this->actingAs($user)
+        ->patchJson("/api/v1/me/profiles/{$profile->ulid}", [
+            'journey_stage' => 'finding_customers',
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.journey_stage', 'finding_customers');
+
+    expect($profile->fresh()->journey_stage)->toBe('finding_customers');
+});
+
+test('an unknown journey stage is rejected', function () {
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+
+    $this->actingAs($user)
+        ->patchJson("/api/v1/me/profiles/{$profile->ulid}", [
+            'journey_stage' => 'world_domination',
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrorFor('journey_stage');
+});
+
+test('a journey stage can be cleared', function () {
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+    $profile->update(['journey_stage' => 'exporting']);
+
+    $this->actingAs($user)
+        ->patchJson("/api/v1/me/profiles/{$profile->ulid}", [
+            'journey_stage' => null,
+        ])
+        ->assertOk()
+        ->assertJsonPath('data.journey_stage', null);
+});
+
 test('updating another users profile is forbidden', function () {
     $user = userWithProfile();
     $other = userWithProfile();

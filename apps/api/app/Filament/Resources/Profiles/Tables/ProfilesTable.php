@@ -6,6 +6,7 @@ use App\Models\Badge;
 use App\Models\BusinessCategory;
 use App\Models\Profile;
 use App\Support\Moderation;
+use Illuminate\Support\Str;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -71,11 +72,18 @@ class ProfilesTable
                     ->icon(Heroicon::OutlinedTag)
                     ->fillForm(fn (Profile $record) => [
                         'category' => $record->category,
+                        'journey_stage' => $record->journey_stage,
                         'business_category_id' => $record->business_category_id,
                         'badges' => $record->badges()->pluck('badges.id')->all(),
                     ])
                     ->schema([
                         TextInput::make('category')->maxLength(255),
+                        Select::make('journey_stage')
+                            ->label('Business journey stage')
+                            ->options(collect(Profile::JOURNEY_STAGES)
+                                ->mapWithKeys(fn (string $s) => [$s => Str::headline($s)])
+                                ->all())
+                            ->nullable(),
                         Select::make('business_category_id')
                             ->label('Business category')
                             ->options(fn () => BusinessCategory::query()->orderBy('position')->pluck('name', 'id'))
@@ -89,7 +97,10 @@ class ProfilesTable
                             ->searchable(),
                     ])
                     ->action(function (Profile $record, array $data): void {
-                        $update = ['category' => $data['category'] ?? null];
+                        $update = [
+                            'category' => $data['category'] ?? null,
+                            'journey_stage' => $data['journey_stage'] ?? null,
+                        ];
 
                         if ($record->isBusiness()) {
                             $update['business_category_id'] = $data['business_category_id'] ?? null;

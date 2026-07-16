@@ -6,6 +6,7 @@
  */
 export interface SignupDraft {
   industry?: string;
+  stage?: string;
   name?: string;
   color?: string;
 }
