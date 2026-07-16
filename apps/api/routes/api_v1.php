@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\V1\ConnectionController;
 use App\Http\Controllers\Api\V1\DailyController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\GoalController;
+use App\Http\Controllers\Api\V1\WellnessController;
 use App\Http\Controllers\Api\V1\OpportunityController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
@@ -210,6 +211,11 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('me/goals', [GoalController::class, 'store']);
     Route::patch('goals/{goal}', [GoalController::class, 'update']);
     Route::delete('goals/{goal}', [GoalController::class, 'destroy']);
+
+    // Wellness & resilience space (V3 · BELONG) — supportive, never gamified.
+    Route::get('wellness/resources', [WellnessController::class, 'resources']);
+    Route::get('me/wellness/checkins', [WellnessController::class, 'checkins']);
+    Route::post('me/wellness/checkins', [WellnessController::class, 'storeCheckin']);
 
     // Opportunities (V1 · GROW) — admin-curated tenders, funding, grants.
     Route::get('opportunities', [OpportunityController::class, 'index']);

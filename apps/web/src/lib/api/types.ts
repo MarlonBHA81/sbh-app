@@ -789,6 +789,23 @@ export interface DashboardData {
   goals: Goal[];
 }
 
+/** An admin-curated wellness prompt/read (V3 · BELONG). */
+export interface WellnessResource {
+  ulid: string;
+  category: string;
+  title: string;
+  body: string;
+}
+
+/** A member's private wellness check-in (V3 · BELONG). */
+export interface WellnessCheckin {
+  ulid: string;
+  /** 1 (finding it hard) … 5 (doing well). */
+  mood: number;
+  note: string | null;
+  created_at: string | null;
+}
+
 /** Streak snapshot (V1 · PROGRESS) — powers the streak chip. */
 export interface StreakSnapshot {
   current_days: number;

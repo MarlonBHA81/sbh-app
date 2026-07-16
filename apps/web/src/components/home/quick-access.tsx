@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  HeartHandshake,
   Megaphone,
   MessagesSquare,
   Sparkles,
@@ -19,6 +20,7 @@ interface Tile {
   labelKey:
     | "dashboard"
     | "opportunities"
+    | "wellness"
     | "forums"
     | "directory"
     | "tools"
@@ -41,6 +43,12 @@ const TILES: Tile[] = [
     href: "/opportunities",
     icon: Sparkles,
     gradient: "from-teal to-sage",
+  },
+  {
+    labelKey: "wellness",
+    href: "/wellness",
+    icon: HeartHandshake,
+    gradient: "from-sage to-plum",
   },
   {
     labelKey: "forums",
