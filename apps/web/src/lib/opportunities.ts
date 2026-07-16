@@ -34,11 +34,15 @@ export function opportunityTypeLabel(type: OpportunityType): string {
  */
 export function closesLabel(closesAt: string | null): string {
   if (!closesAt) return "No deadline";
-  const end = new Date(`${closesAt}T23:59:59`);
-  const today = new Date();
-  const days = Math.ceil(
-    (end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  // Compare at day granularity in local time. Parsing the parts avoids
+  // `new Date("YYYY-MM-DD")` being read as UTC midnight, and flooring both ends
+  // to local midnight keeps the count honest: a date === today reads "Closes
+  // today", not "tomorrow".
+  const [y, m, d] = closesAt.split("-").map(Number);
+  const end = new Date(y, m - 1, d);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const days = Math.round((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (days <= 0) return "Closes today";
   if (days === 1) return "Closes tomorrow";
   if (days <= 14) return `Closes in ${days} days`;

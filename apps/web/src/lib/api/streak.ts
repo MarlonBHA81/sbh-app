@@ -16,10 +16,10 @@ export interface Streak {
 /**
  * The viewer's engagement streak, or null when there's nothing to show.
  *
- * BACKEND-TODO: no streak feature exists yet — there is no streak model,
- * column, or `GET /api/v1/me/streak` endpoint. This resolves to null so the
- * StreakChip renders nothing until a real, honest streak signal exists. Wire
- * the endpoint here and the chip lights up with owned/at-risk copy.
+ * Backed by `GET /api/v1/me/streak` (V1 · Daily Challenge + streak engine):
+ * the daily action advances a real streak on the profile. Returns null when
+ * the streak is zero/lapsed, so the StreakChip only appears with a live,
+ * honest count and its "ends tonight" at-risk flag.
  */
 export async function fetchStreak(): Promise<Streak | null> {
   try {
