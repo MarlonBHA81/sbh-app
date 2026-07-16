@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\BusinessNeedController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\ChallengeController;
+use App\Http\Controllers\Api\V1\ConnectionController;
 use App\Http\Controllers\Api\V1\DailyController;
 use App\Http\Controllers\Api\V1\OpportunityController;
 use App\Http\Controllers\Api\V1\CommentController;
@@ -192,6 +193,9 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('challenges/{challenge}/join', [ChallengeController::class, 'join']);
     Route::delete('challenges/{challenge}/join', [ChallengeController::class, 'leave']);
     Route::get('gamification/ranks', [GamificationController::class, 'ranks']);
+
+    // Today's connections (V1 · CONNECT) — people to meet, with a reason.
+    Route::get('me/connections', [ConnectionController::class, 'today']);
 
     // Daily challenge + streak (V1 · PROGRESS).
     Route::get('me/daily', [DailyController::class, 'today']);

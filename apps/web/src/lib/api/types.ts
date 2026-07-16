@@ -767,3 +767,9 @@ export interface DailyChallenge {
   completed: boolean;
   streak: StreakSnapshot;
 }
+
+/** A suggested connection (V1 · CONNECT) — a person to meet + why. */
+export interface ConnectionSuggestion {
+  profile: Profile;
+  reason: string;
+}
