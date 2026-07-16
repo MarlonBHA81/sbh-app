@@ -745,6 +745,12 @@ export interface Opportunity {
   description: string;
   organisation: string | null;
   url: string | null;
+  /** Where the opportunity came from, e.g. "eTenders", "SEDA" (V3). */
+  source: string | null;
+  /** Canonical link to the original listing (V3). */
+  source_url: string | null;
+  /** Verified as coming from an official/trusted source (V3). */
+  is_official: boolean;
   industry: string | null;
   province: string | null;
   amount: string | null;

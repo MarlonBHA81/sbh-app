@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  BadgeCheck,
   Bookmark,
   Building2,
   CalendarClock,
@@ -107,6 +108,12 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
             <span className="rounded-full bg-teal/12 px-2.5 py-0.5 text-[11px] font-medium text-teal-text">
               {opportunityTypeLabel(state.opportunity.type)}
             </span>
+            {state.opportunity.is_official ? (
+              <span className="flex items-center gap-1 rounded-full bg-sage/15 px-2 py-0.5 text-[11px] font-medium text-sage-ink">
+                <BadgeCheck className="size-3" aria-hidden />
+                Official
+              </span>
+            ) : null}
             <span className="flex items-center gap-1 text-[12px] text-text-secondary">
               <CalendarClock className="size-3.5" aria-hidden />
               {closesLabel(state.opportunity.closes_at)}
@@ -158,6 +165,29 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
               {saved ? "Saved" : "Save"}
             </Button>
           </div>
+
+          {state.opportunity.source ? (
+            <p className="flex flex-wrap items-center gap-1 text-xs text-text-secondary">
+              {state.opportunity.is_official ? (
+                <BadgeCheck className="size-3.5 text-sage-ink" aria-hidden />
+              ) : null}
+              Source:{" "}
+              {state.opportunity.source_url ? (
+                <a
+                  href={state.opportunity.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-teal-text hover:underline"
+                >
+                  {state.opportunity.source}
+                </a>
+              ) : (
+                <span className="font-medium text-text-primary">
+                  {state.opportunity.source}
+                </span>
+              )}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

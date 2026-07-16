@@ -32,6 +32,10 @@ class Opportunity extends Model
         'description',
         'organisation',
         'url',
+        'source',
+        'source_url',
+        'source_ref',
+        'is_official',
         'industry',
         'province',
         'amount',
@@ -46,6 +50,7 @@ class Opportunity extends Model
         return [
             'closes_at' => 'date',
             'is_published' => 'boolean',
+            'is_official' => 'boolean',
             'published_at' => 'datetime',
         ];
     }

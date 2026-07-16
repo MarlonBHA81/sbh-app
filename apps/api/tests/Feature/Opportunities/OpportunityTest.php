@@ -100,3 +100,37 @@ test('opportunities require authentication', function () {
 
     $this->getJson('/api/v1/opportunities')->assertUnauthorized();
 });
+
+test('the official flag and source surface in the feed and detail', function () {
+    $user = userWithProfile();
+
+    $official = makeOpportunity([
+        'title' => 'Verified grant',
+        'source' => 'SEDA',
+        'source_url' => 'https://www.seda.org.za',
+        'is_official' => true,
+    ]);
+
+    $this->actingAs($user)
+        ->getJson('/api/v1/opportunities')
+        ->assertOk()
+        ->assertJsonPath('data.0.is_official', true)
+        ->assertJsonPath('data.0.source', 'SEDA')
+        ->assertJsonPath('data.0.source_url', 'https://www.seda.org.za');
+
+    $this->actingAs($user)
+        ->getJson("/api/v1/opportunities/{$official->ulid}")
+        ->assertOk()
+        ->assertJsonPath('data.is_official', true)
+        ->assertJsonPath('data.source', 'SEDA');
+});
+
+test('an ordinary opportunity is not official by default', function () {
+    $user = userWithProfile();
+    makeOpportunity(['title' => 'Plain grant']);
+
+    $this->actingAs($user)
+        ->getJson('/api/v1/opportunities')
+        ->assertJsonPath('data.0.is_official', false)
+        ->assertJsonPath('data.0.source', null);
+});

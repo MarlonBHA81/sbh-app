@@ -18,6 +18,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use UnitEnum;
@@ -51,6 +52,17 @@ class OpportunityResource extends Resource
                 ->helperText('Who is offering it (e.g. SEDA, a bank, a corporate).'),
             TextInput::make('url')->url()->maxLength(500)
                 ->helperText('Where members apply or read more.'),
+            // Provenance (V3 · GROW): record where this came from and mark it
+            // official when it's from a trusted/verified source.
+            TextInput::make('source')->maxLength(255)
+                ->helperText('Where it came from, e.g. "eTenders", "SEDA", "Manual".'),
+            TextInput::make('source_url')->url()->maxLength(500)
+                ->helperText('Canonical link to the original listing (if different from the apply URL).'),
+            TextInput::make('source_ref')->maxLength(255)
+                ->helperText('Optional external reference/ID — used to avoid duplicates when importing.'),
+            Toggle::make('is_official')
+                ->default(false)
+                ->helperText('On shows an "Official" badge. Only enable for verified, trusted sources.'),
             TextInput::make('industry')->maxLength(255)
                 ->helperText('Optional industry filter, e.g. "Retail".'),
             TextInput::make('province')->maxLength(255)
@@ -72,6 +84,8 @@ class OpportunityResource extends Resource
                 TextColumn::make('title')->searchable()->limit(40)->sortable(),
                 TextColumn::make('type')->badge()->sortable(),
                 TextColumn::make('organisation')->toggleable()->searchable(),
+                TextColumn::make('source')->toggleable()->placeholder('—')->searchable(),
+                IconColumn::make('is_official')->boolean()->label('Official')->sortable(),
                 TextColumn::make('closes_at')->date()->sortable()->placeholder('—'),
                 IconColumn::make('is_published')->boolean()->label('Published')->sortable(),
             ])
@@ -79,6 +93,7 @@ class OpportunityResource extends Resource
                 SelectFilter::make('type')->options(collect(Opportunity::TYPES)
                     ->mapWithKeys(fn (string $t) => [$t => Str::headline($t)])
                     ->all()),
+                TernaryFilter::make('is_official')->label('Official'),
             ])
             ->defaultSort('created_at', 'desc');
     }
