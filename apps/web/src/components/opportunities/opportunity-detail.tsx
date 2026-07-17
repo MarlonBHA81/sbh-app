@@ -2,6 +2,7 @@
 
 import {
   ArrowLeft,
+  BadgeCheck,
   Bookmark,
   Building2,
   CalendarClock,
@@ -19,6 +20,10 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
+import {
+  trackOpportunityClick,
+  trackOpportunityImpression,
+} from "@/lib/ads/track";
 import type { Opportunity } from "@/lib/api/types";
 import { closesLabel, opportunityTypeLabel } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
@@ -39,6 +44,10 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
         if (cancelled) return;
         setState({ phase: "loaded", opportunity: res.data });
         setSaved(res.data.is_saved);
+        // Metrics-first: count a sponsored impression once per session (V3).
+        if (res.data.is_sponsored) {
+          trackOpportunityImpression(res.data.ulid);
+        }
       })
       .catch(() => {
         if (!cancelled) setState({ phase: "error", opportunity: null });
@@ -107,10 +116,23 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
             <span className="rounded-full bg-teal/12 px-2.5 py-0.5 text-[11px] font-medium text-teal-text">
               {opportunityTypeLabel(state.opportunity.type)}
             </span>
+            {state.opportunity.is_official ? (
+              <span className="flex items-center gap-1 rounded-full bg-sage/15 px-2 py-0.5 text-[11px] font-medium text-sage-ink">
+                <BadgeCheck className="size-3" aria-hidden />
+                Official
+              </span>
+            ) : null}
             <span className="flex items-center gap-1 text-[12px] text-text-secondary">
               <CalendarClock className="size-3.5" aria-hidden />
               {closesLabel(state.opportunity.closes_at)}
             </span>
+            {state.opportunity.is_sponsored ? (
+              <span className="ms-auto text-[11px] font-medium text-text-secondary">
+                {state.opportunity.sponsor_name
+                  ? `Sponsored · ${state.opportunity.sponsor_name}`
+                  : "Sponsored"}
+              </span>
+            ) : null}
           </div>
 
           <h2 className="font-heading text-xl leading-snug font-semibold text-text-primary">
@@ -138,7 +160,16 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
           <div className="flex flex-col gap-2 sm:flex-row">
             {state.opportunity.url ? (
               <Button asChild className="h-11 flex-1">
-                <a href={state.opportunity.url} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={state.opportunity.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    if (state.opportunity?.is_sponsored) {
+                      trackOpportunityClick(state.opportunity.ulid);
+                    }
+                  }}
+                >
                   Apply / read more
                   <ExternalLink className="size-4" aria-hidden />
                 </a>
@@ -158,6 +189,29 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
               {saved ? "Saved" : "Save"}
             </Button>
           </div>
+
+          {state.opportunity.source ? (
+            <p className="flex flex-wrap items-center gap-1 text-xs text-text-secondary">
+              {state.opportunity.is_official ? (
+                <BadgeCheck className="size-3.5 text-sage-ink" aria-hidden />
+              ) : null}
+              Source:{" "}
+              {state.opportunity.source_url ? (
+                <a
+                  href={state.opportunity.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-teal-text hover:underline"
+                >
+                  {state.opportunity.source}
+                </a>
+              ) : (
+                <span className="font-medium text-text-primary">
+                  {state.opportunity.source}
+                </span>
+              )}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -15,6 +15,7 @@ class XpActionSeeder extends Seeder
             // answering pay the most; gaining a follower pays less than helping.
             [G::HELPFUL_RECEIVED, 'A comment was marked helpful', 20, null],
             [G::DAILY_ACTION_COMPLETED, 'Completed the daily challenge', 15, 1],
+            [G::GOAL_COMPLETED, 'Reached a goal you set', 15, 5],
             [G::POST_PUBLISHED, 'Published a post', 10, 5],
             [G::COMMENT_CREATED, 'Wrote a comment', 5, 20],
             [G::QUIZ_COMPLETED, 'Completed a quiz', 3, 10],

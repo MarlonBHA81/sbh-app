@@ -5,6 +5,7 @@ namespace App\Services\Ads;
 use App\Models\AdEvent;
 use App\Models\AdSlot;
 use App\Models\Campaign;
+use App\Models\Opportunity;
 use App\Models\Profile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -85,6 +86,35 @@ class AdTrackingService
     {
         AdEvent::create([
             'ad_slot_id' => $slot->id,
+            'kind' => $kind,
+            'profile_id' => $viewer?->id,
+        ]);
+    }
+
+    /**
+     * Record an impression or click against a sponsored opportunity (V3).
+     * Metrics-first: writes an ad_events row only — never any spend. Impressions
+     * are deduped per profile per opportunity within a short window; clicks are
+     * never deduped. No-op unless the opportunity is actually sponsored.
+     */
+    public function trackOpportunity(Opportunity $opportunity, string $kind, ?Profile $viewer): void
+    {
+        if (! $opportunity->is_sponsored) {
+            return;
+        }
+
+        if ($kind === AdEvent::KIND_IMPRESSION && $viewer !== null) {
+            $key = "ad-imp:{$viewer->ulid}:opp:{$opportunity->ulid}";
+
+            if (Cache::has($key)) {
+                return;
+            }
+
+            Cache::put($key, true, now()->addMinutes(self::IMPRESSION_DEDUPE_MINUTES));
+        }
+
+        AdEvent::create([
+            'opportunity_id' => $opportunity->id,
             'kind' => $kind,
             'profile_id' => $viewer?->id,
         ]);

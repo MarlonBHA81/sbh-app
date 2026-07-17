@@ -745,6 +745,16 @@ export interface Opportunity {
   description: string;
   organisation: string | null;
   url: string | null;
+  /** Where the opportunity came from, e.g. "eTenders", "SEDA" (V3). */
+  source: string | null;
+  /** Canonical link to the original listing (V3). */
+  source_url: string | null;
+  /** Verified as coming from an official/trusted source (V3). */
+  is_official: boolean;
+  /** Partner-featured (metrics-first, no price/budget) — V3. */
+  is_sponsored: boolean;
+  sponsor_name: string | null;
+  sponsor_url: string | null;
   industry: string | null;
   province: string | null;
   amount: string | null;
@@ -753,6 +763,51 @@ export interface Opportunity {
   is_open: boolean;
   is_saved: boolean;
   published_at: string | null;
+}
+
+/** A member-set goal or milestone (V3 · PROGRESS). */
+export interface Goal {
+  ulid: string;
+  title: string;
+  target: string | null;
+  /** ISO date (YYYY-MM-DD) or null when there's no deadline. */
+  due_on: string | null;
+  is_done: boolean;
+  completed_at: string | null;
+  created_at: string | null;
+}
+
+/** Growth stats shown on the business dashboard (V3 · PROGRESS). */
+export interface DashboardStats {
+  posts_count: number;
+  helpful_count: number;
+  xp_total: number;
+  streak_days: number;
+  goals_completed: number;
+  goals_total: number;
+}
+
+/** The full dashboard payload (GET /api/v1/me/dashboard). */
+export interface DashboardData {
+  stats: DashboardStats;
+  goals: Goal[];
+}
+
+/** An admin-curated wellness prompt/read (V3 · BELONG). */
+export interface WellnessResource {
+  ulid: string;
+  category: string;
+  title: string;
+  body: string;
+}
+
+/** A member's private wellness check-in (V3 · BELONG). */
+export interface WellnessCheckin {
+  ulid: string;
+  /** 1 (finding it hard) … 5 (doing well). */
+  mood: number;
+  note: string | null;
+  created_at: string | null;
 }
 
 /** Streak snapshot (V1 · PROGRESS) — powers the streak chip. */

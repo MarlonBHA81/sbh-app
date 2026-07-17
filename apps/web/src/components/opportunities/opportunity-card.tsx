@@ -1,11 +1,19 @@
 "use client";
 
-import { Bookmark, Building2, CalendarClock, MapPin, Wallet } from "lucide-react";
+import {
+  Bookmark,
+  BadgeCheck,
+  Building2,
+  CalendarClock,
+  MapPin,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import * as api from "@/lib/api/client";
+import { trackOpportunityImpression } from "@/lib/ads/track";
 import type { Opportunity } from "@/lib/api/types";
 import { closesLabel, opportunityTypeLabel } from "@/lib/opportunities";
 import { cn } from "@/lib/utils";
@@ -24,6 +32,13 @@ export function OpportunityCard({
 }) {
   const [saved, setSaved] = useState(opportunity.is_saved);
   const [busy, setBusy] = useState(false);
+
+  // Metrics-first: count a sponsored impression once per session (V3).
+  useEffect(() => {
+    if (opportunity.is_sponsored) {
+      trackOpportunityImpression(opportunity.ulid);
+    }
+  }, [opportunity.is_sponsored, opportunity.ulid]);
 
   async function toggleSave() {
     if (busy) return;
@@ -51,10 +66,30 @@ export function OpportunityCard({
         <span className="rounded-full bg-teal/12 px-2.5 py-0.5 text-[11px] font-medium text-teal-text">
           {opportunityTypeLabel(opportunity.type)}
         </span>
+        {opportunity.is_official ? (
+          <span
+            className="flex items-center gap-1 rounded-full bg-sage/15 px-2 py-0.5 text-[11px] font-medium text-sage-ink"
+            title={
+              opportunity.source
+                ? `Verified source: ${opportunity.source}`
+                : "Verified source"
+            }
+          >
+            <BadgeCheck className="size-3" aria-hidden />
+            Official
+          </span>
+        ) : null}
         {opportunity.province ? (
           <span className="flex items-center gap-1 text-[11px] text-text-secondary">
             <MapPin className="size-3" aria-hidden />
             {opportunity.province}
+          </span>
+        ) : null}
+        {opportunity.is_sponsored ? (
+          <span className="text-[11px] font-medium text-text-secondary">
+            {opportunity.sponsor_name
+              ? `Sponsored · ${opportunity.sponsor_name}`
+              : "Sponsored"}
           </span>
         ) : null}
         <button

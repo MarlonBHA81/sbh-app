@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  HeartHandshake,
   Megaphone,
   MessagesSquare,
   Sparkles,
   Store,
+  Target,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -15,7 +17,14 @@ import { SwirlWatermark } from "@/components/brand/swirl-watermark";
 import { SectionHeader } from "@/components/home/section-header";
 
 interface Tile {
-  labelKey: "opportunities" | "forums" | "directory" | "tools" | "promotedPosts";
+  labelKey:
+    | "dashboard"
+    | "opportunities"
+    | "wellness"
+    | "forums"
+    | "directory"
+    | "tools"
+    | "promotedPosts";
   href: string;
   icon: LucideIcon;
   /** Brand gradient (design tokens via Tailwind theme). */
@@ -24,10 +33,22 @@ interface Tile {
 
 const TILES: Tile[] = [
   {
+    labelKey: "dashboard",
+    href: "/dashboard",
+    icon: Target,
+    gradient: "from-teal to-plum",
+  },
+  {
     labelKey: "opportunities",
     href: "/opportunities",
     icon: Sparkles,
     gradient: "from-teal to-sage",
+  },
+  {
+    labelKey: "wellness",
+    href: "/wellness",
+    icon: HeartHandshake,
+    gradient: "from-sage to-plum",
   },
   {
     labelKey: "forums",

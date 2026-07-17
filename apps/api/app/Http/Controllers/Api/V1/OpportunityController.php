@@ -33,6 +33,8 @@ class OpportunityController extends Controller
             ->when($filters['type'] ?? null, fn ($q, $type) => $q->where('type', $type))
             ->when($filters['industry'] ?? null, fn ($q, $industry) => $q->where('industry', $industry))
             ->when($filters['province'] ?? null, fn ($q, $province) => $q->where('province', $province))
+            // Sponsored/partner opportunities lead the feed (honestly labelled).
+            ->orderByDesc('is_sponsored')
             ->orderByRaw('closes_at is null asc')
             ->orderBy('closes_at')
             ->orderByDesc('published_at')

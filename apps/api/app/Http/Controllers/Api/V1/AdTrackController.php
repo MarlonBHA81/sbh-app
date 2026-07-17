@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TrackAdRequest;
 use App\Models\AdSlot;
 use App\Models\Campaign;
+use App\Models\Opportunity;
 use App\Models\Profile;
 use App\Services\Ads\AdTrackingService;
 use Illuminate\Http\Response;
@@ -30,6 +31,12 @@ class AdTrackController extends Controller
 
             if ($slot !== null) {
                 $tracking->trackSlot($slot, $kind, $viewer);
+            }
+        } elseif ($ulid = $request->validated('opportunity_ulid')) {
+            $opportunity = Opportunity::query()->where('ulid', $ulid)->first();
+
+            if ($opportunity !== null) {
+                $tracking->trackOpportunity($opportunity, $kind, $viewer);
             }
         }
 

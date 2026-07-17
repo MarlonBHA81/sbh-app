@@ -11,6 +11,7 @@ type TrackKind = "impression" | "click" | "link_click";
 interface TrackTarget {
   campaign_ulid?: string;
   slot_key?: string;
+  opportunity_ulid?: string;
 }
 
 /** Subjects whose impression has already been counted this session. */
@@ -51,4 +52,17 @@ export function trackSlotImpression(slotKey: string): void {
 /** Track a click on a sponsor slot's Visit action (not deduped). */
 export function trackSlotClick(slotKey: string): void {
   send("click", { slot_key: slotKey });
+}
+
+/** Track a sponsored-opportunity impression at most once per session (V3). */
+export function trackOpportunityImpression(opportunityUlid: string): void {
+  const key = `opportunity:${opportunityUlid}`;
+  if (firedImpressions.has(key)) return;
+  firedImpressions.add(key);
+  send("impression", { opportunity_ulid: opportunityUlid });
+}
+
+/** Track a click on a sponsored opportunity (not deduped) — V3. */
+export function trackOpportunityClick(opportunityUlid: string): void {
+  send("click", { opportunity_ulid: opportunityUlid });
 }
