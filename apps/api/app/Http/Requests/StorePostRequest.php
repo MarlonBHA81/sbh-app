@@ -37,6 +37,7 @@ class StorePostRequest extends FormRequest
             ],
             'sensitive' => ['sometimes', 'boolean'],
             'is_question' => ['sometimes', 'boolean'],
+            'is_win' => ['sometimes', 'boolean'],
             'lat' => ['nullable', 'numeric', 'between:-90,90', 'required_with:lng'],
             'lng' => ['nullable', 'numeric', 'between:-180,180', 'required_with:lat'],
             'city' => ['nullable', 'string', 'max:255'],

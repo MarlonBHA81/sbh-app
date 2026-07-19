@@ -301,6 +301,8 @@ export interface Post {
   is_question?: boolean;
   /** A question is answered once its author marks a reply helpful. */
   is_answered?: boolean;
+  /** Celebrated as a win / success story (V2 · BELONG). */
+  is_win?: boolean;
   likes_count: number;
   comments_count: number;
   reposts_count: number;

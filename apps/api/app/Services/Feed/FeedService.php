@@ -294,6 +294,24 @@ class FeedService
     }
 
     /**
+     * Wins / success stories (V2 · BELONG): public posts a member flagged as a
+     * win, newest first.
+     */
+    public function wins(Profile $viewer): CursorPaginator
+    {
+        return Post::query()
+            ->published()
+            ->where('visibility', Post::VISIBILITY_PUBLIC)
+            ->where('is_win', true)
+            ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer))
+            ->tap(fn (Builder $query) => $this->applySafety($query, $viewer))
+            ->with(PostService::EAGER)
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->cursorPaginate(self::PER_PAGE);
+    }
+
+    /**
      * Posts from private profiles only appear to accepted followers (or the
      * author). Applied on top of the public-visibility filter.
      *

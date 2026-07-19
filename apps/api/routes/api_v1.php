@@ -240,6 +240,7 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('topics/{slug}/follow', [TopicController::class, 'unfollow']);
 
     Route::get('feeds/questions', [FeedController::class, 'questions']);
+    Route::get('feeds/wins', [FeedController::class, 'wins']);
     Route::get('feeds/following', [FeedController::class, 'following']);
     Route::get('feeds/for-you', [FeedController::class, 'forYou']);
     Route::get('feeds/nearby', [FeedController::class, 'nearby']);

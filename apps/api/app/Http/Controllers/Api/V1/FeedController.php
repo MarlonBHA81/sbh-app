@@ -44,6 +44,13 @@ class FeedController extends Controller
         return $this->present($feeds->questions($viewer, $answered), $viewer);
     }
 
+    public function wins(Request $request, FeedService $feeds): AnonymousResourceCollection
+    {
+        $viewer = $this->activeProfile($request);
+
+        return $this->present($feeds->wins($viewer), $viewer);
+    }
+
     public function nearby(Request $request, FeedService $feeds): AnonymousResourceCollection
     {
         $validated = $request->validate([

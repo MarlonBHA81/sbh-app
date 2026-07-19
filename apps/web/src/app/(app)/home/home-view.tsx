@@ -11,6 +11,7 @@ import { DailyChallengeCard } from "@/components/home/daily-challenge-card";
 import { HeroPrompt } from "@/components/home/hero-prompt";
 import { HomeHeader } from "@/components/home/home-header";
 import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
+import { RecentWinsCard } from "@/components/home/recent-wins-card";
 import { QuickAccess } from "@/components/home/quick-access";
 import { SectionHeader } from "@/components/home/section-header";
 import { TodaysLessonCard } from "@/components/home/todays-lesson-card";
@@ -77,6 +78,9 @@ export function HomeView() {
 
       {/* Today's lesson (V2 · LEARN) — self-hides when there are no lessons. */}
       <TodaysLessonCard />
+
+      {/* Recent wins (V2 · BELONG) — self-hides when there are none. */}
+      <RecentWinsCard />
 
       <OnboardingChecklist />
       <QuickAccess />

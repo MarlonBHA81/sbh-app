@@ -72,6 +72,7 @@ class Post extends Model
         'sensitive',
         'is_question',
         'answered_at',
+        'is_win',
         'parent_post_id',
     ];
 
@@ -82,6 +83,7 @@ class Post extends Model
             'sensitive' => 'boolean',
             'is_question' => 'boolean',
             'answered_at' => 'datetime',
+            'is_win' => 'boolean',
             'scheduled_at' => 'datetime',
             'published_at' => 'datetime',
             'lat' => 'decimal:7',
