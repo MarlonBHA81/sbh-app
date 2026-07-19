@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { PushSettings } from "@/components/notifications/push-settings";
+import { BusinessTeamSettings } from "@/components/settings/business-team-settings";
 import { ProfileImageUpload } from "@/components/settings/profile-image-upload";
 import { DataPrivacySettings } from "@/components/settings/data-privacy-settings";
 import { LanguagePicker } from "@/components/settings/language-picker";
@@ -708,7 +709,12 @@ export default function ProfileSettingsPage() {
         </CardContent>
       </Card>
       <LanguagePicker />
-      {activeProfile.kind === "business" ? <BusinessCategorySettings /> : null}
+      {activeProfile.kind === "business" ? (
+        <>
+          <BusinessCategorySettings />
+          <BusinessTeamSettings profile={activeProfile} />
+        </>
+      ) : null}
       <ContentSettings />
       <MessagingSettings />
       <PrivacySafetySettings />

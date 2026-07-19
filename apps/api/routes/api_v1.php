@@ -49,6 +49,7 @@ use App\Http\Controllers\Api\V1\PostInteractionController;
 use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\PostSeenController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\ProfileMemberController;
 use App\Http\Controllers\Api\V1\ProfileImageController;
 use App\Http\Controllers\Api\V1\ProfileLocationController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
@@ -124,6 +125,12 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('me/profiles', [MyProfileController::class, 'store']);
     Route::patch('me/profiles/{profile}', [MyProfileController::class, 'update']);
     Route::delete('me/profiles/{profile}', [MyProfileController::class, 'destroy']);
+
+    // Team management for multi-user business profiles (Roles P4).
+    Route::get('me/profiles/{profile}/members', [ProfileMemberController::class, 'index']);
+    Route::post('me/profiles/{profile}/members', [ProfileMemberController::class, 'store']);
+    Route::patch('me/profiles/{profile}/members/{handle}', [ProfileMemberController::class, 'updateRole']);
+    Route::delete('me/profiles/{profile}/members/{handle}', [ProfileMemberController::class, 'destroy']);
 
     Route::post('me/profiles/{profile}/avatar', [ProfileImageController::class, 'storeAvatar']);
     Route::delete('me/profiles/{profile}/avatar', [ProfileImageController::class, 'destroyAvatar']);

@@ -57,6 +57,7 @@ class Post extends Model
 
     protected $fillable = [
         'profile_id',
+        'author_user_id',
         'type',
         'body',
         'payload',
@@ -220,7 +221,18 @@ class Post extends Model
      */
     public function isAuthoredBy(?User $user): bool
     {
-        return $user !== null && $this->profile->user_id === $user->id;
+        if ($user === null) {
+            return false;
+        }
+
+        // The member who wrote it, or anyone who can manage the owning profile
+        // (its owner/manager). Covers legacy posts (author_user_id null) via the
+        // profile owner, and multi-user business profiles (Roles P4).
+        if ($this->author_user_id !== null && $this->author_user_id === $user->id) {
+            return true;
+        }
+
+        return $this->profile->canManageMembers($user);
     }
 
     /**

@@ -23,6 +23,17 @@ export interface ProfileBadge {
 }
 
 export type ProfileKind = "personal" | "business";
+
+/** A user's role on a (business) profile they help manage/post under (Roles P4). */
+export type ProfileRole = "owner" | "manager" | "poster";
+
+/** A member of a business profile's team (Roles P4). */
+export interface TeamMember {
+  handle: string | null;
+  name: string;
+  avatar_url: string | null;
+  role: ProfileRole;
+}
 export type Relationship =
   | "none"
   | "following"
@@ -54,6 +65,10 @@ export interface Profile {
   journey_stage?: string | null;
   /** Opted in to mentoring other members (V2 · CONNECT). */
   is_mentor?: boolean | null;
+  /** Trusted facilitator: can run challenges + own Spaces (Roles P2). */
+  is_facilitator?: boolean | null;
+  /** The viewer's role on this profile (Roles P4); set on /me payloads only. */
+  my_role?: ProfileRole | null;
   is_private: boolean;
   is_verified: boolean;
   followers_count: number;

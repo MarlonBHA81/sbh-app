@@ -172,6 +172,42 @@ class Profile extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** Additional users who help manage/post under this profile (Roles P4). */
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(ProfileMember::class);
+    }
+
+    /**
+     * This user's role on the profile, or null if they have no access. The
+     * creator (`user_id`) is always the owner; others come from the pivot.
+     * Personal profiles have no pivot rows, so only their creator matches.
+     */
+    public function memberRole(User $user): ?string
+    {
+        if ($this->user_id === $user->id) {
+            return ProfileMember::ROLE_OWNER;
+        }
+
+        return $this->memberships()->where('user_id', $user->id)->value('role');
+    }
+
+    /** Whether the user may act as this profile (owner or any member). */
+    public function isAccessibleBy(User $user): bool
+    {
+        return $this->memberRole($user) !== null;
+    }
+
+    /** Whether the user may manage this profile's members (owner or manager). */
+    public function canManageMembers(User $user): bool
+    {
+        return in_array(
+            $this->memberRole($user),
+            [ProfileMember::ROLE_OWNER, ProfileMember::ROLE_MANAGER],
+            true,
+        );
+    }
+
     public function businessCategory(): BelongsTo
     {
         return $this->belongsTo(BusinessCategory::class);

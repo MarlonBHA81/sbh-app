@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -72,6 +73,18 @@ class User extends Authenticatable implements FilamentUser
     public function businessProfiles(): HasMany
     {
         return $this->hasMany(Profile::class)->where('kind', Profile::KIND_BUSINESS);
+    }
+
+    /**
+     * Business profiles this user can act under via membership (Roles P4) —
+     * includes ones they created (backfilled as owner) and ones they were added
+     * to. Personal profiles are never shared, so they don't appear here.
+     */
+    public function memberProfiles(): BelongsToMany
+    {
+        return $this->belongsToMany(Profile::class, 'profile_members')
+            ->withPivot('role')
+            ->withTimestamps();
     }
 
     public function socialAccounts(): HasMany

@@ -57,6 +57,8 @@ class ProfileResource extends JsonResource
             'journey_stage' => $this->journey_stage,
             'is_mentor' => (bool) $this->is_mentor,
             'is_facilitator' => (bool) $this->is_facilitator,
+            // The viewer's role on this profile (Roles P4); only set on /me.
+            'my_role' => $this->my_role ?? null,
             'business_category' => $this->when(
                 $this->relationLoaded('businessCategory') && $this->businessCategory !== null,
                 fn () => [

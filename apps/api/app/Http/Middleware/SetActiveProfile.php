@@ -19,7 +19,10 @@ class SetActiveProfile
             if ($ulid) {
                 $profile = Profile::query()->where('ulid', $ulid)->first();
 
-                if (! $profile || $profile->user_id !== $user->id) {
+                // A user may act as a profile they own OR are a member of
+                // (multi-user business profiles, Roles P4). Personal profiles
+                // have no members, so this stays a strict ownership check for them.
+                if (! $profile || ! $profile->isAccessibleBy($user)) {
                     abort(403, __('The requested profile does not belong to you.'));
                 }
             } else {

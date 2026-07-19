@@ -82,6 +82,8 @@ class PostService
         $post = DB::transaction(function () use ($user, $author, $data, $type, $parent, $media, $payload, $status, $topics) {
             $post = Post::create([
                 'profile_id' => $author->id,
+                // Which member actually wrote it (Roles P4); identity stays the profile.
+                'author_user_id' => $user->id,
                 'type' => $type,
                 'body' => $data['body'] ?? null,
                 'payload' => $payload,

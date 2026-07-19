@@ -114,6 +114,9 @@ export function AccountSwitcher({
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
                     @{profile.handle}
+                    {profile.my_role && profile.my_role !== "owner" ? (
+                      <span className="capitalize"> · {profile.my_role} · shared</span>
+                    ) : null}
                   </span>
                 </span>
                 <Badge
