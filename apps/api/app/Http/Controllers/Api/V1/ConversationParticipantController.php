@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
+use App\Models\ConversationParticipant;
 use App\Models\Profile;
 use App\Services\MessagingService;
 use Illuminate\Http\Request;
@@ -87,14 +88,20 @@ class ConversationParticipantController extends Controller
         abort_unless($me->isOwner(), 403);
 
         $data = $request->validate([
-            'role' => ['required', 'in:admin,member'],
+            // "manager" is the Space-facing alias for the admin role (Roles P3);
+            // both are accepted so the wire protocol stays backward-compatible.
+            'role' => ['required', 'in:admin,manager,member'],
         ]);
+
+        $role = $data['role'] === 'manager'
+            ? ConversationParticipant::ROLE_ADMIN
+            : $data['role'];
 
         $target = $conversation->participantFor($profile);
         abort_unless($target !== null, 404);
         abort_if($target->isOwner(), 403, 'The owner role cannot be changed here.');
 
-        $target->update(['role' => $data['role']]);
+        $target->update(['role' => $role]);
 
         $conversation->load(['participants.profile', 'lastMessage.profile']);
         $conversation->unread_count = 0;

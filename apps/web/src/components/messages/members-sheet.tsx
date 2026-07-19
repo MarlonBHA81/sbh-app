@@ -32,7 +32,8 @@ import type {
 
 const ROLE_LABEL: Record<ConversationRole, string> = {
   owner: "Owner",
-  admin: "Admin",
+  // "Manager" is the Space-facing name for the admin role (Roles P3).
+  admin: "Manager",
   member: "Member",
 };
 
@@ -264,14 +265,14 @@ export function MembersSheet({
                           <DropdownMenuItem
                             onSelect={() => void setRole(profile.ulid, "admin")}
                           >
-                            Make admin
+                            Make manager
                           </DropdownMenuItem>
                         ) : null}
                         {isOwner && role === "admin" ? (
                           <DropdownMenuItem
                             onSelect={() => void setRole(profile.ulid, "member")}
                           >
-                            Remove admin
+                            Remove manager
                           </DropdownMenuItem>
                         ) : null}
                         <DropdownMenuItem

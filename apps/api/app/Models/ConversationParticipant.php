@@ -64,6 +64,15 @@ class ConversationParticipant extends Model
         return $this->role === self::ROLE_ADMIN;
     }
 
+    /**
+     * "Manager" is the Space-facing name for the admin role (Roles P3): an
+     * appointed access-controller who can add/remove members but is not the owner.
+     */
+    public function isManager(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
     public function canManage(): bool
     {
         return in_array($this->role, [self::ROLE_OWNER, self::ROLE_ADMIN], true);
