@@ -50,6 +50,7 @@ use App\Http\Controllers\Api\V1\Public\PublicProfileController;
 use App\Http\Controllers\Api\V1\Public\PublicSitemapController;
 use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\ResourceController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\StatusController;
 use App\Http\Controllers\Api\V1\TopicController;
@@ -208,6 +209,14 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('opportunities/{opportunity}', [OpportunityController::class, 'show']);
     Route::post('opportunities/{opportunity}/save', [OpportunityController::class, 'save']);
     Route::delete('opportunities/{opportunity}/save', [OpportunityController::class, 'unsave']);
+
+    // Resource Library (V2 · LEARN) — admin-curated templates, checklists,
+    // toolkits and AI prompts, bookmarkable like opportunities.
+    Route::get('resources', [ResourceController::class, 'index']);
+    Route::get('me/resources/saved', [ResourceController::class, 'saved']);
+    Route::get('resources/{resource}', [ResourceController::class, 'show']);
+    Route::post('resources/{resource}/save', [ResourceController::class, 'save']);
+    Route::delete('resources/{resource}/save', [ResourceController::class, 'unsave']);
 
     Route::get('me/topics', [TopicController::class, 'mine']);
     Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);

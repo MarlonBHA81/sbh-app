@@ -238,6 +238,12 @@ class Profile extends Model
             ->withTimestamps();
     }
 
+    public function savedResources(): BelongsToMany
+    {
+        return $this->belongsToMany(LibraryResource::class, 'resource_saves', 'profile_id', 'resource_id')
+            ->withTimestamps();
+    }
+
     public function rank(): BelongsTo
     {
         return $this->belongsTo(Rank::class);

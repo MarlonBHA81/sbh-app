@@ -755,6 +755,31 @@ export interface Opportunity {
   published_at: string | null;
 }
 
+/** Resource Library kinds (V2 · LEARN). */
+export type ResourceType = "template" | "checklist" | "toolkit" | "ai_prompt";
+
+/** Resource Library categories (V2 · LEARN). */
+export type ResourceCategory =
+  | "marketing"
+  | "finance"
+  | "operations"
+  | "sales"
+  | "legal"
+  | "people";
+
+/** A curated learning resource (template, checklist, toolkit, AI prompt). */
+export interface LibraryResource {
+  ulid: string;
+  type: ResourceType;
+  category: ResourceCategory;
+  title: string;
+  description: string;
+  url: string;
+  industry: string | null;
+  is_saved: boolean;
+  published_at: string | null;
+}
+
 /** Streak snapshot (V1 · PROGRESS) — powers the streak chip. */
 export interface StreakSnapshot {
   current_days: number;

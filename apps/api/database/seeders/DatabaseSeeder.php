@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             SettingSeeder::class,
             OpportunitySeeder::class,
             DailyActionSeeder::class,
+            ResourceSeeder::class,
         ]);
     }
 }

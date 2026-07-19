@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookOpen,
   Megaphone,
   MessagesSquare,
   Sparkles,
@@ -15,7 +16,13 @@ import { SwirlWatermark } from "@/components/brand/swirl-watermark";
 import { SectionHeader } from "@/components/home/section-header";
 
 interface Tile {
-  labelKey: "opportunities" | "forums" | "directory" | "tools" | "promotedPosts";
+  labelKey:
+    | "opportunities"
+    | "resources"
+    | "forums"
+    | "directory"
+    | "tools"
+    | "promotedPosts";
   href: string;
   icon: LucideIcon;
   /** Brand gradient (design tokens via Tailwind theme). */
@@ -28,6 +35,12 @@ const TILES: Tile[] = [
     href: "/opportunities",
     icon: Sparkles,
     gradient: "from-teal to-sage",
+  },
+  {
+    labelKey: "resources",
+    href: "/resources",
+    icon: BookOpen,
+    gradient: "from-plum to-sage",
   },
   {
     labelKey: "forums",
