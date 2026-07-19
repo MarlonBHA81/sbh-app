@@ -805,6 +805,14 @@ export interface LessonProgress {
   total: number;
 }
 
+/** One turn in an AI Coach conversation (V2 · LEARN). */
+export interface CoachMessage {
+  id: number;
+  role: "user" | "assistant";
+  body: string;
+  created_at: string | null;
+}
+
 /** Streak snapshot (V1 · PROGRESS) — powers the streak chip. */
 export interface StreakSnapshot {
   current_days: number;

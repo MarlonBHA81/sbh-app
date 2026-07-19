@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\BusinessNeedController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\ChallengeController;
+use App\Http\Controllers\Api\V1\CoachController;
 use App\Http\Controllers\Api\V1\ConnectionController;
 use App\Http\Controllers\Api\V1\DailyController;
 use App\Http\Controllers\Api\V1\OpportunityController;
@@ -224,6 +225,11 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/learn/progress', [LessonController::class, 'progress']);
     Route::get('learn/lessons/{lesson}', [LessonController::class, 'show']);
     Route::post('learn/lessons/{lesson}/complete', [LessonController::class, 'complete']);
+
+    // AI Business Coach v1 (V2 · LEARN) — persisted chat; works with no API key.
+    Route::get('coach', [CoachController::class, 'show']);
+    Route::post('coach/messages', [CoachController::class, 'store'])->middleware('throttle:coach');
+    Route::delete('coach', [CoachController::class, 'destroy']);
 
     Route::get('me/topics', [TopicController::class, 'mine']);
     Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);

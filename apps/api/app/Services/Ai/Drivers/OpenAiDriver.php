@@ -23,6 +23,52 @@ class OpenAiDriver extends StructuredJsonAiDriver
         return ! empty($this->config['api_key']);
     }
 
+    public function chat(string $system, array $messages, int $maxTokens = 600): ?string
+    {
+        // BACKEND-TODO: live AI Coach replies require OPENAI_API_KEY and
+        // AI_DRIVER=openai (see config/ai.php). Without them the null driver
+        // serves canned coaching replies instead.
+        if (! $this->enabled()) {
+            return null;
+        }
+
+        $payload = [['role' => 'system', 'content' => $system]];
+
+        foreach ($messages as $message) {
+            $role = ($message['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
+            $content = trim((string) ($message['content'] ?? ''));
+
+            if ($content !== '') {
+                $payload[] = ['role' => $role, 'content' => $content];
+            }
+        }
+
+        try {
+            $response = Http::withToken((string) $this->config['api_key'])
+                ->timeout((int) ($this->config['timeout'] ?? 15))
+                ->baseUrl(rtrim((string) ($this->config['base_url'] ?? 'https://api.openai.com'), '/'))
+                ->post('/v1/chat/completions', [
+                    'model' => $this->config['model'] ?? 'gpt-4o-mini',
+                    'max_tokens' => $maxTokens,
+                    'messages' => $payload,
+                ]);
+
+            if ($response->failed()) {
+                Log::warning('OpenAI chat failed', ['status' => $response->status()]);
+
+                return null;
+            }
+
+            $text = $response->json('choices.0.message.content');
+
+            return is_string($text) && trim($text) !== '' ? $text : null;
+        } catch (Throwable $e) {
+            Log::warning('OpenAI chat threw', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
     /**
      * @return array<string, mixed>|null
      */

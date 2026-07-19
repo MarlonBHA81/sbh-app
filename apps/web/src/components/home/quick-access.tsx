@@ -2,6 +2,7 @@
 
 import {
   BookOpen,
+  Bot,
   GraduationCap,
   Megaphone,
   MessagesSquare,
@@ -21,6 +22,7 @@ interface Tile {
     | "opportunities"
     | "resources"
     | "learn"
+    | "coach"
     | "forums"
     | "directory"
     | "tools"
@@ -49,6 +51,12 @@ const TILES: Tile[] = [
     href: "/learn",
     icon: GraduationCap,
     gradient: "from-sage to-teal",
+  },
+  {
+    labelKey: "coach",
+    href: "/coach",
+    icon: Bot,
+    gradient: "from-teal to-plum",
   },
   {
     labelKey: "forums",

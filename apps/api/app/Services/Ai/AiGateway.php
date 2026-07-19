@@ -25,6 +25,16 @@ interface AiGateway
     public function suggestTopics(string $text, int $max = 3): array;
 
     /**
+     * Free-form chat completion for the AI Coach. Returns the assistant's
+     * plain-text reply. The null driver returns a helpful canned reply so the
+     * coach works with no API key; live drivers return null on any failure so
+     * the caller can fall back gracefully.
+     *
+     * @param  list<array{role: string, content: string}>  $messages  Prior turns.
+     */
+    public function chat(string $system, array $messages, int $maxTokens = 600): ?string;
+
+    /**
      * Whether AI features are active (a driver other than null with any
      * required credentials present).
      */
