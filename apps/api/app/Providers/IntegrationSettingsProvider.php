@@ -28,6 +28,7 @@ class IntegrationSettingsProvider extends ServiceProvider
 
             $this->applyAiSettings();
             $this->applyMailSettings();
+            $this->applyTenderSettings();
         } catch (Throwable) {
             // Missing table / unavailable database during bootstrap: fall back
             // to the config file / env values untouched.
@@ -66,6 +67,30 @@ class IntegrationSettingsProvider extends ServiceProvider
 
         if ($model !== null && $model !== '') {
             config(["ai.{$provider}.model" => $model]);
+        }
+    }
+
+    private function applyTenderSettings(): void
+    {
+        // Boolean toggle: only override when the row exists (null = untouched).
+        $enabled = Setting::get('integrations.tenders.enabled');
+        if ($enabled !== null) {
+            config(['tenders.enabled' => (bool) $enabled]);
+        }
+
+        $map = [
+            'integrations.tenders.base_url' => 'tenders.base_url',
+            'integrations.tenders.version' => 'tenders.version',
+            'integrations.tenders.source' => 'tenders.source',
+        ];
+
+        foreach ($map as $settingKey => $configKey) {
+            $value = Setting::get($settingKey);
+
+            if ($value !== null && $value !== '') {
+                $normalised = $configKey === 'tenders.base_url' ? rtrim((string) $value, '/') : $value;
+                config([$configKey => $normalised]);
+            }
         }
     }
 

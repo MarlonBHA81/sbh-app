@@ -13,3 +13,4 @@ Schedule::command('posts:refresh-scores')->everyFifteenMinutes();
 Schedule::command('uploads:prune')->hourly();
 Schedule::command('ads:settle')->everyFifteenMinutes();
 Schedule::command('briefs:generate')->dailyAt('06:00');
+Schedule::command('tenders:sync')->hourly();

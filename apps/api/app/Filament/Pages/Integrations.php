@@ -7,6 +7,7 @@ use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -100,6 +101,11 @@ class Integrations extends Page
             'mail_password' => (string) Setting::get('integrations.mail.password', ''),
             'mail_from_address' => (string) Setting::get('integrations.mail.from_address', ''),
             'mail_from_name' => (string) Setting::get('integrations.mail.from_name', ''),
+
+            'tenders_enabled' => (bool) Setting::get('integrations.tenders.enabled', config('tenders.enabled')),
+            'tenders_base_url' => (string) Setting::get('integrations.tenders.base_url', config('tenders.base_url')),
+            'tenders_version' => (string) Setting::get('integrations.tenders.version', config('tenders.version')),
+            'tenders_source' => (string) Setting::get('integrations.tenders.source', config('tenders.source')),
         ]);
     }
 
@@ -188,6 +194,24 @@ class Integrations extends Page
                         TextInput::make('mail_from_name')
                             ->label('From name'),
                     ]),
+
+                Section::make('Tenders (OpenProcurement)')
+                    ->description('Pull open tenders into the Opportunities feed from an OpenProcurement-compatible API. Runs hourly when enabled.')
+                    ->schema([
+                        Toggle::make('tenders_enabled')
+                            ->label('Enable tender sync')
+                            ->helperText('Off leaves the hourly tenders:sync job a no-op.'),
+                        TextInput::make('tenders_base_url')
+                            ->label('Base URL')
+                            ->url()
+                            ->helperText('Point at a South-African OpenProcurement endpoint for SA tenders. Default serves the public standard data.'),
+                        TextInput::make('tenders_version')
+                            ->label('API version')
+                            ->helperText('e.g. 2.5'),
+                        TextInput::make('tenders_source')
+                            ->label('Source label')
+                            ->helperText('Stamped on imported opportunities and used to de-duplicate (e.g. "eTenders", "OpenProcurement").'),
+                    ]),
             ])
             ->statePath('data');
     }
@@ -210,6 +234,11 @@ class Integrations extends Page
         Setting::set('integrations.mail.password', (string) ($data['mail_password'] ?? ''));
         Setting::set('integrations.mail.from_address', (string) ($data['mail_from_address'] ?? ''));
         Setting::set('integrations.mail.from_name', (string) ($data['mail_from_name'] ?? ''));
+
+        Setting::set('integrations.tenders.enabled', (bool) ($data['tenders_enabled'] ?? false));
+        Setting::set('integrations.tenders.base_url', (string) ($data['tenders_base_url'] ?? ''));
+        Setting::set('integrations.tenders.version', (string) ($data['tenders_version'] ?? ''));
+        Setting::set('integrations.tenders.source', (string) ($data['tenders_source'] ?? ''));
 
         Notification::make()->title('Integration settings saved')->success()->send();
     }
