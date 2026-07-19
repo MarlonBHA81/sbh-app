@@ -5,10 +5,21 @@ on:
     branches: ["main", "claude/**"]
   pull_request:
 
+# A newer push cancels an older in-flight run for the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   api-tests:
     name: API (Pest, SQLite)
     runs-on: ubuntu-latest
+    # Same-repo pushes and PRs both fire; the push run already covers this
+    # branch, so skip the duplicate same-repo PR run (still run fork PRs, which
+    # push CI can't cover).
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
     defaults:
       run:
         working-directory: apps/api
@@ -31,6 +42,9 @@ jobs:
   api-tests-mysql:
     name: API (Pest, MySQL 8)
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
     defaults:
       run:
         working-directory: apps/api
@@ -73,6 +87,9 @@ jobs:
   web:
     name: Web (lint, types, build)
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'pull_request' ||
+      github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - uses: actions/checkout@v4
       # Version comes from package.json "packageManager" — specifying it here
