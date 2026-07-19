@@ -8,6 +8,7 @@ import {
   MessagesSquare,
   Sparkles,
   Store,
+  UsersRound,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -23,6 +24,7 @@ interface Tile {
     | "resources"
     | "learn"
     | "coach"
+    | "mentors"
     | "forums"
     | "directory"
     | "tools"
@@ -57,6 +59,12 @@ const TILES: Tile[] = [
     href: "/coach",
     icon: Bot,
     gradient: "from-teal to-plum",
+  },
+  {
+    labelKey: "mentors",
+    href: "/mentors",
+    icon: UsersRound,
+    gradient: "from-plum to-slate",
   },
   {
     labelKey: "forums",

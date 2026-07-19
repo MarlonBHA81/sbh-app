@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\V1\GeoController;
 use App\Http\Controllers\Api\V1\LessonController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
+use App\Http\Controllers\Api\V1\MentorController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\MessageReactionController;
 use App\Http\Controllers\Api\V1\MuteController;
@@ -199,6 +200,9 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
     // Today's connections (V1 · CONNECT) — people to meet, with a reason.
     Route::get('me/connections', [ConnectionController::class, 'today']);
+
+    // Mentor matching (V2 · CONNECT) — opted-in mentors ranked by relevance.
+    Route::get('mentors', [MentorController::class, 'index']);
 
     // Daily challenge + streak (V1 · PROGRESS).
     Route::get('me/daily', [DailyController::class, 'today']);

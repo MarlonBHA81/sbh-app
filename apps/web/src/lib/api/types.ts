@@ -52,6 +52,8 @@ export interface Profile {
   location: string | null;
   /** Business journey stage (V1) — where the member is in their journey. */
   journey_stage?: string | null;
+  /** Opted in to mentoring other members (V2 · CONNECT). */
+  is_mentor?: boolean | null;
   is_private: boolean;
   is_verified: boolean;
   followers_count: number;
