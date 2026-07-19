@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
@@ -16,6 +17,7 @@ class Challenge extends Model
         'starts_at',
         'ends_at',
         'is_active',
+        'created_by_profile_id',
     ];
 
     protected function casts(): array
@@ -43,6 +45,12 @@ class Challenge extends Model
     {
         return $this->belongsToMany(Profile::class, 'challenge_participants')
             ->withPivot('joined_at');
+    }
+
+    /** The facilitator profile that created this challenge (null = admin-authored). */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class, 'created_by_profile_id');
     }
 
     public function isRunning(): bool

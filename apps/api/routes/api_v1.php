@@ -197,7 +197,10 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/xp', [GamificationController::class, 'xp']);
     Route::get('gamification/leaderboard', [GamificationController::class, 'leaderboard']);
     Route::get('challenges', [ChallengeController::class, 'index']);
+    // Facilitator-created challenges (Roles P2) — gated by ChallengePolicy.
+    Route::post('challenges', [ChallengeController::class, 'store']);
     Route::get('challenges/{challenge}', [ChallengeController::class, 'show']);
+    Route::patch('challenges/{challenge}', [ChallengeController::class, 'update']);
     Route::post('challenges/{challenge}/join', [ChallengeController::class, 'join']);
     Route::delete('challenges/{challenge}/join', [ChallengeController::class, 'leave']);
     Route::get('gamification/ranks', [GamificationController::class, 'ranks']);

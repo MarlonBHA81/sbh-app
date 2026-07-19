@@ -93,11 +93,17 @@ class MessagingService
             ->unique('id')
             ->values();
 
-        return DB::transaction(function () use ($creator, $title, $rules, $members) {
+        // Facilitators are trusted to run their own Spaces (Roles P2): their
+        // groups launch immediately; everyone else's wait for admin approval.
+        $facilitator = (bool) $creator->is_facilitator;
+
+        return DB::transaction(function () use ($creator, $title, $rules, $members, $facilitator) {
             $conversation = Conversation::create([
                 'kind' => Conversation::KIND_GROUP,
-                // Groups launch only after an admin approves them.
-                'approval_status' => Conversation::APPROVAL_PENDING,
+                'approval_status' => $facilitator
+                    ? Conversation::APPROVAL_APPROVED
+                    : Conversation::APPROVAL_PENDING,
+                'approved_at' => $facilitator ? now() : null,
                 'title' => $title,
                 'rules' => $rules,
                 'created_by_profile_id' => $creator->id,

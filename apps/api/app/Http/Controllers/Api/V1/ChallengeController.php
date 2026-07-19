@@ -9,6 +9,7 @@ use App\Services\Gamification\ChallengeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 
 class ChallengeController extends Controller
 {
@@ -61,6 +62,56 @@ class ChallengeController extends Controller
                     'xp' => $me['points'],
                 ],
             ],
+        ]);
+    }
+
+    /** Create a challenge (facilitators + admins — Roles P2). */
+    public function store(Request $request): JsonResponse
+    {
+        $actor = $this->activeProfile($request);
+        Gate::authorize('create', [Challenge::class, $actor]);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:120'],
+            'description' => ['required', 'string', 'max:2000'],
+            'starts_at' => ['required', 'date'],
+            'ends_at' => ['required', 'date', 'after:starts_at'],
+        ]);
+
+        $challenge = Challenge::create([
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'starts_at' => $data['starts_at'],
+            'ends_at' => $data['ends_at'],
+            'is_active' => true,
+            'created_by_profile_id' => $actor->id,
+        ]);
+
+        return response()->json([
+            'data' => $this->serialize($challenge->loadCount('participants'), false),
+        ], 201);
+    }
+
+    /** Update a challenge the actor created (or any, for admins — Roles P2). */
+    public function update(Request $request, Challenge $challenge): JsonResponse
+    {
+        $actor = $this->activeProfile($request);
+        Gate::authorize('update', [$challenge, $actor]);
+
+        $data = $request->validate([
+            'title' => ['sometimes', 'string', 'max:120'],
+            'description' => ['sometimes', 'string', 'max:2000'],
+            'starts_at' => ['sometimes', 'date'],
+            'ends_at' => ['sometimes', 'date'],
+            'is_active' => ['sometimes', 'boolean'],
+        ]);
+
+        $challenge->update($data);
+
+        $joined = $challenge->participants()->where('profile_id', $actor->id)->exists();
+
+        return response()->json([
+            'data' => $this->serialize($challenge->loadCount('participants'), $joined),
         ]);
     }
 

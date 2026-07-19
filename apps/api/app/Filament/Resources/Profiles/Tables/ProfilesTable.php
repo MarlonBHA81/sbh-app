@@ -30,6 +30,7 @@ class ProfilesTable
                 TextColumn::make('user.email')->label('Owner')->searchable()->toggleable(),
                 TextColumn::make('followers_count')->label('Followers')->sortable(),
                 IconColumn::make('is_verified')->boolean()->label('Verified')->sortable(),
+                IconColumn::make('is_facilitator')->boolean()->label('Facilitator')->sortable()->toggleable(),
                 IconColumn::make('is_private')->boolean()->label('Private')->sortable(),
             ])
             ->filters([
@@ -38,6 +39,7 @@ class ProfilesTable
                     Profile::KIND_BUSINESS => 'Business',
                 ]),
                 TernaryFilter::make('is_verified')->label('Verified'),
+                TernaryFilter::make('is_facilitator')->label('Facilitator'),
                 TernaryFilter::make('is_private')->label('Private'),
             ])
             ->recordActions([
@@ -65,6 +67,20 @@ class ProfilesTable
                         Moderation::log($verify ? 'profile.verify' : 'profile.unverify', $record);
 
                         Notification::make()->title('Verification updated')->success()->send();
+                    }),
+
+                Action::make('toggle_facilitator')
+                    ->label(fn (Profile $record) => $record->is_facilitator ? 'Revoke facilitator' : 'Make facilitator')
+                    ->icon(Heroicon::OutlinedAcademicCap)
+                    ->color(fn (Profile $record) => $record->is_facilitator ? 'gray' : 'success')
+                    ->requiresConfirmation()
+                    ->action(function (Profile $record): void {
+                        $grant = ! $record->is_facilitator;
+                        $record->forceFill(['is_facilitator' => $grant])->save();
+
+                        Moderation::log($grant ? 'profile.facilitator_grant' : 'profile.facilitator_revoke', $record);
+
+                        Notification::make()->title('Facilitator role updated')->success()->send();
                     }),
 
                 Action::make('edit_meta')
