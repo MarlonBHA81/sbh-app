@@ -70,6 +70,8 @@ class Post extends Model
         'country_code',
         'city',
         'sensitive',
+        'is_question',
+        'answered_at',
         'parent_post_id',
     ];
 
@@ -78,6 +80,8 @@ class Post extends Model
         return [
             'payload' => 'array',
             'sensitive' => 'boolean',
+            'is_question' => 'boolean',
+            'answered_at' => 'datetime',
             'scheduled_at' => 'datetime',
             'published_at' => 'datetime',
             'lat' => 'decimal:7',
@@ -176,6 +180,12 @@ class Post extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    /** A question post is answered once its author has marked a reply helpful. */
+    public function isAnswered(): bool
+    {
+        return $this->answered_at !== null;
     }
 
     public function reactions(): MorphMany

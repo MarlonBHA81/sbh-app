@@ -4,6 +4,7 @@ import {
   BookOpen,
   Bot,
   GraduationCap,
+  HelpCircle,
   Megaphone,
   MessagesSquare,
   Sparkles,
@@ -25,6 +26,7 @@ interface Tile {
     | "learn"
     | "coach"
     | "mentors"
+    | "questions"
     | "forums"
     | "directory"
     | "tools"
@@ -65,6 +67,12 @@ const TILES: Tile[] = [
     href: "/mentors",
     icon: UsersRound,
     gradient: "from-plum to-slate",
+  },
+  {
+    labelKey: "questions",
+    href: "/questions",
+    icon: HelpCircle,
+    gradient: "from-sage to-plum",
   },
   {
     labelKey: "forums",

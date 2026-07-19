@@ -28,6 +28,8 @@ class PostResource extends JsonResource
             'visibility' => $this->visibility,
             'status' => $this->status,
             'sensitive' => $this->sensitive,
+            'is_question' => (bool) $this->is_question,
+            'is_answered' => $this->answered_at !== null,
             'likes_count' => $this->likes_count,
             'comments_count' => $this->comments_count,
             'reposts_count' => $this->reposts_count,

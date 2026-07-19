@@ -274,6 +274,26 @@ class FeedService
     }
 
     /**
+     * Ask-the-Community questions (V2 · CONNECT): public question posts, newest
+     * first. $answered filters to answered (true) or still-open (false).
+     */
+    public function questions(Profile $viewer, ?bool $answered = null): CursorPaginator
+    {
+        return Post::query()
+            ->published()
+            ->where('visibility', Post::VISIBILITY_PUBLIC)
+            ->where('is_question', true)
+            ->when($answered === true, fn (Builder $query) => $query->whereNotNull('answered_at'))
+            ->when($answered === false, fn (Builder $query) => $query->whereNull('answered_at'))
+            ->tap(fn (Builder $query) => $this->applyAuthorPrivacy($query, $viewer))
+            ->tap(fn (Builder $query) => $this->applySafety($query, $viewer))
+            ->with(PostService::EAGER)
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->cursorPaginate(self::PER_PAGE);
+    }
+
+    /**
      * Posts from private profiles only appear to accepted followers (or the
      * author). Applied on top of the public-visibility filter.
      *

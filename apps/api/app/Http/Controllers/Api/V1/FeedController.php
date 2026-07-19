@@ -29,6 +29,21 @@ class FeedController extends Controller
         return $this->present($feeds->forYou($viewer), $viewer);
     }
 
+    public function questions(Request $request, FeedService $feeds): AnonymousResourceCollection
+    {
+        $validated = $request->validate([
+            'answered' => ['sometimes', 'boolean'],
+        ]);
+
+        $viewer = $this->activeProfile($request);
+
+        $answered = array_key_exists('answered', $validated)
+            ? (bool) $validated['answered']
+            : null;
+
+        return $this->present($feeds->questions($viewer, $answered), $viewer);
+    }
+
     public function nearby(Request $request, FeedService $feeds): AnonymousResourceCollection
     {
         $validated = $request->validate([

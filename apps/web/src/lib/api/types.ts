@@ -297,6 +297,10 @@ export interface Post {
   visibility: PostVisibility;
   status: PostStatus;
   sensitive: boolean;
+  /** Ask-the-Community question flag (V2 · CONNECT). */
+  is_question?: boolean;
+  /** A question is answered once its author marks a reply helpful. */
+  is_answered?: boolean;
   likes_count: number;
   comments_count: number;
   reposts_count: number;

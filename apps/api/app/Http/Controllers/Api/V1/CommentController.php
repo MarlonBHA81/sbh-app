@@ -50,6 +50,14 @@ class CommentController extends Controller
                 GamificationService::HELPFUL_RECEIVED,
                 $comment,
             );
+
+            // Q&A (V2): a question is answered the moment its author accepts a
+            // helpful reply.
+            $post = $comment->post;
+
+            if ($post->is_question && $post->answered_at === null) {
+                $post->forceFill(['answered_at' => now()])->save();
+            }
         }
 
         ViewerReactions::hydrate([$comment], $request->attributes->get('activeProfile'));
@@ -67,6 +75,15 @@ class CommentController extends Controller
             Profile::query()->whereKey($comment->profile_id)
                 ->where('helpful_count', '>', 0)
                 ->update(['helpful_count' => DB::raw('helpful_count - 1')]);
+
+            // Q&A (V2): a question reverts to unanswered once it has no helpful
+            // replies left.
+            $post = $comment->post;
+
+            if ($post->is_question && $post->answered_at !== null
+                && ! $post->comments()->whereNotNull('helpful_at')->exists()) {
+                $post->forceFill(['answered_at' => null])->save();
+            }
         }
 
         ViewerReactions::hydrate([$comment], $request->attributes->get('activeProfile'));
