@@ -291,6 +291,15 @@
     "forums": "Discussion Forums",
     "directory": "Business Directory",
     "tools": "Business Tools",
-    "promotedPosts": "Promoted Posts"
+    "promotedPosts": "Promoted Posts",
+    "brief": {
+      "title": "Today's Brief",
+      "kinds": {
+        "tip": "Tip",
+        "regulation": "Regulation",
+        "news": "News",
+        "resource": "Resource"
+      }
+    }
   }
 }

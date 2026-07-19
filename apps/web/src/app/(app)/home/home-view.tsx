@@ -7,6 +7,7 @@ import { useComposer } from "@/components/composer/composer-provider";
 import { StreakChip } from "@/components/gamification/streak-chip";
 import { ComposerBar } from "@/components/home/composer-bar";
 import { ConnectionsCard } from "@/components/home/connections-card";
+import { DailyBriefCard } from "@/components/home/daily-brief-card";
 import { DailyChallengeCard } from "@/components/home/daily-challenge-card";
 import { HeroPrompt } from "@/components/home/hero-prompt";
 import { HomeHeader } from "@/components/home/home-header";
@@ -75,6 +76,9 @@ export function HomeView() {
         const Component = CARD[key];
         return <Component key={key} />;
       })}
+
+      {/* Daily Business Brief (V2 · Feature 7) — self-hides when there are no items. */}
+      <DailyBriefCard />
 
       {/* Today's lesson (V2 · LEARN) — self-hides when there are no lessons. */}
       <TodaysLessonCard />

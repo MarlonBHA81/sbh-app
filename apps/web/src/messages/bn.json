@@ -291,6 +291,15 @@
     "forums": "আলোচনা ফোরাম",
     "directory": "ব্যবসার ডিরেক্টরি",
     "tools": "ব্যবসার টুল",
-    "promotedPosts": "প্রচারিত পোস্ট"
+    "promotedPosts": "প্রচারিত পোস্ট",
+    "brief": {
+      "title": "আজকের ব্রিফ",
+      "kinds": {
+        "tip": "পরামর্শ",
+        "regulation": "নিয়মকানুন",
+        "news": "খবর",
+        "resource": "রিসোর্স"
+      }
+    }
   }
 }

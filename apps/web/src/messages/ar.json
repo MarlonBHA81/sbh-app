@@ -291,6 +291,15 @@
     "forums": "منتديات النقاش",
     "directory": "دليل الأعمال",
     "tools": "أدوات الأعمال",
-    "promotedPosts": "منشورات مروَّجة"
+    "promotedPosts": "منشورات مروَّجة",
+    "brief": {
+      "title": "موجز اليوم",
+      "kinds": {
+        "tip": "نصيحة",
+        "regulation": "لائحة",
+        "news": "أخبار",
+        "resource": "مورد"
+      }
+    }
   }
 }

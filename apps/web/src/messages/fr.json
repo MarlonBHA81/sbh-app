@@ -291,6 +291,15 @@
     "forums": "Forums de discussion",
     "directory": "Annuaire des entreprises",
     "tools": "Outils d'entreprise",
-    "promotedPosts": "Publications sponsorisées"
+    "promotedPosts": "Publications sponsorisées",
+    "brief": {
+      "title": "Le brief du jour",
+      "kinds": {
+        "tip": "Conseil",
+        "regulation": "Réglementation",
+        "news": "Actualité",
+        "resource": "Ressource"
+      }
+    }
   }
 }

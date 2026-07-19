@@ -37,19 +37,31 @@ class IntegrationSettingsProvider extends ServiceProvider
     private function applyAiSettings(): void
     {
         $driver = Setting::get('integrations.ai.driver');
-        $apiKey = Setting::get('integrations.ai.api_key');
         $model = Setting::get('integrations.ai.model');
+        $legacyKey = Setting::get('integrations.ai.api_key');
+        $anthropicKey = Setting::get('integrations.ai.anthropic_api_key');
+        $openaiKey = Setting::get('integrations.ai.openai_api_key');
 
         if ($driver !== null && $driver !== '') {
             config(['ai.driver' => $driver]);
         }
 
-        // Key/model apply to whichever provider is selected (anthropic
-        // stays the fallback so pre-OpenAI settings keep working).
+        // Model applies to whichever provider is selected (anthropic stays the
+        // fallback so pre-OpenAI settings keep working).
         $provider = in_array($driver, ['anthropic', 'openai'], true) ? $driver : 'anthropic';
 
-        if ($apiKey !== null && $apiKey !== '') {
-            config(["ai.{$provider}.api_key" => $apiKey]);
+        // Legacy single key first (applies to the active provider), then the
+        // per-provider keys override so a super admin can hold both at once.
+        if ($legacyKey !== null && $legacyKey !== '') {
+            config(["ai.{$provider}.api_key" => $legacyKey]);
+        }
+
+        if ($anthropicKey !== null && $anthropicKey !== '') {
+            config(['ai.anthropic.api_key' => $anthropicKey]);
+        }
+
+        if ($openaiKey !== null && $openaiKey !== '') {
+            config(['ai.openai.api_key' => $openaiKey]);
         }
 
         if ($model !== null && $model !== '') {

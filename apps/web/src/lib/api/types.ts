@@ -882,6 +882,23 @@ export interface StreakSnapshot {
   ends_today: boolean;
 }
 
+/** A curated briefing snippet on the Daily Business Brief (V2 · Feature 7). */
+export interface BriefItem {
+  ulid: string;
+  kind: "tip" | "regulation" | "news" | "resource";
+  title: string;
+  body: string;
+  url: string | null;
+  published_at: string | null;
+}
+
+/** The Daily Business Brief payload (GET /me/brief). */
+export interface DailyBriefData {
+  headline: string;
+  date: string;
+  items: BriefItem[];
+}
+
 /** Today's daily challenge + the viewer's completion + streak (GET me/daily). */
 export interface DailyChallenge {
   action: { ulid: string; title: string; description: string | null } | null;

@@ -27,6 +27,35 @@ test('ai integration settings override the ai config at runtime', function () {
         ->and(config('ai.anthropic.model'))->toBe('claude-sonnet-4-5-20250101');
 });
 
+test('per-provider ai api keys override each provider independently', function () {
+    Setting::set('integrations.ai.driver', 'anthropic');
+    Setting::set('integrations.ai.anthropic_api_key', 'sk-ant-123');
+    Setting::set('integrations.ai.openai_api_key', 'sk-openai-456');
+    Setting::set('integrations.ai.model', 'claude-sonnet-5');
+
+    applyIntegrationSettings();
+
+    expect(config('ai.anthropic.api_key'))->toBe('sk-ant-123')
+        ->and(config('ai.openai.api_key'))->toBe('sk-openai-456')
+        ->and(config('ai.anthropic.model'))->toBe('claude-sonnet-5');
+});
+
+test('the legacy single ai api key still applies to the active provider', function () {
+    Setting::set('integrations.ai.driver', 'anthropic');
+    Setting::set('integrations.ai.api_key', 'sk-legacy-789');
+
+    applyIntegrationSettings();
+
+    expect(config('ai.anthropic.api_key'))->toBe('sk-legacy-789');
+});
+
+test('the ai model defaults to haiku 4.5 when unset', function () {
+    // No model setting: the config-file default (Haiku 4.5) stands.
+    applyIntegrationSettings();
+
+    expect(config('ai.anthropic.model'))->toBe('claude-haiku-4-5-20251001');
+});
+
 test('mail integration settings override the mail config at runtime', function () {
     Setting::set('integrations.mail.mailer', 'smtp');
     Setting::set('integrations.mail.host', 'smtp-relay.brevo.com');

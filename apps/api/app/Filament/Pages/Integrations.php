@@ -10,6 +10,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Mail;
@@ -35,8 +37,37 @@ class Integrations extends Page
 
     protected static ?string $title = 'Integrations';
 
+    /**
+     * Selectable models per provider, cheapest first. Extend as new models ship.
+     *
+     * @var array<string, array<string, string>>
+     */
+    public const MODELS = [
+        'anthropic' => [
+            'claude-haiku-4-5-20251001' => 'Haiku 4.5 — fastest & cheapest (recommended)',
+            'claude-sonnet-5' => 'Sonnet 5 — balanced',
+            'claude-opus-4-8' => 'Opus 4.8 — most capable',
+            'claude-fable-5' => 'Fable 5',
+        ],
+        'openai' => [
+            'gpt-4o-mini' => 'GPT-4o mini — cheapest',
+            'gpt-4o' => 'GPT-4o',
+        ],
+    ];
+
     /** @var array<string, mixed> */
     public ?array $data = [];
+
+    /**
+     * Model choices for the selected driver (anthropic is the fallback so the
+     * dropdown is never empty when the provider is Disabled).
+     *
+     * @return array<string, string>
+     */
+    public static function modelsFor(?string $driver): array
+    {
+        return self::MODELS[$driver] ?? self::MODELS['anthropic'];
+    }
 
     /**
      * Gate both navigation visibility and direct-URL access to super admins.
@@ -56,7 +87,9 @@ class Integrations extends Page
     {
         $this->form->fill([
             'ai_driver' => (string) Setting::get('integrations.ai.driver', 'null'),
-            'ai_api_key' => (string) Setting::get('integrations.ai.api_key', ''),
+            // Per-provider keys, falling back to the legacy single key.
+            'ai_anthropic_api_key' => (string) Setting::get('integrations.ai.anthropic_api_key', Setting::get('integrations.ai.api_key', '')),
+            'ai_openai_api_key' => (string) Setting::get('integrations.ai.openai_api_key', ''),
             'ai_model' => (string) Setting::get('integrations.ai.model', 'claude-haiku-4-5-20251001'),
 
             'mail_mailer' => (string) Setting::get('integrations.mail.mailer', 'log'),
@@ -86,16 +119,33 @@ class Integrations extends Page
                             ])
                             ->default('null')
                             ->required()
-                            ->helperText('Enables composer topic suggestions and AI moderation assist on reports.'),
-                        TextInput::make('ai_api_key')
-                            ->label('API key')
+                            ->live()
+                            // Switching provider resets the model to that provider's
+                            // cheapest option so an Anthropic id can't leak to OpenAI.
+                            ->afterStateUpdated(fn (?string $state, Set $set) => $set(
+                                'ai_model',
+                                (string) array_key_first(self::modelsFor($state)),
+                            ))
+                            ->helperText('Enables composer topic suggestions, AI moderation assist, the Coach and the Daily Brief.'),
+                        Select::make('ai_model')
+                            ->label('Model')
+                            ->options(fn (Get $get): array => self::modelsFor($get('ai_driver')))
+                            ->default('claude-haiku-4-5-20251001')
+                            ->searchable()
+                            ->native(false)
+                            ->helperText('All available models. Haiku 4.5 is the cheapest and fastest — a good default.'),
+                        TextInput::make('ai_anthropic_api_key')
+                            ->label('Anthropic API key')
                             ->password()
                             ->revealable()
-                            ->autocomplete(false),
-                        TextInput::make('ai_model')
-                            ->label('Model')
-                            ->default('claude-haiku-4-5-20251001')
-                            ->helperText('e.g. claude-haiku-4-5-20251001 (Anthropic) or gpt-4o-mini (OpenAI).'),
+                            ->autocomplete(false)
+                            ->helperText('Used when the provider is Anthropic (Claude).'),
+                        TextInput::make('ai_openai_api_key')
+                            ->label('OpenAI API key')
+                            ->password()
+                            ->revealable()
+                            ->autocomplete(false)
+                            ->helperText('Used when the provider is OpenAI (GPT).'),
                     ]),
 
                 Section::make('Email')
@@ -147,8 +197,10 @@ class Integrations extends Page
         $data = $this->form->getState();
 
         Setting::set('integrations.ai.driver', (string) ($data['ai_driver'] ?? 'null'));
-        Setting::set('integrations.ai.api_key', (string) ($data['ai_api_key'] ?? ''));
         Setting::set('integrations.ai.model', (string) ($data['ai_model'] ?? ''));
+        // Per-provider keys — each editable independently (add or change either).
+        Setting::set('integrations.ai.anthropic_api_key', (string) ($data['ai_anthropic_api_key'] ?? ''));
+        Setting::set('integrations.ai.openai_api_key', (string) ($data['ai_openai_api_key'] ?? ''));
 
         Setting::set('integrations.mail.mailer', (string) ($data['mail_mailer'] ?? 'log'));
         Setting::set('integrations.mail.host', (string) ($data['mail_host'] ?? ''));

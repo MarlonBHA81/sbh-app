@@ -291,6 +291,15 @@
     "forums": "Foros de discusión",
     "directory": "Directorio de negocios",
     "tools": "Herramientas de negocio",
-    "promotedPosts": "Publicaciones promocionadas"
+    "promotedPosts": "Publicaciones promocionadas",
+    "brief": {
+      "title": "Resumen de hoy",
+      "kinds": {
+        "tip": "Consejo",
+        "regulation": "Normativa",
+        "news": "Novedades",
+        "resource": "Recurso"
+      }
+    }
   }
 }

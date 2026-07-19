@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
 use App\Http\Controllers\Api\V1\BlockController;
+use App\Http\Controllers\Api\V1\BriefController;
 use App\Http\Controllers\Api\V1\BusinessCategoryController;
 use App\Http\Controllers\Api\V1\BusinessDirectoryController;
 use App\Http\Controllers\Api\V1\BusinessEventController;
@@ -249,6 +250,9 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('coach', [CoachController::class, 'show']);
     Route::post('coach/messages', [CoachController::class, 'store'])->middleware('throttle:coach');
     Route::delete('coach', [CoachController::class, 'destroy']);
+
+    // Daily Business Brief (V2 · Feature 7) — a personalised daily card; works with no API key.
+    Route::get('me/brief', [BriefController::class, 'show']);
 
     Route::get('me/topics', [TopicController::class, 'mine']);
     Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);
