@@ -55,6 +55,7 @@ class ProfileResource extends JsonResource
             'cover_url' => $this->coverUrl(),
             'category' => $this->category,
             'journey_stage' => $this->journey_stage,
+            'is_mentor' => (bool) $this->is_mentor,
             'business_category' => $this->when(
                 $this->relationLoaded('businessCategory') && $this->businessCategory !== null,
                 fn () => [

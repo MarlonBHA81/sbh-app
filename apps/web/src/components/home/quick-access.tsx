@@ -1,12 +1,17 @@
 "use client";
 
 import {
+  BookOpen,
+  Bot,
+  GraduationCap,
   HeartHandshake,
+  HelpCircle,
   Megaphone,
   MessagesSquare,
   Sparkles,
   Store,
   Target,
+  UsersRound,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -21,6 +26,11 @@ interface Tile {
     | "dashboard"
     | "opportunities"
     | "wellness"
+    | "resources"
+    | "learn"
+    | "coach"
+    | "mentors"
+    | "questions"
     | "forums"
     | "directory"
     | "tools"
@@ -48,6 +58,36 @@ const TILES: Tile[] = [
     labelKey: "wellness",
     href: "/wellness",
     icon: HeartHandshake,
+    gradient: "from-sage to-plum",
+  },
+  {
+    labelKey: "resources",
+    href: "/resources",
+    icon: BookOpen,
+    gradient: "from-plum to-sage",
+  },
+  {
+    labelKey: "learn",
+    href: "/learn",
+    icon: GraduationCap,
+    gradient: "from-sage to-teal",
+  },
+  {
+    labelKey: "coach",
+    href: "/coach",
+    icon: Bot,
+    gradient: "from-teal to-plum",
+  },
+  {
+    labelKey: "mentors",
+    href: "/mentors",
+    icon: UsersRound,
+    gradient: "from-plum to-slate",
+  },
+  {
+    labelKey: "questions",
+    href: "/questions",
+    icon: HelpCircle,
     gradient: "from-sage to-plum",
   },
   {

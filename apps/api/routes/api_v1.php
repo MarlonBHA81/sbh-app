@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\BusinessNeedController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\ChallengeController;
+use App\Http\Controllers\Api\V1\CoachController;
 use App\Http\Controllers\Api\V1\ConnectionController;
 use App\Http\Controllers\Api\V1\DailyController;
 use App\Http\Controllers\Api\V1\DashboardController;
@@ -32,8 +33,10 @@ use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\GamificationController;
 use App\Http\Controllers\Api\V1\GeoController;
+use App\Http\Controllers\Api\V1\LessonController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
+use App\Http\Controllers\Api\V1\MentorController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\MessageReactionController;
 use App\Http\Controllers\Api\V1\MuteController;
@@ -53,6 +56,7 @@ use App\Http\Controllers\Api\V1\Public\PublicProfileController;
 use App\Http\Controllers\Api\V1\Public\PublicSitemapController;
 use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\ResourceController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\StatusController;
 use App\Http\Controllers\Api\V1\TopicController;
@@ -200,6 +204,9 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // Today's connections (V1 · CONNECT) — people to meet, with a reason.
     Route::get('me/connections', [ConnectionController::class, 'today']);
 
+    // Mentor matching (V2 · CONNECT) — opted-in mentors ranked by relevance.
+    Route::get('mentors', [MentorController::class, 'index']);
+
     // Daily challenge + streak (V1 · PROGRESS).
     Route::get('me/daily', [DailyController::class, 'today']);
     Route::post('me/daily/complete', [DailyController::class, 'complete']);
@@ -224,10 +231,31 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('opportunities/{opportunity}/save', [OpportunityController::class, 'save']);
     Route::delete('opportunities/{opportunity}/save', [OpportunityController::class, 'unsave']);
 
+    // Resource Library (V2 · LEARN) — admin-curated templates, checklists,
+    // toolkits and AI prompts, bookmarkable like opportunities.
+    Route::get('resources', [ResourceController::class, 'index']);
+    Route::get('me/resources/saved', [ResourceController::class, 'saved']);
+    Route::get('resources/{resource}', [ResourceController::class, 'show']);
+    Route::post('resources/{resource}/save', [ResourceController::class, 'save']);
+    Route::delete('resources/{resource}/save', [ResourceController::class, 'unsave']);
+
+    // Bite-size learning modules (V2 · LEARN) — short lessons that award XP.
+    Route::get('learn/lessons', [LessonController::class, 'index']);
+    Route::get('me/learn/progress', [LessonController::class, 'progress']);
+    Route::get('learn/lessons/{lesson}', [LessonController::class, 'show']);
+    Route::post('learn/lessons/{lesson}/complete', [LessonController::class, 'complete']);
+
+    // AI Business Coach v1 (V2 · LEARN) — persisted chat; works with no API key.
+    Route::get('coach', [CoachController::class, 'show']);
+    Route::post('coach/messages', [CoachController::class, 'store'])->middleware('throttle:coach');
+    Route::delete('coach', [CoachController::class, 'destroy']);
+
     Route::get('me/topics', [TopicController::class, 'mine']);
     Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);
     Route::delete('topics/{slug}/follow', [TopicController::class, 'unfollow']);
 
+    Route::get('feeds/questions', [FeedController::class, 'questions']);
+    Route::get('feeds/wins', [FeedController::class, 'wins']);
     Route::get('feeds/following', [FeedController::class, 'following']);
     Route::get('feeds/for-you', [FeedController::class, 'forYou']);
     Route::get('feeds/nearby', [FeedController::class, 'nearby']);

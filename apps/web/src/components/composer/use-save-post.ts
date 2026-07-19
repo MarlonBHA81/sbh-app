@@ -17,6 +17,8 @@ export interface SavePostInput {
   status: PostStatus;
   scheduled_at?: string;
   sensitive: boolean;
+  is_question?: boolean;
+  is_win?: boolean;
 }
 
 function successMessage(status: PostStatus, editing: boolean): string {

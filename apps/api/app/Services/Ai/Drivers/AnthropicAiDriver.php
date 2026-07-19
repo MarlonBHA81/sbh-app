@@ -24,6 +24,68 @@ class AnthropicAiDriver extends StructuredJsonAiDriver
         return ! empty($this->config['api_key']);
     }
 
+    public function chat(string $system, array $messages, int $maxTokens = 600): ?string
+    {
+        // BACKEND-TODO: live AI Coach replies require ANTHROPIC_API_KEY and
+        // AI_DRIVER=anthropic (see config/ai.php). Without them the null driver
+        // serves canned coaching replies instead.
+        if (! $this->enabled()) {
+            return null;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'x-api-key' => $this->config['api_key'],
+                'anthropic-version' => $this->config['version'] ?? '2023-06-01',
+                'content-type' => 'application/json',
+            ])
+                ->timeout((int) ($this->config['timeout'] ?? 15))
+                ->baseUrl(rtrim((string) ($this->config['base_url'] ?? 'https://api.anthropic.com'), '/'))
+                ->post('/v1/messages', [
+                    'model' => $this->config['model'] ?? 'claude-haiku-4-5-20251001',
+                    'max_tokens' => $maxTokens,
+                    'system' => $system,
+                    'messages' => $this->normaliseMessages($messages),
+                ]);
+
+            if ($response->failed()) {
+                Log::warning('Anthropic chat failed', ['status' => $response->status()]);
+
+                return null;
+            }
+
+            $text = $response->json('content.0.text');
+
+            return is_string($text) && trim($text) !== '' ? $text : null;
+        } catch (Throwable $e) {
+            Log::warning('Anthropic chat threw', ['error' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Constrain roles to user/assistant and coerce content to strings.
+     *
+     * @param  list<array{role: string, content: string}>  $messages
+     * @return list<array{role: string, content: string}>
+     */
+    private function normaliseMessages(array $messages): array
+    {
+        $clean = [];
+
+        foreach ($messages as $message) {
+            $role = ($message['role'] ?? '') === 'assistant' ? 'assistant' : 'user';
+            $content = trim((string) ($message['content'] ?? ''));
+
+            if ($content !== '') {
+                $clean[] = ['role' => $role, 'content' => $content];
+            }
+        }
+
+        return $clean;
+    }
+
     /**
      * @return array<string, mixed>|null
      */

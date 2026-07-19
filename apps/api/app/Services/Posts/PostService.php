@@ -92,6 +92,8 @@ class PostService
                     : null,
                 'published_at' => $status === Post::STATUS_PUBLISHED ? now() : null,
                 'sensitive' => $data['sensitive'] ?? false,
+                'is_question' => $data['is_question'] ?? false,
+                'is_win' => $data['is_win'] ?? false,
                 'lat' => $data['lat'] ?? null,
                 'lng' => $data['lng'] ?? null,
                 'geohash' => isset($data['lat'], $data['lng'])

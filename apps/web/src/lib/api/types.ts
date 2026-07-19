@@ -52,6 +52,8 @@ export interface Profile {
   location: string | null;
   /** Business journey stage (V1) — where the member is in their journey. */
   journey_stage?: string | null;
+  /** Opted in to mentoring other members (V2 · CONNECT). */
+  is_mentor?: boolean | null;
   is_private: boolean;
   is_verified: boolean;
   followers_count: number;
@@ -295,6 +297,12 @@ export interface Post {
   visibility: PostVisibility;
   status: PostStatus;
   sensitive: boolean;
+  /** Ask-the-Community question flag (V2 · CONNECT). */
+  is_question?: boolean;
+  /** A question is answered once its author marks a reply helpful. */
+  is_answered?: boolean;
+  /** Celebrated as a win / success story (V2 · BELONG). */
+  is_win?: boolean;
   likes_count: number;
   comments_count: number;
   reposts_count: number;
@@ -807,6 +815,64 @@ export interface WellnessCheckin {
   /** 1 (finding it hard) … 5 (doing well). */
   mood: number;
   note: string | null;
+  created_at: string | null;
+}
+
+/** Resource Library kinds (V2 · LEARN). */
+export type ResourceType = "template" | "checklist" | "toolkit" | "ai_prompt";
+
+/** Resource Library categories (V2 · LEARN). */
+export type ResourceCategory =
+  | "marketing"
+  | "finance"
+  | "operations"
+  | "sales"
+  | "legal"
+  | "people";
+
+/** A curated learning resource (template, checklist, toolkit, AI prompt). */
+export interface LibraryResource {
+  ulid: string;
+  type: ResourceType;
+  category: ResourceCategory;
+  title: string;
+  description: string;
+  url: string;
+  industry: string | null;
+  is_saved: boolean;
+  published_at: string | null;
+}
+
+/** A bite-size learning module (V2 · LEARN). */
+export interface Lesson {
+  ulid: string;
+  title: string;
+  body: string | null;
+  external_url: string | null;
+  minutes: number;
+  journey_stage: string | null;
+  position: number;
+  track: { ulid: string; title: string } | null;
+  is_completed: boolean;
+}
+
+/** Lite reference to the next lesson in a track. */
+export interface LessonRef {
+  ulid: string;
+  title: string;
+}
+
+/** GET /api/v1/me/learn/progress */
+export interface LessonProgress {
+  completed: number;
+  total: number;
+}
+
+/** One turn in an AI Coach conversation (V2 · LEARN). */
+export interface CoachMessage {
+  id: number;
+  role: "user" | "assistant";
+  body: string;
   created_at: string | null;
 }
 

@@ -64,6 +64,7 @@ const schema = z.object({
     .optional(),
   location: z.string().max(120),
   is_private: z.boolean(),
+  is_mentor: z.boolean(),
   linkedin: z
     .union([
       z.string().regex(/^https:\/\/(www\.)?linkedin\.com\/.+/i, "Enter a full LinkedIn URL (https://linkedin.com/...)"),
@@ -101,6 +102,7 @@ function valuesFromProfile(profile: Profile): Values {
     website: profile.website ?? "",
     location: profile.location ?? "",
     is_private: profile.is_private,
+    is_mentor: profile.is_mentor ?? false,
     linkedin: profile.social_links?.linkedin ?? "",
     facebook: profile.social_links?.facebook ?? "",
     instagram: profile.social_links?.instagram ?? "",
@@ -403,6 +405,7 @@ export default function ProfileSettingsPage() {
       website: "",
       location: "",
       is_private: false,
+      is_mentor: false,
       linkedin: "",
       facebook: "",
       instagram: "",
@@ -438,6 +441,7 @@ export default function ProfileSettingsPage() {
           website: values.website || null,
           location: values.location || null,
           is_private: values.is_private,
+          is_mentor: values.is_mentor,
           social_links: {
             linkedin: values.linkedin || null,
             facebook: values.facebook || null,
@@ -664,6 +668,27 @@ export default function ProfileSettingsPage() {
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         aria-label="Private account"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="is_mentor"
+                render={({ field }) => (
+                  <FormItem className="flex min-h-11 flex-row items-center justify-between gap-4 rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Available as a mentor</FormLabel>
+                      <FormDescription>
+                        Show up in Mentors so members you can help can reach you.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        aria-label="Available as a mentor"
                       />
                     </FormControl>
                   </FormItem>

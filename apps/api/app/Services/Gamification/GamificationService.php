@@ -45,6 +45,8 @@ class GamificationService
 
     public const GOAL_COMPLETED = 'goal_completed';
 
+    public const LESSON_COMPLETED = 'lesson_completed';
+
     /**
      * Award XP to $profile for $actionKey, optionally bound to a subject.
      *

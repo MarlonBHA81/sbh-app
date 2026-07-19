@@ -351,6 +351,10 @@ export function Composer({
     editPost?.visibility ?? "public",
   );
   const [sensitive, setSensitive] = useState(editPost?.sensitive ?? false);
+  // Ask-the-Community (V2): mark a new text post as a question.
+  const [isQuestion, setIsQuestion] = useState(editPost?.is_question ?? false);
+  // Wins (V2): celebrate a win. Mutually exclusive with question.
+  const [isWin, setIsWin] = useState(editPost?.is_win ?? false);
   const [scheduledLocal, setScheduledLocal] = useState(
     editPost?.scheduled_at ? isoToDatetimeLocal(editPost.scheduled_at) : "",
   );
@@ -424,6 +428,10 @@ export function Composer({
 
     const trimmedBody = body.trim();
     if (SEND_COMMON_BODY.includes(type) && trimmedBody) input.body = trimmedBody;
+
+    // Questions and wins only apply to plain text posts, and only at creation.
+    if (type === "text" && !editPost && isQuestion) input.is_question = true;
+    if (type === "text" && !editPost && isWin) input.is_win = true;
 
     switch (type) {
       case "image":
@@ -1081,6 +1089,32 @@ export function Composer({
           <Switch checked={sensitive} onCheckedChange={setSensitive} />
           {t("sensitive")}
         </label>
+
+        {type === "text" && !editPost ? (
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <Switch
+              checked={isQuestion}
+              onCheckedChange={(on) => {
+                setIsQuestion(on);
+                if (on) setIsWin(false);
+              }}
+            />
+            Ask as a question
+          </label>
+        ) : null}
+
+        {type === "text" && !editPost ? (
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <Switch
+              checked={isWin}
+              onCheckedChange={(on) => {
+                setIsWin(on);
+                if (on) setIsQuestion(false);
+              }}
+            />
+            Celebrate a win
+          </label>
+        ) : null}
       </div>
 
       {mediaProcessing ? (

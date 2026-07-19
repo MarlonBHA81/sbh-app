@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             OpportunitySeeder::class,
             WellnessResourceSeeder::class,
             DailyActionSeeder::class,
+            ResourceSeeder::class,
+            LessonSeeder::class,
         ]);
     }
 }

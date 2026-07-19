@@ -53,6 +53,7 @@ class Profile extends Model
         'cover_path',
         'category',
         'journey_stage',
+        'is_mentor',
         'business_category_id',
         'website',
         'social_links',
@@ -76,6 +77,7 @@ class Profile extends Model
             'social_links' => 'array',
             'is_private' => 'boolean',
             'is_verified' => 'boolean',
+            'is_mentor' => 'boolean',
             'share_location' => 'boolean',
             'lat' => 'decimal:7',
             'lng' => 'decimal:7',
@@ -235,6 +237,19 @@ class Profile extends Model
     public function savedOpportunities(): BelongsToMany
     {
         return $this->belongsToMany(Opportunity::class, 'opportunity_saves')
+            ->withTimestamps();
+    }
+
+    public function savedResources(): BelongsToMany
+    {
+        return $this->belongsToMany(LibraryResource::class, 'resource_saves', 'profile_id', 'resource_id')
+            ->withTimestamps();
+    }
+
+    public function completedLessons(): BelongsToMany
+    {
+        return $this->belongsToMany(Lesson::class, 'lesson_completions', 'profile_id', 'lesson_id')
+            ->withPivot('completed_at')
             ->withTimestamps();
     }
 
