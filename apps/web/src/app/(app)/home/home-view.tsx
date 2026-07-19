@@ -13,6 +13,7 @@ import { HomeHeader } from "@/components/home/home-header";
 import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
 import { QuickAccess } from "@/components/home/quick-access";
 import { SectionHeader } from "@/components/home/section-header";
+import { TodaysLessonCard } from "@/components/home/todays-lesson-card";
 import { TodaysOpportunitiesCard } from "@/components/home/todays-opportunities-card";
 import { HomeFeed } from "@/components/posts/home-feed";
 import { hasComposeDraft } from "@/lib/compose-draft";
@@ -73,6 +74,9 @@ export function HomeView() {
         const Component = CARD[key];
         return <Component key={key} />;
       })}
+
+      {/* Today's lesson (V2 · LEARN) — self-hides when there are no lessons. */}
+      <TodaysLessonCard />
 
       <OnboardingChecklist />
       <QuickAccess />

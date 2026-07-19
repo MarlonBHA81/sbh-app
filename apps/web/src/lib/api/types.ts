@@ -780,6 +780,31 @@ export interface LibraryResource {
   published_at: string | null;
 }
 
+/** A bite-size learning module (V2 · LEARN). */
+export interface Lesson {
+  ulid: string;
+  title: string;
+  body: string | null;
+  external_url: string | null;
+  minutes: number;
+  journey_stage: string | null;
+  position: number;
+  track: { ulid: string; title: string } | null;
+  is_completed: boolean;
+}
+
+/** Lite reference to the next lesson in a track. */
+export interface LessonRef {
+  ulid: string;
+  title: string;
+}
+
+/** GET /api/v1/me/learn/progress */
+export interface LessonProgress {
+  completed: number;
+  total: number;
+}
+
 /** Streak snapshot (V1 · PROGRESS) — powers the streak chip. */
 export interface StreakSnapshot {
   current_days: number;

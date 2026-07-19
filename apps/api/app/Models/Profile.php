@@ -244,6 +244,13 @@ class Profile extends Model
             ->withTimestamps();
     }
 
+    public function completedLessons(): BelongsToMany
+    {
+        return $this->belongsToMany(Lesson::class, 'lesson_completions', 'profile_id', 'lesson_id')
+            ->withPivot('completed_at')
+            ->withTimestamps();
+    }
+
     public function rank(): BelongsTo
     {
         return $this->belongsTo(Rank::class);

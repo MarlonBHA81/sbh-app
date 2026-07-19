@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\GamificationController;
 use App\Http\Controllers\Api\V1\GeoController;
+use App\Http\Controllers\Api\V1\LessonController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MessageController;
@@ -217,6 +218,12 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('resources/{resource}', [ResourceController::class, 'show']);
     Route::post('resources/{resource}/save', [ResourceController::class, 'save']);
     Route::delete('resources/{resource}/save', [ResourceController::class, 'unsave']);
+
+    // Bite-size learning modules (V2 · LEARN) — short lessons that award XP.
+    Route::get('learn/lessons', [LessonController::class, 'index']);
+    Route::get('me/learn/progress', [LessonController::class, 'progress']);
+    Route::get('learn/lessons/{lesson}', [LessonController::class, 'show']);
+    Route::post('learn/lessons/{lesson}/complete', [LessonController::class, 'complete']);
 
     Route::get('me/topics', [TopicController::class, 'mine']);
     Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);

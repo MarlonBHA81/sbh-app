@@ -2,6 +2,7 @@
 
 import {
   BookOpen,
+  GraduationCap,
   Megaphone,
   MessagesSquare,
   Sparkles,
@@ -19,6 +20,7 @@ interface Tile {
   labelKey:
     | "opportunities"
     | "resources"
+    | "learn"
     | "forums"
     | "directory"
     | "tools"
@@ -41,6 +43,12 @@ const TILES: Tile[] = [
     href: "/resources",
     icon: BookOpen,
     gradient: "from-plum to-sage",
+  },
+  {
+    labelKey: "learn",
+    href: "/learn",
+    icon: GraduationCap,
+    gradient: "from-sage to-teal",
   },
   {
     labelKey: "forums",

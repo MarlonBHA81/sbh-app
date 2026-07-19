@@ -43,6 +43,8 @@ class GamificationService
 
     public const HELPFUL_RECEIVED = 'helpful_received';
 
+    public const LESSON_COMPLETED = 'lesson_completed';
+
     /**
      * Award XP to $profile for $actionKey, optionally bound to a subject.
      *
