@@ -73,6 +73,11 @@ class UsersTable
                     ->label(fn (User $record) => $record->is_admin ? 'Revoke admin' : 'Make admin')
                     ->icon(Heroicon::OutlinedShieldCheck)
                     ->requiresConfirmation()
+                    // Only super admins may grant or revoke the admin tier — a plain
+                    // admin must not be able to mint more admins. A super admin's
+                    // admin flag is managed through the super-admin action instead.
+                    ->visible(fn (User $record) => (bool) auth()->user()?->is_super_admin
+                        && ! $record->is_super_admin)
                     ->action(function (User $record): void {
                         $record->forceFill(['is_admin' => ! $record->is_admin])->save();
 

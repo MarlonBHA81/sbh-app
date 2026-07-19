@@ -84,6 +84,21 @@ class User extends Authenticatable implements FilamentUser
         return $this->banned_at !== null;
     }
 
+    /** Platform staff: can reach the admin panel and moderate. */
+    public function isAdmin(): bool
+    {
+        return (bool) $this->is_admin;
+    }
+
+    /**
+     * Highest tier: full control over everything, including granting the admin
+     * tier and reaching platform/integration surfaces. Implies admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->is_super_admin;
+    }
+
     /**
      * Only admins may reach the Filament admin panel.
      */
