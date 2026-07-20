@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronRight, Store as StoreIcon } from "lucide-react";
+import { ChevronRight, ShoppingBag, Store as StoreIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -34,6 +34,14 @@ export function ShopView() {
       <p className="text-sm text-text-secondary">
         Courses, digital downloads and tools from businesses in the community.
       </p>
+
+      <Link
+        href="/shop/purchases"
+        className="flex items-center gap-2 self-start text-[13px] font-medium text-teal-text hover:underline"
+      >
+        <ShoppingBag className="size-4" aria-hidden />
+        My purchases
+      </Link>
 
       {stores === null ? (
         <div className="flex flex-col gap-3">

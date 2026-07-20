@@ -916,6 +916,7 @@ export interface Product {
   cover_url: string | null;
   external_url: string | null;
   is_published: boolean;
+  has_file?: boolean;
   store?: { slug: string; name: string };
   cross_sells?: {
     ulid: string;
@@ -924,6 +925,43 @@ export interface Product {
     currency: string;
     cover_url: string | null;
   }[];
+  bumps?: {
+    ulid: string;
+    title: string;
+    price_cents: number;
+    original_price_cents: number | null;
+    currency: string;
+  }[];
+}
+
+/** A marketplace order (Shop P2). */
+export interface Order {
+  ulid: string;
+  status: "pending" | "paid" | "cancelled" | "failed";
+  total_cents: number;
+  currency: string;
+  paid_at?: string | null;
+  created_at?: string | null;
+  items?: { title: string; unit_cents: number; kind: string }[];
+}
+
+/** A buyer's purchase entitlement (Shop P2). */
+export interface Purchase {
+  product: {
+    ulid: string | null;
+    title: string | null;
+    type: ProductType | null;
+    store: string | null;
+  };
+  has_download: boolean;
+  purchased_at: string | null;
+}
+
+/** The PayFast redirect returned by checkout (Shop P2). */
+export interface CheckoutRedirect {
+  order: string;
+  process_url: string;
+  fields: Record<string, string>;
 }
 
 /** A cohort-based programme (V3 · LEARN). */

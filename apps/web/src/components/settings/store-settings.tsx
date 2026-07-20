@@ -1,8 +1,8 @@
 "use client";
 
-import { ExternalLink, Trash2 } from "lucide-react";
+import { CheckCircle2, ExternalLink, Trash2, Upload } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,18 @@ import * as api from "@/lib/api/client";
 import type { Product, ProductType, Store } from "@/lib/api/types";
 import { formatPrice } from "@/lib/shop";
 
-/** Vendor store management (Shop P1): open/brand a store and manage products. */
+interface Earnings {
+  orders_count: number;
+  gross_cents: number;
+  earnings_cents: number;
+  currency: string;
+}
+
+/** Vendor store management (Shop P1/P2): brand a store, manage products, sales. */
 export function StoreSettings() {
   const [store, setStore] = useState<Store | null | undefined>(undefined);
   const [products, setProducts] = useState<Product[]>([]);
+  const [earnings, setEarnings] = useState<Earnings | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,6 +50,12 @@ export function StoreSettings() {
         if (s) {
           const p = (await api.get<{ data: Product[] }>("/api/v1/me/store/products")).data;
           if (!cancelled) setProducts(p);
+          try {
+            const e = (await api.get<{ data: Earnings }>("/api/v1/me/store/orders")).data;
+            if (!cancelled) setEarnings(e);
+          } catch {
+            // Earnings are best-effort; ignore if unavailable.
+          }
         }
       } catch {
         if (!cancelled) setStore(null);
@@ -74,6 +88,7 @@ export function StoreSettings() {
               View your storefront
               <ExternalLink className="size-3.5" aria-hidden />
             </Link>
+            {earnings ? <EarningsSummary earnings={earnings} /> : null}
             <ProductManager
               products={products}
               onChange={setProducts}
@@ -153,6 +168,95 @@ function StoreForm({
   );
 }
 
+function EarningsSummary({ earnings }: { earnings: Earnings }) {
+  return (
+    <div className="grid grid-cols-3 gap-2 rounded-lg border p-3">
+      <Stat label="Sales" value={String(earnings.orders_count)} />
+      <Stat
+        label="Gross"
+        value={formatPrice(earnings.gross_cents, earnings.currency)}
+      />
+      <Stat
+        label="Your earnings"
+        value={formatPrice(earnings.earnings_cents, earnings.currency)}
+      />
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-sm font-semibold text-text-primary">{value}</span>
+      <span className="text-[11px] text-text-secondary">{label}</span>
+    </div>
+  );
+}
+
+/** Upload the deliverable file for a digital product (private disk). */
+function FileUpload({
+  product,
+  onUploaded,
+}: {
+  product: Product;
+  onUploaded: (ulid: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      await api.postMultipart(
+        `/api/v1/me/store/products/${product.ulid}/file`,
+        form,
+      );
+      onUploaded(product.ulid);
+      toast.success("File uploaded");
+    } catch (error) {
+      toast.error(
+        error instanceof api.ApiError ? error.message : "Upload failed",
+      );
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        className="hidden"
+        onChange={(e) => void onPick(e)}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-teal-text hover:underline disabled:opacity-60"
+      >
+        {product.has_file ? (
+          <>
+            <CheckCircle2 className="size-3.5" aria-hidden />
+            {busy ? "Uploading…" : "Replace file"}
+          </>
+        ) : (
+          <>
+            <Upload className="size-3.5" aria-hidden />
+            {busy ? "Uploading…" : "Upload file"}
+          </>
+        )}
+      </button>
+    </>
+  );
+}
+
 const TYPES: ProductType[] = ["digital_download", "course", "service"];
 
 function ProductManager({
@@ -222,6 +326,18 @@ function ProductManager({
                 {p.is_published ? "" : " · draft"}
               </span>
             </span>
+            {p.type === "digital_download" || p.type === "course" ? (
+              <FileUpload
+                product={p}
+                onUploaded={(ulid) =>
+                  onChange(
+                    products.map((x) =>
+                      x.ulid === ulid ? { ...x, has_file: true } : x,
+                    ),
+                  )
+                }
+              />
+            ) : null}
             <button
               type="button"
               aria-label={`Remove ${p.title}`}

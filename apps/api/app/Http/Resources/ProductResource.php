@@ -21,6 +21,7 @@ class ProductResource extends JsonResource
             'cover_url' => $this->coverUrl(),
             'external_url' => $this->external_url,
             'is_published' => (bool) $this->is_published,
+            'has_file' => $this->download_path !== null,
             'store' => $this->whenLoaded('store', fn () => [
                 'slug' => $this->store->slug,
                 'name' => $this->store->name,
@@ -37,6 +38,20 @@ class ProductResource extends JsonResource
                         'price_cents' => $p->price_cents,
                         'currency' => $p->currency,
                         'cover_url' => $p->coverUrl(),
+                    ])
+                    ->values();
+            }),
+            // Order bumps offered at checkout (with the bump price after discount).
+            'bumps' => $this->whenLoaded('offers', function () {
+                return $this->offers
+                    ->where('kind', Product::OFFER_BUMP)
+                    ->filter(fn (ProductOffer $offer) => $offer->related !== null && $offer->related->is_published)
+                    ->map(fn (ProductOffer $offer) => [
+                        'ulid' => $offer->related->ulid,
+                        'title' => $offer->related->title,
+                        'price_cents' => max(0, (int) ($offer->related->price_cents ?? 0) - (int) ($offer->discount_cents ?? 0)),
+                        'original_price_cents' => $offer->related->price_cents,
+                        'currency' => $offer->related->currency,
                     ])
                     ->values();
             }),

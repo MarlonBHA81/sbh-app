@@ -40,6 +40,16 @@ const schema = z.object({
 
 type Values = z.infer<typeof schema>;
 
+/**
+ * The post-login destination from `?next=`, restricted to same-site relative
+ * paths ("/shop/...") so it can't be used as an open redirect.
+ */
+function safeNext(): string {
+  if (typeof window === "undefined") return "/home";
+  const next = new URLSearchParams(window.location.search).get("next");
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : "/home";
+}
+
 export default function LoginPage() {
   const t = useTranslations("auth");
   const login = useAuthStore((s) => s.login);
@@ -59,7 +69,7 @@ export default function LoginPage() {
     form.clearErrors("root");
     try {
       await login(values.email, values.password);
-      router.replace("/home");
+      router.replace(safeNext());
     } catch (error) {
       if (error instanceof ApiError && error.status === 403) {
         setBanned({
