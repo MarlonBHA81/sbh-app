@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\ProfileResource;
 use App\Models\Profile;
 use App\Services\ProfileService;
+use App\Services\Webhooks\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -29,11 +30,14 @@ class MyProfileController extends Controller
         return (new ProfileResource($profile))->response()->setStatusCode(201);
     }
 
-    public function update(UpdateProfileRequest $request, Profile $profile, ProfileService $profiles): ProfileResource
+    public function update(UpdateProfileRequest $request, Profile $profile, ProfileService $profiles, WebhookDispatcher $webhooks): ProfileResource
     {
         abort_unless($profile->user_id === $request->user()->id, 403);
 
         $updated = $profiles->updateProfile($profile, $request->validated());
+
+        // Sync the updated contact to any configured CRM (Brevo or any).
+        $webhooks->contact(WebhookDispatcher::CONTACT_UPDATED, $updated);
 
         return new ProfileResource($updated->load('businessCategory'));
     }

@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Services\SafetyService;
+use App\Observers\ProfileObserver;
 use Database\Factories\ProfileFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -16,6 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
+#[ObservedBy(ProfileObserver::class)]
 class Profile extends Model
 {
     /** @use HasFactory<ProfileFactory> */
