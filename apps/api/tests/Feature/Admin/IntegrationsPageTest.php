@@ -40,6 +40,25 @@ test('saving stores the model and per-provider keys independently', function () 
         ->and(Setting::get('integrations.ai.openai_api_key'))->toBe('sk-openai-xyz');
 });
 
+test('saving stores the PayFast payment settings', function () {
+    $admin = superAdminWithProfile();
+
+    Livewire::actingAs($admin)
+        ->test(Integrations::class)
+        ->fillForm([
+            'payments_driver' => 'payfast',
+            'payfast_merchant_id' => '10000100',
+            'payfast_merchant_key' => '46f0cd694581a',
+            'payments_platform_fee_percent' => '12',
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(Setting::get('integrations.payments.driver'))->toBe('payfast')
+        ->and(Setting::get('integrations.payments.payfast.merchant_id'))->toBe('10000100')
+        ->and(Setting::get('integrations.payments.platform_fee_percent'))->toBe('12');
+});
+
 test('the model options list every available model for the driver', function () {
     expect(Integrations::modelsFor('anthropic'))
         ->toHaveKeys([

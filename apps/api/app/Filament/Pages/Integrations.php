@@ -107,7 +107,9 @@ class Integrations extends Page
             'tenders_version' => (string) Setting::get('integrations.tenders.version', config('tenders.version')),
             'tenders_source' => (string) Setting::get('integrations.tenders.source', config('tenders.source')),
 
-            'payments_driver' => (string) Setting::get('integrations.payments.driver', config('payments.driver', 'null')),
+            // env('PAYMENTS_DRIVER=null') parses to PHP null, so coalesce any
+            // empty value back to the 'null' option key (the required Select).
+            'payments_driver' => Setting::get('integrations.payments.driver', config('payments.driver')) ?: 'null',
             'payments_platform_fee_percent' => (string) Setting::get('integrations.payments.platform_fee_percent', (string) config('payments.platform_fee_percent', 10)),
             'payfast_sandbox' => (bool) Setting::get('integrations.payments.payfast.sandbox', config('payments.payfast.sandbox', true)),
             'payfast_merchant_id' => (string) Setting::get('integrations.payments.payfast.merchant_id', ''),
