@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             LessonSeeder::class,
             BriefItemSeeder::class,
             MasterclassSeeder::class,
+            StoreSeeder::class,
         ]);
     }
 }

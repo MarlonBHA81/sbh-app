@@ -9,6 +9,7 @@ import {
   Megaphone,
   MessagesSquare,
   School,
+  ShoppingBag,
   Sparkles,
   Store,
   Target,
@@ -31,6 +32,7 @@ interface Tile {
     | "learn"
     | "coach"
     | "masterclasses"
+    | "shop"
     | "mentors"
     | "questions"
     | "forums"
@@ -85,6 +87,12 @@ const TILES: Tile[] = [
     href: "/masterclasses",
     icon: School,
     gradient: "from-plum to-teal",
+  },
+  {
+    labelKey: "shop",
+    href: "/shop",
+    icon: ShoppingBag,
+    gradient: "from-teal to-sage",
   },
   {
     labelKey: "mentors",

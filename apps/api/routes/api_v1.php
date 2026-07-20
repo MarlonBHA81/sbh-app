@@ -51,6 +51,9 @@ use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\PostSeenController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileMemberController;
+use App\Http\Controllers\Api\V1\ShopController;
+use App\Http\Controllers\Api\V1\StoreController;
+use App\Http\Controllers\Api\V1\StoreProductController;
 use App\Http\Controllers\Api\V1\ProfileImageController;
 use App\Http\Controllers\Api\V1\ProfileLocationController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
@@ -271,6 +274,18 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('coach/suggestions', [CoachController::class, 'suggestions']);
     Route::post('coach/messages', [CoachController::class, 'store'])->middleware('throttle:coach');
     Route::delete('coach', [CoachController::class, 'destroy']);
+
+    // Marketplace (Shop P1) — browse stores/products; vendor management under /me/store.
+    Route::get('shop/stores', [ShopController::class, 'stores']);
+    Route::get('shop/stores/{store}', [ShopController::class, 'store']);
+    Route::get('shop/stores/{store}/products', [ShopController::class, 'storeProducts']);
+    Route::get('shop/products/{product}', [ShopController::class, 'product']);
+    Route::get('me/store', [StoreController::class, 'show']);
+    Route::post('me/store', [StoreController::class, 'upsert']);
+    Route::get('me/store/products', [StoreProductController::class, 'index']);
+    Route::post('me/store/products', [StoreProductController::class, 'store']);
+    Route::patch('me/store/products/{product}', [StoreProductController::class, 'update']);
+    Route::delete('me/store/products/{product}', [StoreProductController::class, 'destroy']);
 
     // Daily Business Brief (V2 · Feature 7) — a personalised daily card; works with no API key.
     Route::get('me/brief', [BriefController::class, 'show']);

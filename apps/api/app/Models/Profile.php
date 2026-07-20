@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -172,6 +173,12 @@ class Profile extends Model
     {
         return $this->belongsToMany(Masterclass::class, 'masterclass_participants')
             ->withPivot('enrolled_at');
+    }
+
+    /** This (business) profile's storefront, if it has opened one (Shop). */
+    public function store(): HasOne
+    {
+        return $this->hasOne(Store::class);
     }
 
     public function user(): BelongsTo

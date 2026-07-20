@@ -885,6 +885,47 @@ export interface LessonProgress {
   total: number;
 }
 
+/** Product kinds sold on a storefront (Shop). */
+export type ProductType = "digital_download" | "course" | "service";
+
+/** A vendor storefront (Shop). */
+export interface Store {
+  ulid: string;
+  slug: string;
+  name: string;
+  tagline: string | null;
+  about: string | null;
+  brand_color: string | null;
+  accent_color: string | null;
+  logo_url: string | null;
+  banner_url: string | null;
+  policies: string | null;
+  is_active: boolean;
+  products_count?: number;
+  owner: { handle: string | null; name: string | null };
+}
+
+/** A product sold by a store (Shop). */
+export interface Product {
+  ulid: string;
+  type: ProductType;
+  title: string;
+  description: string;
+  price_cents: number | null;
+  currency: string;
+  cover_url: string | null;
+  external_url: string | null;
+  is_published: boolean;
+  store?: { slug: string; name: string };
+  cross_sells?: {
+    ulid: string;
+    title: string;
+    price_cents: number | null;
+    currency: string;
+    cover_url: string | null;
+  }[];
+}
+
 /** A cohort-based programme (V3 · LEARN). */
 export interface Masterclass {
   ulid: string;

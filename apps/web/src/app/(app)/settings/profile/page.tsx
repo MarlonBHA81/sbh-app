@@ -12,6 +12,7 @@ import { z } from "zod";
 import { PushSettings } from "@/components/notifications/push-settings";
 import { BusinessTeamSettings } from "@/components/settings/business-team-settings";
 import { ProfileImageUpload } from "@/components/settings/profile-image-upload";
+import { StoreSettings } from "@/components/settings/store-settings";
 import { DataPrivacySettings } from "@/components/settings/data-privacy-settings";
 import { LanguagePicker } from "@/components/settings/language-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -712,6 +713,7 @@ export default function ProfileSettingsPage() {
       {activeProfile.kind === "business" ? (
         <>
           <BusinessCategorySettings />
+          <StoreSettings />
           <BusinessTeamSettings profile={activeProfile} />
         </>
       ) : null}
