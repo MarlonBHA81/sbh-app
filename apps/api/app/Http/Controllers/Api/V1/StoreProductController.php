@@ -58,6 +58,24 @@ class StoreProductController extends Controller
         return response()->noContent();
     }
 
+    /** Upload the deliverable file for a digital product (private disk). */
+    public function uploadFile(Request $request, Product $product): JsonResponse
+    {
+        $store = $this->vendorStore($request);
+        abort_unless($product->store_id === $store->id, 403);
+
+        $request->validate([
+            'file' => ['required', 'file', 'max:51200'], // 50 MB
+        ]);
+
+        // Stored on the private "local" disk — only delivered to buyers who own it.
+        $path = $request->file('file')->store('products/'.$product->ulid, 'local');
+
+        $product->update(['download_path' => $path]);
+
+        return response()->json(['data' => ['uploaded' => true]]);
+    }
+
     /**
      * @return array<string, mixed>
      */

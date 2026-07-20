@@ -29,6 +29,7 @@ class IntegrationSettingsProvider extends ServiceProvider
             $this->applyAiSettings();
             $this->applyMailSettings();
             $this->applyTenderSettings();
+            $this->applyPaymentSettings();
         } catch (Throwable) {
             // Missing table / unavailable database during bootstrap: fall back
             // to the config file / env values untouched.
@@ -90,6 +91,39 @@ class IntegrationSettingsProvider extends ServiceProvider
             if ($value !== null && $value !== '') {
                 $normalised = $configKey === 'tenders.base_url' ? rtrim((string) $value, '/') : $value;
                 config([$configKey => $normalised]);
+            }
+        }
+    }
+
+    private function applyPaymentSettings(): void
+    {
+        $driver = Setting::get('integrations.payments.driver');
+        if ($driver !== null && $driver !== '') {
+            config(['payments.driver' => $driver]);
+        }
+
+        $feePercent = Setting::get('integrations.payments.platform_fee_percent');
+        if ($feePercent !== null && $feePercent !== '') {
+            config(['payments.platform_fee_percent' => (float) $feePercent]);
+        }
+
+        // Sandbox toggle: only override when the row exists (null = untouched).
+        $sandbox = Setting::get('integrations.payments.payfast.sandbox');
+        if ($sandbox !== null) {
+            config(['payments.payfast.sandbox' => (bool) $sandbox]);
+        }
+
+        $map = [
+            'integrations.payments.payfast.merchant_id' => 'payments.payfast.merchant_id',
+            'integrations.payments.payfast.merchant_key' => 'payments.payfast.merchant_key',
+            'integrations.payments.payfast.passphrase' => 'payments.payfast.passphrase',
+        ];
+
+        foreach ($map as $settingKey => $configKey) {
+            $value = Setting::get($settingKey);
+
+            if ($value !== null && $value !== '') {
+                config([$configKey => $value]);
             }
         }
     }

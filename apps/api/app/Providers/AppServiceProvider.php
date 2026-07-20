@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use App\Services\Ai\AiGateway;
 use App\Services\Ai\Drivers\AnthropicAiDriver;
-use App\Services\Ai\Drivers\OpenAiDriver;
 use App\Services\Ai\Drivers\NullAiDriver;
+use App\Services\Ai\Drivers\OpenAiDriver;
+use App\Services\Payments\NullPaymentDriver;
+use App\Services\Payments\PayFastDriver;
+use App\Services\Payments\PaymentGateway;
 use App\Services\Posts\PostTypeRegistry;
 use App\Services\SafetyService;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -32,6 +35,15 @@ class AppServiceProvider extends ServiceProvider
                 'anthropic' => new AnthropicAiDriver(config('ai.anthropic', [])),
                 'openai' => new OpenAiDriver(config('ai.openai', [])),
                 default => new NullAiDriver,
+            };
+        });
+
+        // Payment gateway (Shop P2) — resolved from config at resolution time so
+        // runtime integration settings can switch the provider/credentials.
+        $this->app->bind(PaymentGateway::class, function () {
+            return match (config('payments.driver')) {
+                'payfast' => new PayFastDriver(config('payments.payfast', [])),
+                default => new NullPaymentDriver,
             };
         });
     }

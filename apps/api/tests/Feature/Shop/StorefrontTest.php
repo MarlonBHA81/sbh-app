@@ -1,8 +1,11 @@
 <?php
 
 use App\Models\Product;
+use App\Models\ProductOffer;
 use App\Models\Profile;
 use App\Models\Store;
+use Database\Seeders\StoreSeeder;
+use Illuminate\Support\Str;
 
 function businessOwner(): array
 {
@@ -16,7 +19,7 @@ function makeStore(Profile $profile, array $attributes = []): Store
 {
     return Store::create(array_merge([
         'profile_id' => $profile->id,
-        'slug' => 'store-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(6)),
+        'slug' => 'store-'.Str::lower(Str::random(6)),
         'name' => 'Test Store',
         'is_active' => true,
     ], $attributes));
@@ -126,7 +129,7 @@ test('a product page includes its cross-sells', function () {
     $main = $store->products()->create(['type' => 'course', 'title' => 'Main', 'description' => 'x', 'is_published' => true]);
     $related = $store->products()->create(['type' => 'digital_download', 'title' => 'Add-on', 'description' => 'x', 'price_cents' => 4900, 'is_published' => true]);
 
-    \App\Models\ProductOffer::create([
+    ProductOffer::create([
         'product_id' => $main->id,
         'related_product_id' => $related->id,
         'kind' => Product::OFFER_CROSS_SELL,
@@ -145,15 +148,15 @@ test('shop browsing requires authentication', function () {
 
 test('the store seeder is idempotent and needs a business profile', function () {
     // No business profile yet → no-op.
-    $this->seed(\Database\Seeders\StoreSeeder::class);
+    $this->seed(StoreSeeder::class);
     expect(Store::query()->count())->toBe(0);
 
     $user = userWithProfile();
     Profile::factory()->business()->for($user)->create();
 
-    $this->seed(\Database\Seeders\StoreSeeder::class);
+    $this->seed(StoreSeeder::class);
     $count = Store::query()->count();
-    $this->seed(\Database\Seeders\StoreSeeder::class);
+    $this->seed(StoreSeeder::class);
 
     expect(Store::query()->count())->toBe($count)->toBeGreaterThan(0);
 });

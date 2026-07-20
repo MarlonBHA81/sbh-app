@@ -106,6 +106,13 @@ class Integrations extends Page
             'tenders_base_url' => (string) Setting::get('integrations.tenders.base_url', config('tenders.base_url')),
             'tenders_version' => (string) Setting::get('integrations.tenders.version', config('tenders.version')),
             'tenders_source' => (string) Setting::get('integrations.tenders.source', config('tenders.source')),
+
+            'payments_driver' => (string) Setting::get('integrations.payments.driver', config('payments.driver', 'null')),
+            'payments_platform_fee_percent' => (string) Setting::get('integrations.payments.platform_fee_percent', (string) config('payments.platform_fee_percent', 10)),
+            'payfast_sandbox' => (bool) Setting::get('integrations.payments.payfast.sandbox', config('payments.payfast.sandbox', true)),
+            'payfast_merchant_id' => (string) Setting::get('integrations.payments.payfast.merchant_id', ''),
+            'payfast_merchant_key' => (string) Setting::get('integrations.payments.payfast.merchant_key', ''),
+            'payfast_passphrase' => (string) Setting::get('integrations.payments.payfast.passphrase', ''),
         ]);
     }
 
@@ -212,6 +219,43 @@ class Integrations extends Page
                             ->label('Source label')
                             ->helperText('Stamped on imported opportunities and used to de-duplicate (e.g. "eTenders", "OpenProcurement").'),
                     ]),
+
+                Section::make('Payments (PayFast)')
+                    ->description('Marketplace checkout. Buyers pay via PayFast; orders are confirmed by PayFast\'s ITN. Leave the provider Disabled to hide checkout.')
+                    ->schema([
+                        Select::make('payments_driver')
+                            ->label('Payment provider')
+                            ->options([
+                                'null' => 'Disabled',
+                                'payfast' => 'PayFast',
+                            ])
+                            ->default('null')
+                            ->required()
+                            ->helperText('Disabled hides the Buy button and rejects checkout.'),
+                        Toggle::make('payfast_sandbox')
+                            ->label('Sandbox mode')
+                            ->helperText('On uses PayFast\'s sandbox (sandbox.payfast.co.za) for testing. Turn off for live payments.'),
+                        TextInput::make('payments_platform_fee_percent')
+                            ->label('Platform fee (%)')
+                            ->numeric()
+                            ->helperText('Commission kept from each paid order. The rest is recorded as the vendor\'s earnings.'),
+                        TextInput::make('payfast_merchant_id')
+                            ->label('Merchant ID')
+                            ->autocomplete(false)
+                            ->helperText('From your PayFast dashboard. Sandbox test ID: 10000100.'),
+                        TextInput::make('payfast_merchant_key')
+                            ->label('Merchant key')
+                            ->password()
+                            ->revealable()
+                            ->autocomplete(false)
+                            ->helperText('Sandbox test key: 46f0cd694581a.'),
+                        TextInput::make('payfast_passphrase')
+                            ->label('Passphrase')
+                            ->password()
+                            ->revealable()
+                            ->autocomplete(false)
+                            ->helperText('Optional, but set it in PayFast and here to sign requests. Required once your account has a passphrase configured.'),
+                    ]),
             ])
             ->statePath('data');
     }
@@ -239,6 +283,13 @@ class Integrations extends Page
         Setting::set('integrations.tenders.base_url', (string) ($data['tenders_base_url'] ?? ''));
         Setting::set('integrations.tenders.version', (string) ($data['tenders_version'] ?? ''));
         Setting::set('integrations.tenders.source', (string) ($data['tenders_source'] ?? ''));
+
+        Setting::set('integrations.payments.driver', (string) ($data['payments_driver'] ?? 'null'));
+        Setting::set('integrations.payments.platform_fee_percent', (string) ($data['payments_platform_fee_percent'] ?? '10'));
+        Setting::set('integrations.payments.payfast.sandbox', (bool) ($data['payfast_sandbox'] ?? true));
+        Setting::set('integrations.payments.payfast.merchant_id', (string) ($data['payfast_merchant_id'] ?? ''));
+        Setting::set('integrations.payments.payfast.merchant_key', (string) ($data['payfast_merchant_key'] ?? ''));
+        Setting::set('integrations.payments.payfast.passphrase', (string) ($data['payfast_passphrase'] ?? ''));
 
         Notification::make()->title('Integration settings saved')->success()->send();
     }

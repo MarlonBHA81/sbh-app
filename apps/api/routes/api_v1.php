@@ -51,6 +51,10 @@ use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\PostSeenController;
 use App\Http\Controllers\Api\V1\ProfileController;
 use App\Http\Controllers\Api\V1\ProfileMemberController;
+use App\Http\Controllers\Api\V1\CheckoutController;
+use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\PayFastWebhookController;
+use App\Http\Controllers\Api\V1\PurchaseController;
 use App\Http\Controllers\Api\V1\ShopController;
 use App\Http\Controllers\Api\V1\StoreController;
 use App\Http\Controllers\Api\V1\StoreProductController;
@@ -107,6 +111,9 @@ Route::prefix('public')->middleware('throttle:60,1')->group(function () {
 
 // Public business category taxonomy (cached).
 Route::get('business/categories', [BusinessCategoryController::class, 'index']);
+
+// PayFast ITN (Shop P2) — server-to-server payment confirmation; unauthenticated.
+Route::post('shop/payfast/itn', PayFastWebhookController::class)->middleware('throttle:60,1');
 
 // Public profile routes (viewer resolved when authenticated).
 Route::middleware('profile.active')->group(function () {
@@ -286,6 +293,15 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('me/store/products', [StoreProductController::class, 'store']);
     Route::patch('me/store/products/{product}', [StoreProductController::class, 'update']);
     Route::delete('me/store/products/{product}', [StoreProductController::class, 'destroy']);
+    Route::post('me/store/products/{product}/file', [StoreProductController::class, 'uploadFile']);
+
+    // Checkout + orders + entitlements (Shop P2). Payment is confirmed by the ITN.
+    Route::post('shop/checkout', [CheckoutController::class, 'store']);
+    Route::get('shop/orders/{order}', [CheckoutController::class, 'show']);
+    Route::get('me/orders', [OrderController::class, 'index']);
+    Route::get('me/store/orders', [OrderController::class, 'storeOrders']);
+    Route::get('me/purchases', [PurchaseController::class, 'index']);
+    Route::get('me/purchases/{product}/download', [PurchaseController::class, 'download']);
 
     // Daily Business Brief (V2 · Feature 7) — a personalised daily card; works with no API key.
     Route::get('me/brief', [BriefController::class, 'show']);
