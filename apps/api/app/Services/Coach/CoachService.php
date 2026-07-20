@@ -4,6 +4,7 @@ namespace App\Services\Coach;
 
 use App\Models\CoachConversation;
 use App\Models\CoachMessage;
+use App\Models\Goal;
 use App\Models\Profile;
 use App\Services\Ai\AiGateway;
 use App\Services\Ai\CannedCoachReply;
@@ -77,11 +78,19 @@ class CoachService
      */
     private function systemContext(Profile $profile): string
     {
+        $goals = Goal::forProfile($profile)
+            ->where('is_done', false)
+            ->latest()
+            ->limit(3)
+            ->pluck('title')
+            ->all();
+
         $facts = array_filter([
             $profile->name ? "Name: {$profile->name}" : null,
             $profile->category ? "Business / industry: {$profile->category}" : null,
             $profile->journey_stage ? 'Journey stage: '.str_replace('_', ' ', $profile->journey_stage) : null,
             ($profile->city ?: $profile->location) ? 'Location: '.($profile->city ?: $profile->location) : null,
+            $goals !== [] ? 'Current goals: '.implode('; ', $goals) : null,
         ]);
 
         $context = $facts === []

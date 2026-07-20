@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OpportunityResource;
 use App\Models\Opportunity;
 use App\Models\Profile;
+use App\Services\Opportunities\OpportunityFitService;
 use Illuminate\Contracts\Pagination\CursorPaginator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -41,6 +42,26 @@ class OpportunityController extends Controller
             ->cursorPaginate(self::PER_PAGE);
 
         return OpportunityResource::collection($this->markSaved($page, $viewer));
+    }
+
+    /**
+     * Fit-ranked opportunities for the member (V3 · personalised Home) — ordered
+     * by relevance to their industry, closing date and official/partner status.
+     */
+    public function suggested(Request $request, OpportunityFitService $fit): AnonymousResourceCollection
+    {
+        $viewer = $this->activeProfile($request);
+
+        $opportunities = $fit->forProfile($viewer, 6);
+
+        $ids = $opportunities->pluck('id');
+        $savedIds = $ids->isEmpty()
+            ? collect()
+            : $viewer->savedOpportunities()->whereIn('opportunities.id', $ids)->pluck('opportunities.id');
+
+        $opportunities->each(fn (Opportunity $o) => $o->setAttribute('is_saved', $savedIds->contains($o->id)));
+
+        return OpportunityResource::collection($opportunities);
     }
 
     /** The viewer's saved opportunities, most recently saved first. */

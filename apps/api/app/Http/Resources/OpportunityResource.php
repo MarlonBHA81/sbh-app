@@ -28,6 +28,8 @@ class OpportunityResource extends JsonResource
             'closes_at' => $this->closes_at?->toDateString(),
             'is_open' => $this->isOpen(),
             'is_saved' => (bool) ($this->is_saved ?? false),
+            // Why it was surfaced (V3 · fit ranking); only set by OpportunityFitService.
+            'fit_reason' => $this->fit_reason ?? null,
             'published_at' => $this->published_at?->toIso8601String(),
         ];
     }

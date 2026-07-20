@@ -1,6 +1,7 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { ChevronRight, GraduationCap, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -8,15 +9,23 @@ import { ScreenHeader } from "@/components/shell/screen-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import * as api from "@/lib/api/client";
-import type { CoachMessage } from "@/lib/api/types";
+import type { CoachMessage, Lesson, Opportunity } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 interface SendResponse {
   data: { user: CoachMessage; assistant: CoachMessage };
 }
 
+interface Suggestions {
+  opportunities: Opportunity[];
+  lessons: Lesson[];
+}
+
+// Deep-coach quick actions (V3): the first two hit structured canned guidance;
+// the last two are answered by the "For you" panel below.
 const SUGGESTIONS = [
-  "How should I price my products?",
+  "Help me draft a proposal",
+  "How should I price this job?",
   "How do I find my first customers?",
   "Where can I find funding?",
 ];
@@ -24,6 +33,7 @@ const SUGGESTIONS = [
 /** AI Business Coach v1 (V2 · LEARN): a persisted chat surface. */
 export function CoachView() {
   const [messages, setMessages] = useState<CoachMessage[] | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestions | null>(null);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const listEndRef = useRef<HTMLDivElement>(null);
@@ -39,6 +49,22 @@ export function CoachView() {
       })
       .catch(() => {
         if (!cancelled) setMessages([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Deep Coach (V3): fit-ranked opportunities + recommended lessons.
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get<{ data: Suggestions }>("/api/v1/coach/suggestions")
+      .then((res) => {
+        if (!cancelled) setSuggestions(res.data);
+      })
+      .catch(() => {
+        if (!cancelled) setSuggestions(null);
       });
     return () => {
       cancelled = true;
@@ -88,6 +114,70 @@ export function CoachView() {
   return (
     <div className="flex min-h-[70vh] flex-col gap-4">
       <ScreenHeader title="AI Coach" />
+
+      {suggestions &&
+      (suggestions.opportunities.length > 0 ||
+        suggestions.lessons.length > 0) ? (
+        <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
+          <h2 className="font-heading text-[15px] font-semibold text-text-primary">
+            For you
+          </h2>
+          {suggestions.opportunities.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {suggestions.opportunities.map((o) => (
+                <li key={o.ulid}>
+                  <Link
+                    href={`/opportunities/${o.ulid}`}
+                    className="flex items-center gap-2 active:scale-[0.99]"
+                  >
+                    <Sparkles
+                      className="size-4 shrink-0 text-teal-text"
+                      aria-hidden
+                    />
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate text-sm font-medium text-text-primary">
+                        {o.title}
+                      </span>
+                      {o.fit_reason ? (
+                        <span className="truncate text-[11px] text-text-secondary">
+                          {o.fit_reason}
+                        </span>
+                      ) : null}
+                    </span>
+                    <ChevronRight
+                      className="size-4 shrink-0 text-text-secondary"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {suggestions.lessons.length > 0 ? (
+            <div className="flex flex-col gap-2 border-t border-warmgray pt-2">
+              {suggestions.lessons.map((l) => (
+                <Link
+                  key={l.ulid}
+                  href={`/learn/${l.ulid}`}
+                  className="flex items-center gap-2 active:scale-[0.99]"
+                >
+                  <GraduationCap
+                    className="size-4 shrink-0 text-plum"
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-text-primary">
+                    {l.title}
+                  </span>
+                  <ChevronRight
+                    className="size-4 shrink-0 text-text-secondary"
+                    aria-hidden
+                  />
+                </Link>
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className="flex flex-1 flex-col gap-3">
         {messages === null ? (

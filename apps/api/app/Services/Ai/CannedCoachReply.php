@@ -18,6 +18,8 @@ class CannedCoachReply
         $text = mb_strtolower($lastUserMessage);
 
         $tip = match (true) {
+            self::mentions($text, ['proposal', 'quote', 'quotation', 'bid', 'tender', 'apply', 'rfq']) =>
+                "A strong proposal is short and specific. Structure it as: (1) a one-line summary of what you'll deliver, (2) your understanding of their need, (3) scope — exactly what's included, (4) timeline with a start and end, (5) price with clear terms, and (6) why you (proof: past work, references, compliance docs like CSD/B-BBEE if relevant). Lead with the outcome they'll get, not your company history.",
             self::mentions($text, ['price', 'pricing', 'charge', 'cost', 'expensive', 'cheap']) =>
                 "On pricing: start from your true cost per sale (materials + your time), then add a margin you're comfortable with. Many owners under-charge because they forget to pay themselves. Try raising one price by 10% and watch what happens — you can always adjust.",
             self::mentions($text, ['customer', 'clients', 'sales', 'sell', 'leads', 'market']) =>

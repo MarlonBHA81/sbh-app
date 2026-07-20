@@ -237,6 +237,8 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
     // Opportunities (V1 · GROW) — admin-curated tenders, funding, grants.
     Route::get('opportunities', [OpportunityController::class, 'index']);
+    // Fit-ranked opportunities for the member (V3 · personalised Home).
+    Route::get('me/opportunities/suggested', [OpportunityController::class, 'suggested']);
     Route::get('me/opportunities/saved', [OpportunityController::class, 'saved']);
     Route::get('opportunities/{opportunity}', [OpportunityController::class, 'show']);
     Route::post('opportunities/{opportunity}/save', [OpportunityController::class, 'save']);
@@ -258,6 +260,8 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
     // AI Business Coach v1 (V2 · LEARN) — persisted chat; works with no API key.
     Route::get('coach', [CoachController::class, 'show']);
+    // Deep Coach (V3) — fit-ranked opportunities + recommended lessons.
+    Route::get('coach/suggestions', [CoachController::class, 'suggestions']);
     Route::post('coach/messages', [CoachController::class, 'store'])->middleware('throttle:coach');
     Route::delete('coach', [CoachController::class, 'destroy']);
 

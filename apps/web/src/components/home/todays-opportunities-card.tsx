@@ -5,36 +5,26 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import * as api from "@/lib/api/client";
-import type { Opportunity, Paginated } from "@/lib/api/types";
+import type { Opportunity } from "@/lib/api/types";
 import { closesLabel, opportunityTypeLabel } from "@/lib/opportunities";
-import { useAuthStore } from "@/lib/stores/auth-store-provider";
 
 /**
- * "Today's Opportunities" (V1 · Daily Home): the next few opportunities,
- * personalised to the member's industry when set, with a graceful fallback to
- * the general feed so the card is never empty when opportunities exist. Reuses
- * the opportunities API — no new backend.
+ * "Today's Opportunities" (V1 · Daily Home; V3 · personalised Home): the next
+ * few opportunities, fit-ranked to the member's industry, closing date and
+ * official/partner status via /me/opportunities/suggested. Self-hides when none.
  */
 export function TodaysOpportunitiesCard() {
-  const industry = useAuthStore((s) => s.activeProfile?.category ?? null);
   const [items, setItems] = useState<Opportunity[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
-      const general = "/api/v1/opportunities";
-      const url = industry
-        ? `${general}?industry=${encodeURIComponent(industry)}`
-        : general;
       try {
-        const res = await api.get<Paginated<Opportunity>>(url);
-        let data = res.data;
-        // Fall back to the general feed if the industry filter came back empty.
-        if (data.length === 0 && industry) {
-          data = (await api.get<Paginated<Opportunity>>(general)).data;
-        }
-        if (!cancelled) setItems(data.slice(0, 3));
+        const res = await api.get<{ data: Opportunity[] }>(
+          "/api/v1/me/opportunities/suggested",
+        );
+        if (!cancelled) setItems(res.data.slice(0, 3));
       } catch {
         if (!cancelled) setItems([]);
       }
@@ -44,7 +34,7 @@ export function TodaysOpportunitiesCard() {
     return () => {
       cancelled = true;
     };
-  }, [industry]);
+  }, []);
 
   if (!items || items.length === 0) return null;
 
@@ -85,6 +75,9 @@ export function TodaysOpportunitiesCard() {
               <span className="text-sm font-medium text-text-primary">
                 {o.title}
               </span>
+              {o.fit_reason ? (
+                <span className="text-[11px] text-sage-ink">{o.fit_reason}</span>
+              ) : null}
             </Link>
           </li>
         ))}

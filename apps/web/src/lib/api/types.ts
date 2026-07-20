@@ -786,6 +786,8 @@ export interface Opportunity {
   is_open: boolean;
   is_saved: boolean;
   published_at: string | null;
+  /** Why it was surfaced when fit-ranked (V3); present on coach/Home suggestions. */
+  fit_reason?: string | null;
 }
 
 /** A member-set goal or milestone (V3 · PROGRESS). */
