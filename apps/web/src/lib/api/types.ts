@@ -885,6 +885,21 @@ export interface LessonProgress {
   total: number;
 }
 
+/** A cohort-based programme (V3 · LEARN). */
+export interface Masterclass {
+  ulid: string;
+  title: string;
+  description: string;
+  facilitator_name: string | null;
+  starts_at: string;
+  ends_at: string;
+  status: "upcoming" | "active" | "ended";
+  capacity: number | null;
+  seats_left: number | null;
+  participants_count: number;
+  enrolled: boolean;
+}
+
 /** One turn in an AI Coach conversation (V2 · LEARN). */
 export interface CoachMessage {
   id: number;

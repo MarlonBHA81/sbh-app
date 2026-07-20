@@ -35,6 +35,7 @@ use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\GamificationController;
 use App\Http\Controllers\Api\V1\GeoController;
 use App\Http\Controllers\Api\V1\LessonController;
+use App\Http\Controllers\Api\V1\MasterclassController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
 use App\Http\Controllers\Api\V1\MentorController;
@@ -251,6 +252,12 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('resources/{resource}', [ResourceController::class, 'show']);
     Route::post('resources/{resource}/save', [ResourceController::class, 'save']);
     Route::delete('resources/{resource}/save', [ResourceController::class, 'unsave']);
+
+    // Masterclasses & cohorts (V3 · LEARN) — longer programmes members enrol in.
+    Route::get('masterclasses', [MasterclassController::class, 'index']);
+    Route::get('masterclasses/{masterclass}', [MasterclassController::class, 'show']);
+    Route::post('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'enrol']);
+    Route::delete('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'withdraw']);
 
     // Bite-size learning modules (V2 · LEARN) — short lessons that award XP.
     Route::get('learn/lessons', [LessonController::class, 'index']);

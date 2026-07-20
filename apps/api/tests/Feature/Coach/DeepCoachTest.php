@@ -2,7 +2,7 @@
 
 use App\Models\Opportunity;
 
-function makeOpp(array $attributes = []): Opportunity
+function coachOpp(array $attributes = []): Opportunity
 {
     return Opportunity::create(array_merge([
         'type' => 'funding',
@@ -15,9 +15,9 @@ function makeOpp(array $attributes = []): Opportunity
 test('coach suggestions return fit-ranked opportunities and lessons', function () {
     $user = userWithProfile(['category' => 'Retail', 'journey_stage' => 'growing_sales']);
 
-    makeOpp(['title' => 'Retail grant', 'industry' => 'Retail']);
-    makeOpp(['title' => 'General grant', 'industry' => null]);
-    makeOpp(['title' => 'Tech grant', 'industry' => 'Technology']);
+    coachOpp(['title' => 'Retail grant', 'industry' => 'Retail']);
+    coachOpp(['title' => 'General grant', 'industry' => null]);
+    coachOpp(['title' => 'Tech grant', 'industry' => 'Technology']);
 
     $data = $this->actingAs($user)
         ->getJson('/api/v1/coach/suggestions')
@@ -35,7 +35,7 @@ test('coach suggestions return fit-ranked opportunities and lessons', function (
 test('a closing-soon opportunity is flagged in the fit reason', function () {
     $user = userWithProfile(['category' => null]);
 
-    makeOpp(['title' => 'Soon', 'industry' => null, 'closes_at' => now()->addDays(5)->toDateString()]);
+    coachOpp(['title' => 'Soon', 'industry' => null, 'closes_at' => now()->addDays(5)->toDateString()]);
 
     $data = $this->actingAs($user)
         ->getJson('/api/v1/coach/suggestions')

@@ -167,6 +167,13 @@ class Profile extends Model
             ->withPivot('joined_at');
     }
 
+    /** Cohort programmes this profile is enrolled in (V3 · LEARN). */
+    public function masterclasses(): BelongsToMany
+    {
+        return $this->belongsToMany(Masterclass::class, 'masterclass_participants')
+            ->withPivot('enrolled_at');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

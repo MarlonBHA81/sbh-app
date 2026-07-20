@@ -8,6 +8,7 @@ import {
   HelpCircle,
   Megaphone,
   MessagesSquare,
+  School,
   Sparkles,
   Store,
   Target,
@@ -29,6 +30,7 @@ interface Tile {
     | "resources"
     | "learn"
     | "coach"
+    | "masterclasses"
     | "mentors"
     | "questions"
     | "forums"
@@ -77,6 +79,12 @@ const TILES: Tile[] = [
     href: "/coach",
     icon: Bot,
     gradient: "from-teal to-plum",
+  },
+  {
+    labelKey: "masterclasses",
+    href: "/masterclasses",
+    icon: School,
+    gradient: "from-plum to-teal",
   },
   {
     labelKey: "mentors",
