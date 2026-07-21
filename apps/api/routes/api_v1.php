@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AdSlotController;
 use App\Http\Controllers\Api\V1\AdTrackController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
@@ -15,25 +16,25 @@ use App\Http\Controllers\Api\V1\BusinessDirectoryController;
 use App\Http\Controllers\Api\V1\BusinessEventController;
 use App\Http\Controllers\Api\V1\BusinessMatchController;
 use App\Http\Controllers\Api\V1\BusinessNeedController;
-use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\CampaignController;
 use App\Http\Controllers\Api\V1\ChallengeController;
+use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\CoachController;
-use App\Http\Controllers\Api\V1\ConnectionController;
-use App\Http\Controllers\Api\V1\DailyController;
-use App\Http\Controllers\Api\V1\DashboardController;
-use App\Http\Controllers\Api\V1\GoalController;
-use App\Http\Controllers\Api\V1\WellnessController;
-use App\Http\Controllers\Api\V1\OpportunityController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
+use App\Http\Controllers\Api\V1\ConnectionController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\ConversationParticipantController;
+use App\Http\Controllers\Api\V1\CourseController;
+use App\Http\Controllers\Api\V1\DailyController;
+use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\EnrolmentController;
 use App\Http\Controllers\Api\V1\FeedController;
 use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\GamificationController;
 use App\Http\Controllers\Api\V1\GeoController;
+use App\Http\Controllers\Api\V1\GoalController;
 use App\Http\Controllers\Api\V1\LessonController;
 use App\Http\Controllers\Api\V1\MasterclassController;
 use App\Http\Controllers\Api\V1\MeController;
@@ -45,32 +46,34 @@ use App\Http\Controllers\Api\V1\MuteController;
 use App\Http\Controllers\Api\V1\MyPostController;
 use App\Http\Controllers\Api\V1\MyProfileController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\OpportunityController;
+use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\PayFastWebhookController;
 use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\PostInteractionController;
 use App\Http\Controllers\Api\V1\PostReactionController;
 use App\Http\Controllers\Api\V1\PostSeenController;
 use App\Http\Controllers\Api\V1\ProfileController;
-use App\Http\Controllers\Api\V1\ProfileMemberController;
-use App\Http\Controllers\Api\V1\CheckoutController;
-use App\Http\Controllers\Api\V1\OrderController;
-use App\Http\Controllers\Api\V1\PayFastWebhookController;
-use App\Http\Controllers\Api\V1\PurchaseController;
-use App\Http\Controllers\Api\V1\ShopController;
-use App\Http\Controllers\Api\V1\StoreController;
-use App\Http\Controllers\Api\V1\StoreProductController;
 use App\Http\Controllers\Api\V1\ProfileImageController;
 use App\Http\Controllers\Api\V1\ProfileLocationController;
+use App\Http\Controllers\Api\V1\ProfileMemberController;
 use App\Http\Controllers\Api\V1\ProfileSearchController;
 use App\Http\Controllers\Api\V1\Public\PublicPostController;
 use App\Http\Controllers\Api\V1\Public\PublicProfileController;
 use App\Http\Controllers\Api\V1\Public\PublicSitemapController;
+use App\Http\Controllers\Api\V1\PurchaseController;
 use App\Http\Controllers\Api\V1\PushSubscriptionController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ResourceController;
 use App\Http\Controllers\Api\V1\SearchController;
+use App\Http\Controllers\Api\V1\ShopController;
 use App\Http\Controllers\Api\V1\StatusController;
+use App\Http\Controllers\Api\V1\StoreController;
+use App\Http\Controllers\Api\V1\StoreCourseController;
+use App\Http\Controllers\Api\V1\StoreProductController;
 use App\Http\Controllers\Api\V1\TopicController;
 use App\Http\Controllers\Api\V1\UploadController;
+use App\Http\Controllers\Api\V1\WellnessController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -302,6 +305,23 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/store/orders', [OrderController::class, 'storeOrders']);
     Route::get('me/purchases', [PurchaseController::class, 'index']);
     Route::get('me/purchases/{product}/download', [PurchaseController::class, 'download']);
+
+    // Courses + free enrolment + in-app tools (Shop P3). Content is gated by the Purchase entitlement.
+    Route::get('shop/products/{product}/curriculum', [CourseController::class, 'outline']);
+    Route::post('shop/products/{product}/enrol', [EnrolmentController::class, 'store']);
+    Route::get('me/courses/lessons/{lesson}', [CourseController::class, 'lesson']);
+    Route::post('me/courses/lessons/{lesson}/complete', [CourseController::class, 'complete']);
+    Route::get('me/courses/lessons/{lesson}/attachment', [CourseController::class, 'attachment']);
+    // Vendor course authoring.
+    Route::get('me/store/products/{product}/curriculum', [StoreCourseController::class, 'index']);
+    Route::post('me/store/products/{product}/modules', [StoreCourseController::class, 'storeModule']);
+    Route::patch('me/store/modules/{module}', [StoreCourseController::class, 'updateModule']);
+    Route::delete('me/store/modules/{module}', [StoreCourseController::class, 'destroyModule']);
+    Route::post('me/store/modules/{module}/lessons', [StoreCourseController::class, 'storeLesson']);
+    Route::patch('me/store/lessons/{lesson}', [StoreCourseController::class, 'updateLesson']);
+    Route::delete('me/store/lessons/{lesson}', [StoreCourseController::class, 'destroyLesson']);
+    Route::post('me/store/lessons/{lesson}/attachment', [StoreCourseController::class, 'uploadAttachment']);
+    Route::post('me/store/products/{product}/curriculum/reorder', [StoreCourseController::class, 'reorder']);
 
     // Daily Business Brief (V2 · Feature 7) — a personalised daily card; works with no API key.
     Route::get('me/brief', [BriefController::class, 'show']);

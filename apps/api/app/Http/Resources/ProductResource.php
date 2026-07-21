@@ -22,6 +22,13 @@ class ProductResource extends JsonResource
             'external_url' => $this->external_url,
             'is_published' => (bool) $this->is_published,
             'has_file' => $this->download_path !== null,
+            'is_html_tool' => $this->isHtmlTool(),
+            'is_free' => $this->isFree(),
+            // Curriculum summary for course products (when modules are loaded).
+            'course' => $this->when($this->isCourse(), fn () => [
+                'modules_count' => $this->whenLoaded('modules', fn () => $this->modules->count()),
+                'lessons_count' => $this->whenLoaded('modules', fn () => $this->modules->sum(fn ($m) => $m->lessons->count())),
+            ]),
             'store' => $this->whenLoaded('store', fn () => [
                 'slug' => $this->store->slug,
                 'name' => $this->store->name,

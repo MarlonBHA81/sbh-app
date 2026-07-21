@@ -26,4 +26,14 @@ class Purchase extends Model
     {
         return $this->belongsTo(Product::class);
     }
+
+    /** Whether the given profile owns (has purchased/enrolled in) the product. */
+    public static function ownedBy(?Profile $profile, Product $product): bool
+    {
+        return $profile !== null
+            && static::query()
+                ->where('buyer_profile_id', $profile->id)
+                ->where('product_id', $product->id)
+                ->exists();
+    }
 }

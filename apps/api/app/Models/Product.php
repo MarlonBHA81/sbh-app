@@ -83,6 +83,31 @@ class Product extends Model
         return $this->hasMany(ProductOffer::class);
     }
 
+    /** Curriculum modules (Shop P3), for `course` products. */
+    public function modules(): HasMany
+    {
+        return $this->hasMany(CourseModule::class)->orderBy('position')->orderBy('id');
+    }
+
+    public function isCourse(): bool
+    {
+        return $this->type === 'course';
+    }
+
+    /** A free product (price unset or zero) can be enrolled in without checkout. */
+    public function isFree(): bool
+    {
+        return $this->price_cents === null || $this->price_cents <= 0;
+    }
+
+    /** Whether the deliverable is a self-contained HTML tool (rendered in-app). */
+    public function isHtmlTool(): bool
+    {
+        return $this->download_path !== null
+            && (str_ends_with(strtolower($this->download_path), '.html')
+                || str_ends_with(strtolower($this->download_path), '.htm'));
+    }
+
     /** Published, in an active store — what buyers should see. */
     public function scopeVisible(Builder $query): Builder
     {
