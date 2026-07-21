@@ -59,6 +59,9 @@ class ShopController extends Controller
         );
 
         $product->load('store', 'offers.related');
+        if ($product->isCourse()) {
+            $product->load('modules.lessons');
+        }
 
         return response()->json(['data' => new ProductResource($product)]);
     }

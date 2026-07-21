@@ -91,7 +91,11 @@ export function PurchasesView() {
               </span>
             </div>
 
-            {p.has_download ? (
+            {p.product.type === "course" && p.product.ulid ? (
+              <Button asChild variant="outline" className="h-9 shrink-0">
+                <Link href={`/courses/${p.product.ulid}`}>Open course</Link>
+              </Button>
+            ) : p.has_download ? (
               <Button
                 type="button"
                 variant="outline"

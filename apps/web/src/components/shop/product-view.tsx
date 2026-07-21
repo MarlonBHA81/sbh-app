@@ -1,23 +1,33 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, Download } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
+import { ToolViewer } from "@/components/shop/tool-viewer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import { ApiError } from "@/lib/api/client";
-import type { Product } from "@/lib/api/types";
+import type { Product, Purchase } from "@/lib/api/types";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
-import { formatPrice, productTypeLabel, startCheckout } from "@/lib/shop";
+import {
+  downloadPurchase,
+  enrolFree,
+  formatPrice,
+  productTypeLabel,
+  startCheckout,
+} from "@/lib/shop";
 
 /** Product detail (Shop P2). "Buy" starts a PayFast checkout with order bumps. */
 export function ProductView({ slug, ulid }: { slug: string; ulid: string }) {
   const [product, setProduct] = useState<Product | null>(null);
   const [missing, setMissing] = useState(false);
+  const [owned, setOwned] = useState(false);
   const [selectedBumps, setSelectedBumps] = useState<Set<string>>(new Set());
   const [buying, setBuying] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isAuthed = useAuthStore((s) => s.status === "authed");
 
@@ -35,6 +45,22 @@ export function ProductView({ slug, ulid }: { slug: string; ulid: string }) {
       cancelled = true;
     };
   }, [ulid]);
+
+  useEffect(() => {
+    if (!isAuthed) return;
+    let cancelled = false;
+    api
+      .get<{ data: Purchase[] }>("/api/v1/me/purchases")
+      .then((res) => {
+        if (!cancelled) {
+          setOwned(res.data.some((p) => p.product.ulid === ulid));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthed, ulid]);
 
   if (missing) {
     return (
@@ -57,6 +83,10 @@ export function ProductView({ slug, ulid }: { slug: string; ulid: string }) {
   }
 
   const forSale = product.price_cents != null && product.price_cents > 0;
+  const isFree = !forSale;
+  const isCourse = product.type === "course";
+  const isTool = Boolean(product.is_html_tool) || Boolean(product.external_url);
+  const lessonCount = product.course?.lessons_count ?? 0;
   const bumps = product.bumps ?? [];
   const bumpTotal = bumps
     .filter((b) => selectedBumps.has(b.ulid))
@@ -88,6 +118,22 @@ export function ProductView({ slug, ulid }: { slug: string; ulid: string }) {
     }
   }
 
+  async function enrol(): Promise<void> {
+    setEnrolling(true);
+    setError(null);
+    try {
+      await enrolFree(ulid);
+      setOwned(true);
+      toast.success("You're in — enjoy!");
+    } catch (err) {
+      setError(
+        err instanceof ApiError ? err.message : "Couldn't enrol. Please try again.",
+      );
+    } finally {
+      setEnrolling(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <BackLink slug={slug} />
@@ -116,54 +162,109 @@ export function ProductView({ slug, ulid }: { slug: string; ulid: string }) {
           {product.description}
         </p>
 
-        {forSale && bumps.length > 0 ? (
-          <fieldset className="flex flex-col gap-2 rounded-lg border border-warmgray/70 bg-sage/8 p-3">
-            <legend className="px-1 text-[12px] font-semibold text-text-primary">
-              Add to your order
-            </legend>
-            {bumps.map((bump) => (
-              <label
-                key={bump.ulid}
-                className="flex cursor-pointer items-center gap-3 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  className="size-4 accent-teal"
-                  checked={selectedBumps.has(bump.ulid)}
-                  onChange={() => toggleBump(bump.ulid)}
-                />
-                <span className="flex-1 text-text-primary">{bump.title}</span>
-                <span className="font-semibold text-teal-text">
-                  +{formatPrice(bump.price_cents, bump.currency)}
-                </span>
-              </label>
-            ))}
-          </fieldset>
+        {isCourse && lessonCount > 0 ? (
+          <p className="flex items-center gap-1.5 text-[13px] text-text-secondary">
+            <BookOpen className="size-4" aria-hidden />
+            {lessonCount} lesson{lessonCount === 1 ? "" : "s"}
+            {product.course?.modules_count
+              ? ` · ${product.course.modules_count} module${product.course.modules_count === 1 ? "" : "s"}`
+              : ""}
+          </p>
         ) : null}
 
-        {forSale ? (
-          isAuthed ? (
-            <Button
-              type="button"
-              className="h-11"
-              onClick={buy}
-              disabled={buying}
-            >
-              {buying
-                ? "Redirecting to PayFast…"
-                : `Buy — ${formatPrice(total, product.currency)}`}
-            </Button>
-          ) : (
-            <Button asChild className="h-11">
-              <Link href={`/login?next=/shop/${slug}/${ulid}`}>
-                Sign in to buy
-              </Link>
-            </Button>
-          )
+        {owned ? (
+          <div className="flex flex-col gap-2">
+            <p className="rounded-lg bg-teal/10 px-3 py-2 text-center text-[13px] font-medium text-teal-text">
+              You own this — enjoy!
+            </p>
+            {isCourse ? (
+              <Button asChild className="h-11 gap-1.5">
+                <Link href={`/courses/${ulid}`}>
+                  <BookOpen className="size-4" aria-hidden />
+                  Continue learning
+                </Link>
+              </Button>
+            ) : isTool ? (
+              <ToolViewer product={product} />
+            ) : product.has_file ? (
+              <Button
+                type="button"
+                className="h-11 gap-1.5"
+                onClick={() => void downloadPurchase(ulid, product.title)}
+              >
+                <Download className="size-4" aria-hidden />
+                Download
+              </Button>
+            ) : null}
+          </div>
         ) : (
-          <p className="rounded-lg bg-sage/12 px-3 py-2 text-center text-[13px] text-text-secondary">
-            Contact the store to enquire about this {productTypeLabel(product.type).toLowerCase()}.
-          </p>
+          <>
+            {forSale && bumps.length > 0 ? (
+              <fieldset className="flex flex-col gap-2 rounded-lg border border-warmgray/70 bg-sage/8 p-3">
+                <legend className="px-1 text-[12px] font-semibold text-text-primary">
+                  Add to your order
+                </legend>
+                {bumps.map((bump) => (
+                  <label
+                    key={bump.ulid}
+                    className="flex cursor-pointer items-center gap-3 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-teal"
+                      checked={selectedBumps.has(bump.ulid)}
+                      onChange={() => toggleBump(bump.ulid)}
+                    />
+                    <span className="flex-1 text-text-primary">{bump.title}</span>
+                    <span className="font-semibold text-teal-text">
+                      +{formatPrice(bump.price_cents, bump.currency)}
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+            ) : null}
+
+            {!isAuthed ? (
+              <Button asChild className="h-11">
+                <Link href={`/login?next=/shop/${slug}/${ulid}`}>
+                  {isFree ? "Sign in to get this" : "Sign in to buy"}
+                </Link>
+              </Button>
+            ) : isFree ? (
+              <Button
+                type="button"
+                className="h-11"
+                onClick={enrol}
+                disabled={enrolling}
+              >
+                {enrolling
+                  ? "Enrolling…"
+                  : isCourse
+                    ? "Enrol free"
+                    : "Get it free"}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                className="h-11"
+                onClick={buy}
+                disabled={buying}
+              >
+                {buying
+                  ? "Redirecting to PayFast…"
+                  : `Buy — ${formatPrice(total, product.currency)}`}
+              </Button>
+            )}
+
+            {isCourse ? (
+              <Link
+                href={`/courses/${ulid}`}
+                className="text-center text-[13px] font-medium text-teal-text hover:underline"
+              >
+                Preview the course
+              </Link>
+            ) : null}
+          </>
         )}
 
         {error ? (
@@ -172,7 +273,7 @@ export function ProductView({ slug, ulid }: { slug: string; ulid: string }) {
           </p>
         ) : null}
 
-        {forSale ? (
+        {forSale && !owned ? (
           <p className="text-center text-[11px] text-text-secondary">
             Secure payment via PayFast. You&apos;ll get access right after paying.
           </p>

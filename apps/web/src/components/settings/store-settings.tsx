@@ -326,6 +326,14 @@ function ProductManager({
                 {p.is_published ? "" : " · draft"}
               </span>
             </span>
+            {p.type === "course" ? (
+              <Link
+                href={`/settings/courses/${p.ulid}`}
+                className="shrink-0 text-[12px] font-medium text-teal-text hover:underline"
+              >
+                Curriculum
+              </Link>
+            ) : null}
             {p.type === "digital_download" || p.type === "course" ? (
               <FileUpload
                 product={p}

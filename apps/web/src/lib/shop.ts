@@ -21,6 +21,28 @@ export function productTypeLabel(type: ProductType): string {
   return PRODUCT_TYPE_LABELS[type] ?? type;
 }
 
+/** Enrol free in a R0 product (grants the entitlement without PayFast). */
+export async function enrolFree(productUlid: string): Promise<void> {
+  await api.post(`/api/v1/shop/products/${productUlid}/enrol`);
+}
+
+/**
+ * Fetch a gated deliverable's raw text (e.g. an HTML tool) with the active
+ * profile header, so it can be rendered in a sandboxed iframe.
+ */
+export async function fetchOwnedFile(productUlid: string): Promise<string> {
+  const headers: Record<string, string> = {};
+  const profileId = api.getActiveProfileId();
+  if (profileId) headers["X-Profile-Id"] = profileId;
+
+  const res = await fetch(
+    `${api.API_URL}/api/v1/me/purchases/${productUlid}/download`,
+    { credentials: "include", headers },
+  );
+  if (!res.ok) throw new Error("Could not load this tool");
+  return res.text();
+}
+
 /**
  * Start a checkout: create a pending order, then redirect the browser to
  * PayFast by POSTing the signed field set as a self-submitting form (PayFast
@@ -64,6 +86,44 @@ export async function downloadPurchase(
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+}
+
+/** Download a course lesson's gated attachment via an authenticated fetch. */
+export async function downloadLessonAttachment(
+  lessonUlid: string,
+  filename: string,
+): Promise<void> {
+  const headers: Record<string, string> = { Accept: "application/octet-stream" };
+  const profileId = api.getActiveProfileId();
+  if (profileId) headers["X-Profile-Id"] = profileId;
+
+  const res = await fetch(
+    `${api.API_URL}/api/v1/me/courses/lessons/${lessonUlid}/attachment`,
+    { credentials: "include", headers },
+  );
+  if (!res.ok) throw new Error("Download failed");
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+/** Turn a YouTube/Vimeo watch URL into an embeddable src, else null. */
+export function videoEmbedUrl(url: string | null): string | null {
+  if (!url) return null;
+  const yt = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/,
+  );
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return null;
 }
 
 /** Build a hidden form for the PayFast fields and submit it (full redirect). */

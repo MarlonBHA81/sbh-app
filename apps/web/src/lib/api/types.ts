@@ -917,6 +917,9 @@ export interface Product {
   external_url: string | null;
   is_published: boolean;
   has_file?: boolean;
+  is_html_tool?: boolean;
+  is_free?: boolean;
+  course?: { modules_count?: number; lessons_count?: number };
   store?: { slug: string; name: string };
   cross_sells?: {
     ulid: string;
@@ -962,6 +965,37 @@ export interface CheckoutRedirect {
   order: string;
   process_url: string;
   fields: Record<string, string>;
+}
+
+/** A single lesson in a course outline (Shop P3). */
+export interface CourseOutlineLesson {
+  ulid: string;
+  title: string;
+  minutes: number | null;
+  is_preview: boolean;
+  has_attachment: boolean;
+  is_completed: boolean;
+}
+
+/** The browsable curriculum outline for a course product (Shop P3). */
+export interface CourseOutline {
+  product: { ulid: string; title: string; store: string | null };
+  owned: boolean;
+  progress: { completed: number; total: number };
+  modules: { ulid: string; title: string; lessons: CourseOutlineLesson[] }[];
+}
+
+/** Full lesson content once unlocked (Shop P3). */
+export interface CourseLesson {
+  ulid: string;
+  title: string;
+  body: string | null;
+  video_url: string | null;
+  has_attachment: boolean;
+  minutes: number | null;
+  is_preview: boolean;
+  is_completed: boolean;
+  next: { ulid: string; title: string } | null;
 }
 
 /** A cohort-based programme (V3 · LEARN). */
