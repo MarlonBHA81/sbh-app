@@ -5,6 +5,7 @@ namespace App\Services\Ads;
 use App\Models\AdEvent;
 use App\Models\AdSlot;
 use App\Models\Campaign;
+use App\Models\Masterclass;
 use App\Models\Opportunity;
 use App\Models\Profile;
 use Illuminate\Support\Facades\Cache;
@@ -115,6 +116,35 @@ class AdTrackingService
 
         AdEvent::create([
             'opportunity_id' => $opportunity->id,
+            'kind' => $kind,
+            'profile_id' => $viewer?->id,
+        ]);
+    }
+
+    /**
+     * Record an impression or click against a sponsored masterclass room (P4).
+     * Metrics-first: writes an ad_events row only — never any spend. Impressions
+     * are deduped per profile per room within a short window; clicks are never
+     * deduped. No-op unless the masterclass is actually sponsored.
+     */
+    public function trackSponsoredRoom(Masterclass $masterclass, string $kind, ?Profile $viewer): void
+    {
+        if (! $masterclass->is_sponsored) {
+            return;
+        }
+
+        if ($kind === AdEvent::KIND_IMPRESSION && $viewer !== null) {
+            $key = "ad-imp:{$viewer->ulid}:room:{$masterclass->ulid}";
+
+            if (Cache::has($key)) {
+                return;
+            }
+
+            Cache::put($key, true, now()->addMinutes(self::IMPRESSION_DEDUPE_MINUTES));
+        }
+
+        AdEvent::create([
+            'masterclass_id' => $masterclass->id,
             'kind' => $kind,
             'profile_id' => $viewer?->id,
         ]);

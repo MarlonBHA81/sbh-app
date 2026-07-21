@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TrackAdRequest;
 use App\Models\AdSlot;
 use App\Models\Campaign;
+use App\Models\Masterclass;
 use App\Models\Opportunity;
 use App\Models\Profile;
 use App\Services\Ads\AdTrackingService;
@@ -37,6 +38,12 @@ class AdTrackController extends Controller
 
             if ($opportunity !== null) {
                 $tracking->trackOpportunity($opportunity, $kind, $viewer);
+            }
+        } elseif ($ulid = $request->validated('room_ulid')) {
+            $room = Masterclass::query()->where('ulid', $ulid)->first();
+
+            if ($room !== null) {
+                $tracking->trackSponsoredRoom($room, $kind, $viewer);
             }
         }
 

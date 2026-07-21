@@ -20,6 +20,7 @@ class AdEvent extends Model
         'campaign_id',
         'ad_slot_id',
         'opportunity_id',
+        'masterclass_id',
         'kind',
         'profile_id',
     ];
@@ -37,6 +38,11 @@ class AdEvent extends Model
     public function opportunity(): BelongsTo
     {
         return $this->belongsTo(Opportunity::class);
+    }
+
+    public function masterclass(): BelongsTo
+    {
+        return $this->belongsTo(Masterclass::class);
     }
 
     public function profile(): BelongsTo

@@ -23,6 +23,7 @@ class MasterclassController extends Controller
         $classes = Masterclass::query()
             ->visible()
             ->withCount('participants')
+            ->orderByDesc('is_sponsored')
             ->orderBy('starts_at')
             ->limit(30)
             ->get();
@@ -89,6 +90,14 @@ class MasterclassController extends Controller
             'title' => $masterclass->title,
             'description' => $masterclass->description,
             'facilitator_name' => $masterclass->facilitator_name,
+            'brand_color' => $masterclass->brand_color,
+            'accent_color' => $masterclass->accent_color,
+            'logo_url' => $masterclass->logoUrl(),
+            'banner_url' => $masterclass->bannerUrl(),
+            'is_sponsored' => $masterclass->is_sponsored,
+            'sponsor_name' => $masterclass->sponsor_name,
+            'sponsor_url' => $masterclass->sponsor_url,
+            'sponsor_blurb' => $masterclass->sponsor_blurb,
             'starts_at' => $masterclass->starts_at->toIso8601String(),
             'ends_at' => $masterclass->ends_at->toIso8601String(),
             'status' => $masterclass->hasEnded()

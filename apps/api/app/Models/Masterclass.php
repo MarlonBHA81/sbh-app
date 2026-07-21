@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -21,6 +22,14 @@ class Masterclass extends Model
         'title',
         'description',
         'facilitator_name',
+        'brand_color',
+        'accent_color',
+        'logo_path',
+        'banner_path',
+        'is_sponsored',
+        'sponsor_name',
+        'sponsor_url',
+        'sponsor_blurb',
         'starts_at',
         'ends_at',
         'capacity',
@@ -36,6 +45,7 @@ class Masterclass extends Model
             'ends_at' => 'datetime',
             'capacity' => 'integer',
             'is_published' => 'boolean',
+            'is_sponsored' => 'boolean',
             'published_at' => 'datetime',
         ];
     }
@@ -91,5 +101,15 @@ class Masterclass extends Model
         }
 
         return max(0, $this->capacity - $this->participants()->count());
+    }
+
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path === null ? null : Storage::disk('public')->url($this->logo_path);
+    }
+
+    public function bannerUrl(): ?string
+    {
+        return $this->banner_path === null ? null : Storage::disk('public')->url($this->banner_path);
     }
 }

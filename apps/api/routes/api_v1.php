@@ -67,7 +67,9 @@ use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\ResourceController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\ShopController;
+use App\Http\Controllers\Api\V1\ShopSeenController;
 use App\Http\Controllers\Api\V1\StatusController;
+use App\Http\Controllers\Api\V1\StoreAnalyticsController;
 use App\Http\Controllers\Api\V1\StoreController;
 use App\Http\Controllers\Api\V1\StoreCourseController;
 use App\Http\Controllers\Api\V1\StoreProductController;
@@ -303,6 +305,8 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('shop/orders/{order}', [CheckoutController::class, 'show']);
     Route::get('me/orders', [OrderController::class, 'index']);
     Route::get('me/store/orders', [OrderController::class, 'storeOrders']);
+    Route::get('me/store/analytics', [StoreAnalyticsController::class, 'show']);
+    Route::post('shop/seen', [ShopSeenController::class, 'store'])->middleware('throttle:60,1');
     Route::get('me/purchases', [PurchaseController::class, 'index']);
     Route::get('me/purchases/{product}/download', [PurchaseController::class, 'download']);
 
