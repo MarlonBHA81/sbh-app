@@ -115,6 +115,11 @@ class Integrations extends Page
             'payfast_merchant_id' => (string) Setting::get('integrations.payments.payfast.merchant_id', ''),
             'payfast_merchant_key' => (string) Setting::get('integrations.payments.payfast.merchant_key', ''),
             'payfast_passphrase' => (string) Setting::get('integrations.payments.payfast.passphrase', ''),
+
+            'streaming_driver' => Setting::get('integrations.streaming.driver', config('streaming.driver')) ?: 'null',
+            'mux_token_id' => (string) Setting::get('integrations.streaming.mux.token_id', ''),
+            'mux_token_secret' => (string) Setting::get('integrations.streaming.mux.token_secret', ''),
+            'mux_webhook_secret' => (string) Setting::get('integrations.streaming.mux.webhook_secret', ''),
         ]);
     }
 
@@ -258,6 +263,34 @@ class Integrations extends Page
                             ->autocomplete(false)
                             ->helperText('Optional, but set it in PayFast and here to sign requests. Required once your account has a passphrase configured.'),
                     ]),
+
+                Section::make('Live streaming (Mux)')
+                    ->description('Host masterclass rooms live. The host streams via RTMP to Mux; members watch the HLS playback in the app.')
+                    ->schema([
+                        Select::make('streaming_driver')
+                            ->label('Streaming provider')
+                            ->options([
+                                'null' => 'Disabled',
+                                'mux' => 'Mux',
+                            ])
+                            ->default('null')
+                            ->required()
+                            ->helperText('Disabled hides the "Go live" controls.'),
+                        TextInput::make('mux_token_id')
+                            ->label('Mux access token ID')
+                            ->autocomplete(false),
+                        TextInput::make('mux_token_secret')
+                            ->label('Mux secret key')
+                            ->password()
+                            ->revealable()
+                            ->autocomplete(false),
+                        TextInput::make('mux_webhook_secret')
+                            ->label('Mux webhook signing secret')
+                            ->password()
+                            ->revealable()
+                            ->autocomplete(false)
+                            ->helperText('From the Mux webhook settings. Point the webhook at /api/v1/streaming/webhook.'),
+                    ]),
             ])
             ->statePath('data');
     }
@@ -292,6 +325,11 @@ class Integrations extends Page
         Setting::set('integrations.payments.payfast.merchant_id', (string) ($data['payfast_merchant_id'] ?? ''));
         Setting::set('integrations.payments.payfast.merchant_key', (string) ($data['payfast_merchant_key'] ?? ''));
         Setting::set('integrations.payments.payfast.passphrase', (string) ($data['payfast_passphrase'] ?? ''));
+
+        Setting::set('integrations.streaming.driver', (string) ($data['streaming_driver'] ?? 'null'));
+        Setting::set('integrations.streaming.mux.token_id', (string) ($data['mux_token_id'] ?? ''));
+        Setting::set('integrations.streaming.mux.token_secret', (string) ($data['mux_token_secret'] ?? ''));
+        Setting::set('integrations.streaming.mux.webhook_secret', (string) ($data['mux_webhook_secret'] ?? ''));
 
         Notification::make()->title('Integration settings saved')->success()->send();
     }

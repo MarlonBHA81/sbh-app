@@ -30,6 +30,7 @@ class IntegrationSettingsProvider extends ServiceProvider
             $this->applyMailSettings();
             $this->applyTenderSettings();
             $this->applyPaymentSettings();
+            $this->applyStreamingSettings();
         } catch (Throwable) {
             // Missing table / unavailable database during bootstrap: fall back
             // to the config file / env values untouched.
@@ -117,6 +118,28 @@ class IntegrationSettingsProvider extends ServiceProvider
             'integrations.payments.payfast.merchant_id' => 'payments.payfast.merchant_id',
             'integrations.payments.payfast.merchant_key' => 'payments.payfast.merchant_key',
             'integrations.payments.payfast.passphrase' => 'payments.payfast.passphrase',
+        ];
+
+        foreach ($map as $settingKey => $configKey) {
+            $value = Setting::get($settingKey);
+
+            if ($value !== null && $value !== '') {
+                config([$configKey => $value]);
+            }
+        }
+    }
+
+    private function applyStreamingSettings(): void
+    {
+        $driver = Setting::get('integrations.streaming.driver');
+        if ($driver !== null && $driver !== '') {
+            config(['streaming.driver' => $driver]);
+        }
+
+        $map = [
+            'integrations.streaming.mux.token_id' => 'streaming.mux.token_id',
+            'integrations.streaming.mux.token_secret' => 'streaming.mux.token_secret',
+            'integrations.streaming.mux.webhook_secret' => 'streaming.mux.webhook_secret',
         ];
 
         foreach ($map as $settingKey => $configKey) {

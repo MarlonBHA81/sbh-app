@@ -11,6 +11,9 @@ use App\Services\Payments\PayFastDriver;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Posts\PostTypeRegistry;
 use App\Services\SafetyService;
+use App\Services\Streaming\MuxStreamDriver;
+use App\Services\Streaming\NullStreamDriver;
+use App\Services\Streaming\StreamProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -44,6 +47,15 @@ class AppServiceProvider extends ServiceProvider
             return match (config('payments.driver')) {
                 'payfast' => new PayFastDriver(config('payments.payfast', [])),
                 default => new NullPaymentDriver,
+            };
+        });
+
+        // Live-streaming provider (ask #4) — resolved from config at resolution
+        // time so runtime integration settings can switch the provider.
+        $this->app->bind(StreamProvider::class, function () {
+            return match (config('streaming.driver')) {
+                'mux' => new MuxStreamDriver(config('streaming.mux', [])),
+                default => new NullStreamDriver,
             };
         });
     }

@@ -36,6 +36,7 @@ use App\Http\Controllers\Api\V1\GamificationController;
 use App\Http\Controllers\Api\V1\GeoController;
 use App\Http\Controllers\Api\V1\GoalController;
 use App\Http\Controllers\Api\V1\LessonController;
+use App\Http\Controllers\Api\V1\LiveSessionController;
 use App\Http\Controllers\Api\V1\MasterclassController;
 use App\Http\Controllers\Api\V1\MeController;
 use App\Http\Controllers\Api\V1\MediaController;
@@ -73,6 +74,7 @@ use App\Http\Controllers\Api\V1\StoreAnalyticsController;
 use App\Http\Controllers\Api\V1\StoreController;
 use App\Http\Controllers\Api\V1\StoreCourseController;
 use App\Http\Controllers\Api\V1\StoreProductController;
+use App\Http\Controllers\Api\V1\StreamingWebhookController;
 use App\Http\Controllers\Api\V1\TopicController;
 use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\WellnessController;
@@ -119,6 +121,9 @@ Route::get('business/categories', [BusinessCategoryController::class, 'index']);
 
 // PayFast ITN (Shop P2) — server-to-server payment confirmation; unauthenticated.
 Route::post('shop/payfast/itn', PayFastWebhookController::class)->middleware('throttle:60,1');
+
+// Streaming provider webhook (ask #4) — live-status updates; unauthenticated.
+Route::post('streaming/webhook', StreamingWebhookController::class)->middleware('throttle:120,1');
 
 // Public profile routes (viewer resolved when authenticated).
 Route::middleware('profile.active')->group(function () {
@@ -273,6 +278,12 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('masterclasses/{masterclass}', [MasterclassController::class, 'show']);
     Route::post('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'enrol']);
     Route::delete('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'withdraw']);
+    // Live streaming (ask #4): members watch; hosting is admin-only.
+    Route::get('masterclasses/{masterclass}/live', [LiveSessionController::class, 'show']);
+    Route::middleware('admin')->group(function () {
+        Route::post('masterclasses/{masterclass}/live', [LiveSessionController::class, 'store']);
+        Route::delete('masterclasses/{masterclass}/live', [LiveSessionController::class, 'end']);
+    });
 
     // Bite-size learning modules (V2 · LEARN) — short lessons that award XP.
     Route::get('learn/lessons', [LessonController::class, 'index']);

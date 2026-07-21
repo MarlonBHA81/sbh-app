@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -73,6 +74,20 @@ class Masterclass extends Model
         return $this->belongsToMany(Profile::class, 'masterclass_participants')
             ->withPivot('enrolled_at')
             ->withTimestamps();
+    }
+
+    public function liveSessions(): HasMany
+    {
+        return $this->hasMany(MasterclassLiveSession::class);
+    }
+
+    /** The current (not-ended) live session, newest first. */
+    public function currentLiveSession(): ?MasterclassLiveSession
+    {
+        return $this->liveSessions()
+            ->where('status', '!=', MasterclassLiveSession::STATUS_ENDED)
+            ->latest('id')
+            ->first();
     }
 
     /** Published and not finished — what members should see. */

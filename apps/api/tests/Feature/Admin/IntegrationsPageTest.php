@@ -59,6 +59,23 @@ test('saving stores the PayFast payment settings', function () {
         ->and(Setting::get('integrations.payments.platform_fee_percent'))->toBe('12');
 });
 
+test('saving stores the streaming settings', function () {
+    $admin = superAdminWithProfile();
+
+    Livewire::actingAs($admin)
+        ->test(Integrations::class)
+        ->fillForm([
+            'streaming_driver' => 'mux',
+            'mux_token_id' => 'mux-id',
+            'mux_token_secret' => 'mux-secret',
+        ])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(Setting::get('integrations.streaming.driver'))->toBe('mux')
+        ->and(Setting::get('integrations.streaming.mux.token_id'))->toBe('mux-id');
+});
+
 test('the model options list every available model for the driver', function () {
     expect(Integrations::modelsFor('anthropic'))
         ->toHaveKeys([
