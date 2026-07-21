@@ -135,6 +135,44 @@ test('the provider webhook flips the session to live', function () {
     expect($session->fresh()->status)->toBe(MasterclassLiveSession::STATUS_IDLE);
 });
 
+test('a ready recording becomes a replay for members', function () {
+    useMux();
+    $admin = adminWithProfile();
+    $room = liveRoom();
+    $this->actingAs($admin)->postJson("/api/v1/masterclasses/{$room->ulid}/live")->assertCreated();
+
+    // Mux says the recording asset is ready for this live stream.
+    $this->flushHeaders();
+    $this->postJson('/api/v1/streaming/webhook', [
+        'type' => 'video.asset.ready',
+        'data' => [
+            'id' => 'asset_1',
+            'live_stream_id' => 'stream_abc',
+            'playback_ids' => [['id' => 'replay_pid', 'policy' => 'public']],
+        ],
+    ])->assertOk();
+
+    $session = MasterclassLiveSession::where('masterclass_id', $room->id)->first();
+    expect($session->recording_playback_url)->toBe('https://stream.mux.com/replay_pid.m3u8');
+
+    // An enrolled member sees the replay.
+    $member = userWithProfile();
+    $room->participants()->attach($member->profiles()->first()->id, ['enrolled_at' => now()]);
+
+    $this->actingAs($member)
+        ->getJson("/api/v1/masterclasses/{$room->ulid}/live")
+        ->assertOk()
+        ->assertJsonPath('data.replays.0.recording_url', 'https://stream.mux.com/replay_pid.m3u8');
+
+    // A non-enrolled viewer does not.
+    $this->flushHeaders();
+    $viewer = userWithProfile();
+    $this->actingAs($viewer)
+        ->getJson("/api/v1/masterclasses/{$room->ulid}/live")
+        ->assertOk()
+        ->assertJsonCount(0, 'data.replays');
+});
+
 test('an admin can end the live stream', function () {
     useMux();
     $admin = adminWithProfile();

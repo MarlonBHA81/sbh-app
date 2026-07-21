@@ -26,6 +26,42 @@ class MessagingService
     public function __construct(private SafetyService $safety) {}
 
     /**
+     * Add a profile to a group as an active participant, rejoining if they had
+     * previously left (respects the [conversation_id, profile_id] unique key).
+     * Used to auto-join enrolled members to a masterclass room chat.
+     */
+    public function ensureMember(
+        Conversation $conversation,
+        Profile $profile,
+        string $role = ConversationParticipant::ROLE_MEMBER,
+    ): void {
+        $existing = $conversation->participants()->where('profile_id', $profile->id)->first();
+
+        if ($existing !== null) {
+            if ($existing->left_at !== null) {
+                $existing->update(['left_at' => null, 'joined_at' => now()]);
+            }
+
+            return;
+        }
+
+        $conversation->participants()->create([
+            'profile_id' => $profile->id,
+            'role' => $role,
+            'joined_at' => now(),
+        ]);
+    }
+
+    /** Mark a profile as having left a group (soft — preserves message authorship). */
+    public function removeMember(Conversation $conversation, Profile $profile): void
+    {
+        $conversation->participants()
+            ->where('profile_id', $profile->id)
+            ->whereNull('left_at')
+            ->update(['left_at' => now()]);
+    }
+
+    /**
      * Find an existing DM between the two profiles (rejoining it if the
      * creator had left) or create a fresh one. Enforces block + DM-privacy.
      */

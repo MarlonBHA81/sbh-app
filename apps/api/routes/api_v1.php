@@ -280,6 +280,8 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'withdraw']);
     // Live streaming (ask #4): members watch; hosting is admin-only.
     Route::get('masterclasses/{masterclass}/live', [LiveSessionController::class, 'show']);
+    Route::post('masterclasses/{masterclass}/live/react', [LiveSessionController::class, 'react'])
+        ->middleware('throttle:60,1');
     Route::middleware('admin')->group(function () {
         Route::post('masterclasses/{masterclass}/live', [LiveSessionController::class, 'store']);
         Route::delete('masterclasses/{masterclass}/live', [LiveSessionController::class, 'end']);

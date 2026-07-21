@@ -26,9 +26,11 @@ interface StreamProvider
     public function deleteLiveStream(string $providerStreamId): void;
 
     /**
-     * Parse (and verify) a provider status webhook.
+     * Parse (and verify) a provider webhook. Returns a live-status change and/or
+     * a ready recording (replay) keyed to a live stream, or null when the event
+     * is invalid/unrecognised.
      *
-     * @return array{provider_stream_id: string, status: string}|null null when invalid/unrecognised
+     * @return array{provider_stream_id: string, status?: string, recording_playback_url?: string}|null
      */
     public function parseWebhook(Request $request): ?array;
 }

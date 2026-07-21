@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -37,6 +38,7 @@ class Masterclass extends Model
         'is_published',
         'published_at',
         'created_by',
+        'conversation_id',
     ];
 
     protected function casts(): array
@@ -79,6 +81,45 @@ class Masterclass extends Model
     public function liveSessions(): HasMany
     {
         return $this->hasMany(MasterclassLiveSession::class);
+    }
+
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class);
+    }
+
+    /**
+     * Ensure the room's group chat exists (pre-approved, so it's usable
+     * immediately), owned by the masterclass's creator when known, else by the
+     * given fallback profile.
+     */
+    public function ensureRoomConversation(Profile $fallbackOwner): Conversation
+    {
+        if ($this->conversation_id !== null && $this->conversation !== null) {
+            return $this->conversation;
+        }
+
+        $owner = ($this->created_by !== null ? User::find($this->created_by)?->personalProfile : null)
+            ?? $fallbackOwner;
+
+        $conversation = Conversation::create([
+            'kind' => Conversation::KIND_GROUP,
+            'title' => Str::limit($this->title, 78, ''),
+            'created_by_profile_id' => $owner->id,
+            'approval_status' => Conversation::APPROVAL_APPROVED,
+            'approved_at' => now(),
+        ]);
+
+        $conversation->participants()->create([
+            'profile_id' => $owner->id,
+            'role' => ConversationParticipant::ROLE_OWNER,
+            'joined_at' => now(),
+        ]);
+
+        $this->forceFill(['conversation_id' => $conversation->id])->save();
+        $this->setRelation('conversation', $conversation);
+
+        return $conversation;
     }
 
     /** The current (not-ended) live session, newest first. */

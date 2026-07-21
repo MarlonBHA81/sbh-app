@@ -69,6 +69,21 @@ class MuxStreamDriver implements StreamProvider
         }
 
         $type = $request->input('type');
+
+        // A recording became available: keyed to the live stream via live_stream_id.
+        if ($type === 'video.asset.ready' && $request->input('data.live_stream_id')) {
+            $playbackId = $request->input('data.playback_ids.0.id');
+
+            if (! is_string($playbackId) || $playbackId === '') {
+                return null;
+            }
+
+            return [
+                'provider_stream_id' => (string) $request->input('data.live_stream_id'),
+                'recording_playback_url' => $this->config['playback_base'].'/'.$playbackId.'.m3u8',
+            ];
+        }
+
         $streamId = $request->input('data.id');
 
         if (! is_string($streamId) || $streamId === '') {

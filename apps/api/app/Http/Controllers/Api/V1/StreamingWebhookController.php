@@ -20,20 +20,35 @@ class StreamingWebhookController extends Controller
         $event = $provider->parseWebhook($request);
 
         if ($event !== null) {
+            // A recording can land after the stream has ended, so it matches any
+            // (even ended) session; a status change only applies to a live one.
+            $recording = $event['recording_playback_url'] ?? null;
+
             $session = MasterclassLiveSession::query()
                 ->where('provider_stream_id', $event['provider_stream_id'])
-                ->where('status', '!=', MasterclassLiveSession::STATUS_ENDED)
+                ->when($recording === null, fn ($q) => $q->where('status', '!=', MasterclassLiveSession::STATUS_ENDED))
                 ->latest('id')
                 ->first();
 
             if ($session !== null) {
-                $updates = ['status' => $event['status']];
+                $updates = [];
 
-                if ($event['status'] === MasterclassLiveSession::STATUS_ACTIVE && $session->started_at === null) {
-                    $updates['started_at'] = now();
+                if ($recording !== null) {
+                    $updates['recording_playback_url'] = $recording;
+                    $updates['recording_ready_at'] = now();
                 }
 
-                $session->update($updates);
+                if (isset($event['status'])) {
+                    $updates['status'] = $event['status'];
+
+                    if ($event['status'] === MasterclassLiveSession::STATUS_ACTIVE && $session->started_at === null) {
+                        $updates['started_at'] = now();
+                    }
+                }
+
+                if ($updates !== []) {
+                    $session->update($updates);
+                }
             }
         }
 

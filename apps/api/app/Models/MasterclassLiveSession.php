@@ -29,6 +29,8 @@ class MasterclassLiveSession extends Model
         'ingest_url',
         'playback_id',
         'playback_url',
+        'recording_playback_url',
+        'recording_ready_at',
         'scheduled_at',
         'started_at',
         'ended_at',
@@ -41,6 +43,7 @@ class MasterclassLiveSession extends Model
             'scheduled_at' => 'datetime',
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
+            'recording_ready_at' => 'datetime',
         ];
     }
 

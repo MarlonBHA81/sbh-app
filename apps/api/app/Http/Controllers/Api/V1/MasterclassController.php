@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Masterclass;
 use App\Models\Profile;
+use App\Services\MessagingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -42,15 +43,15 @@ class MasterclassController extends Controller
         abort_unless($masterclass->is_published, 404);
 
         $viewer = $this->activeProfile($request);
-        $masterclass->loadCount('participants');
+        $masterclass->loadCount('participants')->load('conversation');
 
         $enrolled = $masterclass->participants()->where('profile_id', $viewer->id)->exists();
 
         return response()->json(['data' => $this->serialize($masterclass, $enrolled)]);
     }
 
-    /** Enrol the member into the cohort. */
-    public function enrol(Request $request, Masterclass $masterclass): JsonResponse
+    /** Enrol the member into the cohort (and its room chat). */
+    public function enrol(Request $request, Masterclass $masterclass, MessagingService $messaging): JsonResponse
     {
         abort_unless($masterclass->is_published, 404);
         abort_if($masterclass->hasEnded(), 422, 'This masterclass has already finished.');
@@ -65,17 +66,25 @@ class MasterclassController extends Controller
             $masterclass->participants()->attach($viewer->id, ['enrolled_at' => now()]);
         }
 
-        $masterclass->loadCount('participants');
+        // Join the room chat (rejoin-safe).
+        $conversation = $masterclass->ensureRoomConversation($viewer);
+        $messaging->ensureMember($conversation, $viewer);
+
+        $masterclass->loadCount('participants')->load('conversation');
 
         return response()->json(['data' => $this->serialize($masterclass, true)], 201);
     }
 
-    /** Withdraw from the cohort. */
-    public function withdraw(Request $request, Masterclass $masterclass): Response
+    /** Withdraw from the cohort (and its room chat). */
+    public function withdraw(Request $request, Masterclass $masterclass, MessagingService $messaging): Response
     {
         $viewer = $this->activeProfile($request);
 
         $masterclass->participants()->detach($viewer->id);
+
+        if ($masterclass->conversation !== null) {
+            $messaging->removeMember($masterclass->conversation, $viewer);
+        }
 
         return response()->noContent();
     }
@@ -107,6 +116,10 @@ class MasterclassController extends Controller
             'seats_left' => $masterclass->seatsLeft(),
             'participants_count' => (int) ($masterclass->participants_count ?? 0),
             'enrolled' => $enrolled,
+            // Room chat conversation — only exposed to enrolled members (loaded on show).
+            'chat_conversation' => ($enrolled && $masterclass->relationLoaded('conversation'))
+                ? $masterclass->conversation?->ulid
+                : null,
         ];
     }
 
