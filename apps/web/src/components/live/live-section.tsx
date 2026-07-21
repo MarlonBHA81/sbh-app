@@ -1,14 +1,15 @@
 "use client";
 
-import { Copy, Radio, Video } from "lucide-react";
+import { Copy, PlayCircle, Radio, Video } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { HlsPlayer } from "@/components/live/hls-player";
+import { RoomChat } from "@/components/live/room-chat";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
-import type { LiveState } from "@/lib/api/types";
+import type { LiveReplay, LiveState } from "@/lib/api/types";
 
 /**
  * Live streaming for a masterclass room (ask #4). Members watch the HLS stream;
@@ -76,12 +77,20 @@ export function LiveSection({ ulid }: { ulid: string }) {
 
   if (!state) return <Skeleton className="h-40 w-full rounded-xl" />;
 
-  // Nothing to show unless a stream exists or the viewer can host.
-  if (!state.enabled && !state.session) return null;
+  // Nothing to show unless there's a stream, chat, replays, or the viewer hosts.
+  if (
+    !state.enabled &&
+    !state.session &&
+    !state.chat_conversation &&
+    state.replays.length === 0
+  ) {
+    return null;
+  }
 
   const session = state.session;
 
   return (
+    <div className="flex flex-col gap-4">
     <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
       <div className="flex items-center gap-2">
         <Radio
@@ -146,6 +155,59 @@ export function LiveSection({ ulid }: { ulid: string }) {
           )}
         </div>
       ) : null}
+    </section>
+
+    {/* Room chat (+ live reactions) for participants. */}
+    {state.chat_conversation ? (
+      <RoomChat
+        conversationUlid={state.chat_conversation}
+        masterclassUlid={ulid}
+      />
+    ) : null}
+
+    {/* Replays of past sessions. */}
+    {state.replays.length > 0 ? (
+      <Replays replays={state.replays} />
+    ) : null}
+    </div>
+  );
+}
+
+function Replays({ replays }: { replays: LiveReplay[] }) {
+  const [active, setActive] = useState<LiveReplay | null>(null);
+
+  return (
+    <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
+      <div className="flex items-center gap-2">
+        <PlayCircle className="size-4 text-text-secondary" aria-hidden />
+        <h2 className="font-heading text-[15px] font-semibold text-text-primary">
+          Replays
+        </h2>
+      </div>
+      {active ? <HlsPlayer src={active.recording_url} /> : null}
+      <ul className="flex flex-col gap-1.5">
+        {replays.map((r) => (
+          <li key={r.ulid}>
+            <button
+              type="button"
+              onClick={() => setActive(r)}
+              className={`flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-[13px] ${
+                active?.ulid === r.ulid
+                  ? "bg-teal/12 text-teal-text"
+                  : "text-text-secondary hover:bg-sage/10"
+              }`}
+            >
+              <PlayCircle className="size-4 shrink-0" aria-hidden />
+              <span className="flex-1 truncate">{r.title ?? "Session"}</span>
+              {r.recorded_at ? (
+                <span className="shrink-0 text-[11px]">
+                  {new Date(r.recorded_at).toLocaleDateString()}
+                </span>
+              ) : null}
+            </button>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

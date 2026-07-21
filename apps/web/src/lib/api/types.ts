@@ -1033,12 +1033,22 @@ export interface LiveSession {
   stream_key?: string | null; // host only
 }
 
+/** A past session's recording (replay) available to watch (ask #4). */
+export interface LiveReplay {
+  ulid: string;
+  title: string | null;
+  recording_url: string;
+  recorded_at: string | null;
+}
+
 /** The live state of a masterclass room for the current viewer (ask #4). */
 export interface LiveState {
   enabled: boolean;
   is_host: boolean;
   can_watch: boolean;
+  chat_conversation: string | null;
   session: LiveSession | null;
+  replays: LiveReplay[];
 }
 
 /** Vendor store analytics payload (Shop P4). */
