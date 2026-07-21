@@ -21,6 +21,16 @@ export function productTypeLabel(type: ProductType): string {
   return PRODUCT_TYPE_LABELS[type] ?? type;
 }
 
+/** Fire-and-forget shop view tracking (store + products) for vendor analytics. */
+export function trackShopView(target: {
+  store?: string;
+  products?: string[];
+}): void {
+  api.post("/api/v1/shop/seen", target).catch(() => {
+    // View tracking must never surface an error to the shopper.
+  });
+}
+
 /** Enrol free in a R0 product (grants the entitlement without PayFast). */
 export async function enrolFree(productUlid: string): Promise<void> {
   await api.post(`/api/v1/shop/products/${productUlid}/enrol`);

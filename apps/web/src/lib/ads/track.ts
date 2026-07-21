@@ -12,6 +12,7 @@ interface TrackTarget {
   campaign_ulid?: string;
   slot_key?: string;
   opportunity_ulid?: string;
+  room_ulid?: string;
 }
 
 /** Subjects whose impression has already been counted this session. */
@@ -65,4 +66,17 @@ export function trackOpportunityImpression(opportunityUlid: string): void {
 /** Track a click on a sponsored opportunity (not deduped) — V3. */
 export function trackOpportunityClick(opportunityUlid: string): void {
   send("click", { opportunity_ulid: opportunityUlid });
+}
+
+/** Track a sponsored-room impression at most once per session (Shop P4). */
+export function trackSponsoredRoomImpression(roomUlid: string): void {
+  const key = `room:${roomUlid}`;
+  if (firedImpressions.has(key)) return;
+  firedImpressions.add(key);
+  send("impression", { room_ulid: roomUlid });
+}
+
+/** Track a click on a sponsored room's sponsor link (not deduped) — Shop P4. */
+export function trackSponsoredRoomClick(roomUlid: string): void {
+  send("click", { room_ulid: roomUlid });
 }

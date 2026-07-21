@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import type { Product, Store } from "@/lib/api/types";
-import { formatPrice, productTypeLabel } from "@/lib/shop";
+import { formatPrice, productTypeLabel, trackShopView } from "@/lib/shop";
 
 /** A vendor's branded storefront (Shop P1). */
 export function StorefrontView({ slug }: { slug: string }) {
@@ -29,6 +29,7 @@ export function StorefrontView({ slug }: { slug: string }) {
         if (!cancelled) {
           setStore(s);
           setProducts(p);
+          trackShopView({ store: slug, products: p.slice(0, 20).map((x) => x.ulid) });
         }
       } catch {
         if (!cancelled) setMissing(true);

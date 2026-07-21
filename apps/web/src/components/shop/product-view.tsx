@@ -18,6 +18,7 @@ import {
   formatPrice,
   productTypeLabel,
   startCheckout,
+  trackShopView,
 } from "@/lib/shop";
 
 /** Product detail (Shop P2). "Buy" starts a PayFast checkout with order bumps. */
@@ -36,7 +37,9 @@ export function ProductView({ slug, ulid }: { slug: string; ulid: string }) {
     api
       .get<{ data: Product }>(`/api/v1/shop/products/${ulid}`)
       .then((res) => {
-        if (!cancelled) setProduct(res.data);
+        if (cancelled) return;
+        setProduct(res.data);
+        trackShopView({ store: slug, products: [ulid] });
       })
       .catch(() => {
         if (!cancelled) setMissing(true);
@@ -44,7 +47,7 @@ export function ProductView({ slug, ulid }: { slug: string; ulid: string }) {
     return () => {
       cancelled = true;
     };
-  }, [ulid]);
+  }, [ulid, slug]);
 
   useEffect(() => {
     if (!isAuthed) return;

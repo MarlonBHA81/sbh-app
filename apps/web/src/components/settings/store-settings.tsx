@@ -26,6 +26,8 @@ import * as api from "@/lib/api/client";
 import type { Product, ProductType, Store } from "@/lib/api/types";
 import { formatPrice } from "@/lib/shop";
 
+import { StoreAnalytics } from "./store-analytics";
+
 interface Earnings {
   orders_count: number;
   gross_cents: number;
@@ -89,6 +91,7 @@ export function StoreSettings() {
               <ExternalLink className="size-3.5" aria-hidden />
             </Link>
             {earnings ? <EarningsSummary earnings={earnings} /> : null}
+            <StoreAnalytics />
             <ProductManager
               products={products}
               onChange={setProducts}

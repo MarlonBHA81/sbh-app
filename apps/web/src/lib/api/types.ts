@@ -1004,6 +1004,14 @@ export interface Masterclass {
   title: string;
   description: string;
   facilitator_name: string | null;
+  brand_color?: string | null;
+  accent_color?: string | null;
+  logo_url?: string | null;
+  banner_url?: string | null;
+  is_sponsored?: boolean;
+  sponsor_name?: string | null;
+  sponsor_url?: string | null;
+  sponsor_blurb?: string | null;
   starts_at: string;
   ends_at: string;
   status: "upcoming" | "active" | "ended";
@@ -1011,6 +1019,27 @@ export interface Masterclass {
   seats_left: number | null;
   participants_count: number;
   enrolled: boolean;
+}
+
+/** Vendor store analytics payload (Shop P4). */
+export interface StoreAnalytics {
+  days: number;
+  series: {
+    date: string;
+    views: number;
+    orders: number;
+    gross_cents: number;
+    earnings_cents: number;
+  }[];
+  totals: {
+    views: number;
+    orders: number;
+    gross_cents: number;
+    earnings_cents: number;
+    conversion_pct: number;
+    currency: string;
+  };
+  top_products: { ulid: string; title: string; views: number }[];
 }
 
 /** One turn in an AI Coach conversation (V2 · LEARN). */
