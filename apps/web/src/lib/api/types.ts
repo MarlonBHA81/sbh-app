@@ -1021,6 +1021,26 @@ export interface Masterclass {
   enrolled: boolean;
 }
 
+/** A masterclass live-stream session (ask #4). */
+export interface LiveSession {
+  ulid: string;
+  status: "idle" | "active" | "ended";
+  is_live: boolean;
+  title: string | null;
+  started_at: string | null;
+  playback_url: string | null;
+  ingest_url?: string | null; // host only
+  stream_key?: string | null; // host only
+}
+
+/** The live state of a masterclass room for the current viewer (ask #4). */
+export interface LiveState {
+  enabled: boolean;
+  is_host: boolean;
+  can_watch: boolean;
+  session: LiveSession | null;
+}
+
 /** Vendor store analytics payload (Shop P4). */
 export interface StoreAnalytics {
   days: number;

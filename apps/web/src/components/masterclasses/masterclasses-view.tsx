@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -164,9 +165,12 @@ function RoomCard({
             )}
           </span>
           <div className="flex flex-1 flex-col gap-1">
-            <h2 className="font-heading text-[15px] font-semibold text-text-primary">
+            <Link
+              href={`/masterclasses/${m.ulid}`}
+              className="font-heading text-[15px] font-semibold text-text-primary hover:underline"
+            >
               {m.title}
-            </h2>
+            </Link>
             {m.facilitator_name ? (
               <span className="text-[12px] text-text-secondary">
                 with {m.facilitator_name}
