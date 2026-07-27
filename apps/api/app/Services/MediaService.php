@@ -72,7 +72,10 @@ class MediaService
             ->cover(self::AVATAR_SIZE, self::AVATAR_SIZE)
             ->encode(new WebpEncoder(quality: config('media.webp_quality')));
 
-        $path = 'media/avatars/'.$profile->ulid.'.webp';
+        // A unique filename per upload guarantees a fresh URL when the photo is
+        // replaced, so browsers (and the <img> src) never serve the cached old
+        // image. The previous file is deleted in replaceProfileImage().
+        $path = 'media/avatars/'.$profile->ulid.'-'.Str::lower(Str::random(10)).'.webp';
 
         $this->replaceProfileImage($profile, 'avatar_path', $path, (string) $encoded);
 
@@ -89,7 +92,7 @@ class MediaService
             ->cover(self::COVER_WIDTH, self::COVER_HEIGHT)
             ->encode(new WebpEncoder(quality: config('media.webp_quality')));
 
-        $path = 'media/covers/'.$profile->ulid.'.webp';
+        $path = 'media/covers/'.$profile->ulid.'-'.Str::lower(Str::random(10)).'.webp';
 
         $this->replaceProfileImage($profile, 'cover_path', $path, (string) $encoded);
 

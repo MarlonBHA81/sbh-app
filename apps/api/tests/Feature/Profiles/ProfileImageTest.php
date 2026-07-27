@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\Profile;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -16,7 +16,35 @@ test('a user can upload an avatar for their profile', function () {
         ->assertOk();
 
     expect($response->json('data.avatar_url'))->not->toBeNull();
-    Storage::disk('public')->assertExists("media/avatars/{$profile->ulid}.webp");
+
+    $path = $profile->fresh()->avatar_path;
+    expect($path)->toStartWith("media/avatars/{$profile->ulid}-");
+    Storage::disk('public')->assertExists($path);
+});
+
+test('replacing an avatar yields a new url and deletes the old file', function () {
+    Storage::fake('public');
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+
+    $first = $this->actingAs($user)
+        ->post("/api/v1/me/profiles/{$profile->ulid}/avatar", [
+            'image' => UploadedFile::fake()->image('a.jpg', 500, 500),
+        ])->assertOk()->json('data.avatar_url');
+    $firstPath = $profile->fresh()->avatar_path;
+
+    $second = $this->actingAs($user)
+        ->post("/api/v1/me/profiles/{$profile->ulid}/avatar", [
+            'image' => UploadedFile::fake()->image('b.jpg', 500, 500),
+        ])->assertOk()->json('data.avatar_url');
+    $secondPath = $profile->fresh()->avatar_path;
+
+    // A distinct filename → a distinct URL, so the browser never shows the old
+    // cached photo after an edit; the previous file is cleaned up.
+    expect($secondPath)->not->toBe($firstPath)
+        ->and($second)->not->toBe($first);
+    Storage::disk('public')->assertMissing($firstPath);
+    Storage::disk('public')->assertExists($secondPath);
 });
 
 test('a user cannot upload an avatar for a profile they do not own', function () {
@@ -46,7 +74,7 @@ test('non-image uploads are rejected', function () {
 test('a business profile can upload a cover banner', function () {
     Storage::fake('public');
     $user = userWithProfile();
-    $business = \App\Models\Profile::factory()->for($user)->business()->create();
+    $business = Profile::factory()->for($user)->business()->create();
 
     $this->actingAs($user)
         ->post("/api/v1/me/profiles/{$business->ulid}/cover", [
@@ -55,7 +83,9 @@ test('a business profile can upload a cover banner', function () {
         ->assertOk()
         ->assertJsonPath('data.cover_url', fn ($url) => $url !== null);
 
-    Storage::disk('public')->assertExists("media/covers/{$business->ulid}.webp");
+    $path = $business->fresh()->cover_path;
+    expect($path)->toStartWith("media/covers/{$business->ulid}-");
+    Storage::disk('public')->assertExists($path);
 });
 
 test('a personal profile cannot upload a cover banner', function () {
@@ -77,11 +107,12 @@ test('an avatar can be removed', function () {
     $this->actingAs($user)->post("/api/v1/me/profiles/{$profile->ulid}/avatar", [
         'image' => UploadedFile::fake()->image('me.jpg', 400, 400),
     ])->assertOk();
+    $path = $profile->fresh()->avatar_path;
 
     $this->actingAs($user)
         ->deleteJson("/api/v1/me/profiles/{$profile->ulid}/avatar")
         ->assertOk()
         ->assertJsonPath('data.avatar_url', null);
 
-    Storage::disk('public')->assertMissing("media/avatars/{$profile->ulid}.webp");
+    Storage::disk('public')->assertMissing($path);
 });
