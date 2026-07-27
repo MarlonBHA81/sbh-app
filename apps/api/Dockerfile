@@ -31,4 +31,7 @@ RUN composer dump-autoload --optimize --no-dev \
     && chown -R www-data:www-data storage bootstrap/cache
 COPY docker/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY docker/supervisord.conf /etc/supervisord.conf
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+# Re-assert storage ownership at startup: the media-storage named volume mounts
+# over /app/storage/app *after* the build-time chown, leaving it root-owned so
+# php-fpm (www-data) can't write uploads. Fix it every boot, then run supervisor.
+CMD ["sh", "-c", "chown -R www-data:www-data storage bootstrap/cache 2>/dev/null; exec supervisord -c /etc/supervisord.conf"]
