@@ -113,14 +113,23 @@ class MediaService
 
     /**
      * Write the encoded bytes, delete the previous file if the path changed,
-     * and persist the column. A stable per-profile path means re-uploads
-     * overwrite in place (and dodge CDN cache with a query bump elsewhere).
+     * and persist the column. The public disk is configured with
+     * `'throw' => false`, so a failed write (e.g. a root-owned storage volume
+     * php-fpm can't write to) returns false instead of raising — which would
+     * silently leave the DB pointing at a file that never landed and serve a
+     * broken image forever. Guard on the return value so the failure surfaces
+     * as a 500 and the DB column is only updated once the bytes are on disk.
      */
     private function replaceProfileImage(Profile $profile, string $column, string $path, string $bytes): void
     {
         $previous = $profile->getAttribute($column);
 
-        Storage::disk('public')->put($path, $bytes);
+        if (Storage::disk('public')->put($path, $bytes) === false) {
+            throw new \RuntimeException(
+                "Failed to write image to public disk at [{$path}] — check that ".
+                'storage/app/public is writable by the web server user.'
+            );
+        }
 
         if ($previous && $previous !== $path) {
             Storage::disk('public')->delete($previous);

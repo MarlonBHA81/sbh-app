@@ -47,6 +47,29 @@ test('replacing an avatar yields a new url and deletes the old file', function (
     Storage::disk('public')->assertExists($secondPath);
 });
 
+test('a failed disk write surfaces as an error instead of a silent broken image', function () {
+    $user = userWithProfile();
+    $profile = $user->personalProfile;
+
+    // The public disk is configured with 'throw' => false, so a write to an
+    // unwritable volume (e.g. a root-owned prod media volume php-fpm can't
+    // touch) returns false. That must NOT be swallowed into a saved DB path
+    // pointing at a file that never landed — otherwise the app serves a broken
+    // image forever. Simulate the failure and assert the column stays null.
+    $disk = Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+    $disk->shouldReceive('put')->andReturn(false);
+    $disk->shouldReceive('delete')->andReturn(true);
+    Storage::shouldReceive('disk')->with('public')->andReturn($disk);
+
+    $this->actingAs($user)
+        ->post("/api/v1/me/profiles/{$profile->ulid}/avatar", [
+            'image' => UploadedFile::fake()->image('me.jpg', 400, 400),
+        ])
+        ->assertStatus(500);
+
+    expect($profile->fresh()->avatar_path)->toBeNull();
+});
+
 test('a user cannot upload an avatar for a profile they do not own', function () {
     Storage::fake('public');
     $owner = userWithProfile();
