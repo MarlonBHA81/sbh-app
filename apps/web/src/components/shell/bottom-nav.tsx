@@ -50,7 +50,9 @@ export function BottomNav() {
               )}
             >
               <Icon className="size-5" strokeWidth={active ? 2.5 : 2} aria-hidden />
-              <span className="font-heading text-[10px] font-medium">{label}</span>
+              <span className="max-w-full truncate font-heading text-[10px] font-medium whitespace-nowrap">
+                {label}
+              </span>
             </Link>
           );
         })}
@@ -67,7 +69,7 @@ export function BottomNav() {
             profile={activeProfile}
             className={cn("size-5", !profileActive && "opacity-70")}
           />
-          <span className="font-heading text-[10px] font-medium">
+          <span className="max-w-full truncate font-heading text-[10px] font-medium whitespace-nowrap">
             {t("profile")}
           </span>
         </Link>

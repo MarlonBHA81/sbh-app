@@ -4,6 +4,7 @@ import { Check, Flame, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { HomeCard, type HomeCardTier } from "@/components/home/home-card";
 import { Button } from "@/components/ui/button";
 import * as api from "@/lib/api/client";
 import type { DailyChallenge } from "@/lib/api/types";
@@ -13,7 +14,7 @@ import type { DailyChallenge } from "@/lib/api/types";
  * it awards XP and advances the streak — a preview of the Daily Home dashboard
  * and the small-actions-create-momentum idea.
  */
-export function DailyChallengeCard() {
+export function DailyChallengeCard({ tier }: { tier?: HomeCardTier }) {
   const [daily, setDaily] = useState<DailyChallenge | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -56,22 +57,20 @@ export function DailyChallengeCard() {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-full bg-teal/12 text-teal-text">
-          <Target className="size-4" aria-hidden />
-        </span>
-        <h2 className="font-heading text-[15px] font-semibold text-text-primary">
-          Today&apos;s challenge
-        </h2>
-        {streak.current_days > 0 ? (
-          <span className="ms-auto flex items-center gap-1 rounded-full bg-teal/12 px-2 py-0.5 text-[11px] font-medium text-teal-text">
+    <HomeCard
+      tier={tier}
+      tone="teal"
+      icon={Target}
+      title="Today's challenge"
+      aside={
+        streak.current_days > 0 ? (
+          <span className="flex items-center gap-1 rounded-full bg-teal/12 px-2 py-0.5 text-[11px] font-medium text-teal-text">
             <Flame className="size-3" aria-hidden />
             {streak.current_days}-day
           </span>
-        ) : null}
-      </div>
-
+        ) : null
+      }
+    >
       <div className="flex flex-col gap-0.5">
         <p className="text-[15px] font-medium text-text-primary">{action.title}</p>
         {action.description ? (
@@ -94,6 +93,6 @@ export function DailyChallengeCard() {
           {busy ? "Saving…" : "Mark as done"}
         </Button>
       )}
-    </section>
+    </HomeCard>
   );
 }

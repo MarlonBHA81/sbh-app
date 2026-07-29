@@ -59,7 +59,7 @@ export function MaintenanceBanner() {
   return (
     <div
       role="status"
-      className="flex items-start gap-3 border-b border-amber-300 bg-amber-50 px-4 py-2.5 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+      className="flex items-start gap-3 border-b border-gold/40 bg-gold/10 px-4 py-2.5 text-gold-text"
     >
       <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
       <p className="min-w-0 flex-1 text-sm">{message}</p>
@@ -67,7 +67,7 @@ export function MaintenanceBanner() {
         type="button"
         aria-label="Dismiss"
         onClick={dismiss}
-        className="-my-1 shrink-0 rounded-md p-1 transition-colors hover:bg-amber-100 dark:hover:bg-amber-500/20"
+        className="-my-1 shrink-0 rounded-md p-1 transition-colors hover:bg-gold/20"
       >
         <X className="size-4" aria-hidden />
       </button>

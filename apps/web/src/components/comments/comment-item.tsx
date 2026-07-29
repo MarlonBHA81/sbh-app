@@ -220,7 +220,7 @@ export function CommentItem({
               <span className="truncate">{comment.profile.name}</span>
               {comment.profile.is_verified ? (
                 <BadgeCheck
-                  className="size-3.5 shrink-0 text-sky-500"
+                  className="size-3.5 shrink-0 text-teal-text"
                   aria-label="Verified"
                 />
               ) : null}
@@ -279,8 +279,8 @@ export function CommentItem({
                   aria-pressed={vote === 1}
                   onClick={() => void castVote(1)}
                   className={cn(
-                    "flex min-h-9 items-center rounded-md px-1 transition-colors hover:text-emerald-600",
-                    vote === 1 && "text-emerald-600",
+                    "flex min-h-9 items-center rounded-md px-1 transition-colors hover:text-sage-text",
+                    vote === 1 && "text-sage-text",
                   )}
                 >
                   <ArrowBigUp
@@ -291,7 +291,7 @@ export function CommentItem({
                 <span
                   className={cn(
                     "min-w-3 text-center text-xs tabular-nums",
-                    vote === 1 && "text-emerald-600",
+                    vote === 1 && "text-sage-text",
                     vote === -1 && "text-red-600",
                   )}
                 >

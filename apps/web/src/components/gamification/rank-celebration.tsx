@@ -74,7 +74,7 @@ export function RankCelebrationDialog({
       >
         {rank ? <ConfettiField /> : null}
         <div className="relative flex flex-col items-center gap-4 py-2">
-          <span className="sbh-rank-icon flex size-24 items-center justify-center rounded-full bg-amber-500/15 text-5xl">
+          <span className="sbh-rank-icon flex size-24 items-center justify-center rounded-full bg-gold/15 text-5xl">
             <span aria-hidden>{rank?.icon ?? "🏆"}</span>
           </span>
           <div className="flex flex-col gap-1">

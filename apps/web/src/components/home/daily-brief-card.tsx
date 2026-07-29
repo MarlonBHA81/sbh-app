@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
+import { HomeCard, type HomeCardTier } from "@/components/home/home-card";
 import * as api from "@/lib/api/client";
 import type { BriefItem, DailyBriefData } from "@/lib/api/types";
 
@@ -14,7 +15,7 @@ import type { BriefItem, DailyBriefData } from "@/lib/api/types";
  * there are no items so it never shows an empty shell. Works with no AI key —
  * the headline falls back to a canned line on the backend.
  */
-export function DailyBriefCard() {
+export function DailyBriefCard({ tier }: { tier?: HomeCardTier }) {
   const t = useTranslations("home");
   const [brief, setBrief] = useState<DailyBriefData | null>(null);
 
@@ -41,16 +42,7 @@ export function DailyBriefCard() {
   if (!brief || brief.items.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-full bg-teal/12 text-teal-text">
-          <Newspaper className="size-4" aria-hidden />
-        </span>
-        <h2 className="font-heading text-[15px] font-semibold text-text-primary">
-          {t("brief.title")}
-        </h2>
-      </div>
-
+    <HomeCard tier={tier} tone="teal" icon={Newspaper} title={t("brief.title")}>
       {brief.headline ? (
         <p className="text-sm text-text-secondary">{brief.headline}</p>
       ) : null}
@@ -60,7 +52,7 @@ export function DailyBriefCard() {
           <BriefRow key={item.ulid} item={item} kindLabel={t(`brief.kinds.${item.kind}`)} />
         ))}
       </ul>
-    </section>
+    </HomeCard>
   );
 }
 

@@ -29,7 +29,7 @@ function ActionRow({ action }: { action: XpAction }) {
         className={cn(
           "flex size-6 shrink-0 items-center justify-center rounded-full",
           capped
-            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+            ? "bg-sage/15 text-sage-text"
             : "bg-muted text-muted-foreground",
         )}
       >
@@ -104,7 +104,7 @@ export function XpProgressCard() {
     <Card>
       <CardContent className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-2xl">
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-gold/15 text-2xl">
             <span aria-hidden>{rank.icon}</span>
           </span>
           <div className="min-w-0 flex-1">

@@ -130,6 +130,13 @@
   --color-plum-tint: var(--sbh-plum-tint);
   --color-sage: var(--sbh-sage);
   --color-sage-tint: var(--sbh-sage-tint);
+  /* `sage-ink` and `sage-text` were both in use across 8 files with no token
+     behind them — the utilities never generated and the type fell back to
+     body colour. Both names now resolve to the AA-checked sage step. */
+  --color-sage-ink: var(--sbh-sage-text);
+  --color-sage-text: var(--sbh-sage-text);
+  --color-gold: var(--sbh-gold);
+  --color-gold-text: var(--sbh-gold-text);
   --color-slate: var(--sbh-slate);
   --color-slate-tint: var(--sbh-slate-tint);
   --color-slate-wash: var(--sbh-slate-wash);
@@ -140,10 +147,22 @@
   --color-text-muted: var(--sbh-text-muted);
 
   /* ------ Typography ------ */
-  /* Body: Avenir with Mulish as the loaded web substitute. */
-  --font-sans: Avenir, var(--font-mulish), system-ui, sans-serif;
+  /* Body: Mulish. Avenir led this stack but is never loaded — it resolves
+     only on macOS/iOS, so Apple users saw a different body face from
+     everyone else. Mulish is the one face we actually ship. */
+  --font-sans: var(--font-mulish), system-ui, sans-serif;
   --font-heading: var(--font-poppins), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
+
+  /* ------ Motion ------ */
+  /* Named easings and durations so animations stop being hand-tuned
+     one-offs. Spatial motion uses --ease-out; exits use --ease-in. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --dur-slow: 500ms;
 
   /* ------ Elevation & shape ------ */
   --shadow-card: var(--sbh-shadow-card);
@@ -155,6 +174,13 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+  }
+  /* Guard against sideways scroll from absolutely-positioned motion (live
+     reactions, confetti). `clip` not `hidden` — `hidden` on the root would
+     break position: sticky in the shell. */
+  html,
+  body {
+    overflow-x: clip;
   }
   body {
     @apply bg-background text-foreground;
@@ -187,13 +213,17 @@
   }
 }
 
+/* Glow rides a pseudo-element's opacity/transform rather than animating
+   box-shadow, which repaints the element on every frame. */
 @keyframes sbh-rank-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 var(--sbh-glow, oklch(0.64 0.11 75 / 45%));
+    opacity: 0;
+    transform: scale(0.85);
   }
   50% {
-    box-shadow: 0 0 36px 10px var(--sbh-glow, oklch(0.64 0.11 75 / 55%));
+    opacity: 1;
+    transform: scale(1.25);
   }
 }
 
@@ -223,9 +253,41 @@
   }
 }
 
+/* Reduced-motion stand-in for sbh-float-up: no travel, just a crossfade. */
+@keyframes sbh-float-fade {
+  0% {
+    opacity: 0;
+  }
+  6%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 .sbh-rank-icon {
-  animation: sbh-rank-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both,
-    sbh-rank-glow 2.4s ease-in-out 0.5s infinite;
+  position: relative;
+  animation: sbh-rank-pop var(--dur-slow) var(--ease-out) both;
+}
+
+/* Three pulses, then it stops — an unending glow reads as a notification
+   badge, not a celebration. */
+.sbh-rank-icon::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle,
+    var(--sbh-glow, oklch(0.64 0.11 75 / 55%)) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: sbh-rank-glow 2.4s var(--ease-in-out) 0.5s 3;
 }
 
 .sbh-confetti {
@@ -240,10 +302,22 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sbh-rank-icon {
+  .sbh-rank-icon,
+  .sbh-rank-icon::after {
     animation: none;
+  }
+  .sbh-rank-icon::after {
+    display: none;
   }
   .sbh-confetti {
     display: none;
+  }
+  /* Live reactions are the highest-frequency animation in the app; they
+     were the one keyframe the reduce block never covered. Collapse the
+     flight path to an in-place crossfade — the element is removed from the
+     DOM on a 2.6s timer either way (room-chat.tsx), so the fade has to
+     carry the same duration or reactions would vanish abruptly. */
+  [class*="sbh-float-up"] {
+    animation: sbh-float-fade 2.6s linear forwards;
   }
 }

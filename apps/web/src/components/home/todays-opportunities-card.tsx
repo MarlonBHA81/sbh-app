@@ -4,6 +4,7 @@ import { CalendarClock, ChevronRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { HomeCard, type HomeCardTier } from "@/components/home/home-card";
 import * as api from "@/lib/api/client";
 import type { Opportunity } from "@/lib/api/types";
 import { closesLabel, opportunityTypeLabel } from "@/lib/opportunities";
@@ -13,7 +14,7 @@ import { closesLabel, opportunityTypeLabel } from "@/lib/opportunities";
  * few opportunities, fit-ranked to the member's industry, closing date and
  * official/partner status via /me/opportunities/suggested. Self-hides when none.
  */
-export function TodaysOpportunitiesCard() {
+export function TodaysOpportunitiesCard({ tier }: { tier?: HomeCardTier }) {
   const [items, setItems] = useState<Opportunity[] | null>(null);
 
   useEffect(() => {
@@ -39,23 +40,21 @@ export function TodaysOpportunitiesCard() {
   if (!items || items.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-full bg-sage/15 text-sage-ink">
-          <Sparkles className="size-4" aria-hidden />
-        </span>
-        <h2 className="font-heading text-[15px] font-semibold text-text-primary">
-          Opportunities for you
-        </h2>
+    <HomeCard
+      tier={tier}
+      tone="sage"
+      icon={Sparkles}
+      title="Opportunities for you"
+      aside={
         <Link
           href="/opportunities"
-          className="ms-auto flex items-center text-[13px] font-medium text-teal-text hover:underline"
+          className="flex items-center text-[13px] font-medium text-teal-text hover:underline"
         >
           See all
           <ChevronRight className="size-4" aria-hidden />
         </Link>
-      </div>
-
+      }
+    >
       <ul className="flex flex-col divide-y divide-warmgray">
         {items.map((o) => (
           <li key={o.ulid}>
@@ -82,6 +81,6 @@ export function TodaysOpportunitiesCard() {
           </li>
         ))}
       </ul>
-    </section>
+    </HomeCard>
   );
 }

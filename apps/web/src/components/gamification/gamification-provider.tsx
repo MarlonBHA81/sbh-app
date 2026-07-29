@@ -34,7 +34,7 @@ function XpToast({
 }) {
   return (
     <div className="flex items-center gap-2.5 rounded-md border bg-popover px-3 py-2.5 text-sm text-popover-foreground shadow-md">
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gold/15 text-gold-text">
         <Sparkles className="size-4" aria-hidden />
       </span>
       <span className="min-w-0">

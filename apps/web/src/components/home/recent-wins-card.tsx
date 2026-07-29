@@ -4,6 +4,7 @@ import { ChevronRight, PartyPopper } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { HomeCard, type HomeCardTier } from "@/components/home/home-card";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import * as api from "@/lib/api/client";
 import type { Paginated, Post } from "@/lib/api/types";
@@ -13,7 +14,7 @@ import type { Paginated, Post } from "@/lib/api/types";
  * real milestones worth celebrating. Self-hides when there are none. Reuses the
  * wins feed — no new backend.
  */
-export function RecentWinsCard() {
+export function RecentWinsCard({ tier }: { tier?: HomeCardTier }) {
   const [wins, setWins] = useState<Post[] | null>(null);
 
   useEffect(() => {
@@ -34,23 +35,21 @@ export function RecentWinsCard() {
   if (!wins || wins.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-full bg-sage/15 text-sage-ink">
-          <PartyPopper className="size-4" aria-hidden />
-        </span>
-        <h2 className="font-heading text-[15px] font-semibold text-text-primary">
-          Recent wins
-        </h2>
+    <HomeCard
+      tier={tier}
+      tone="sage"
+      icon={PartyPopper}
+      title="Recent wins"
+      aside={
         <Link
           href="/wins"
-          className="ms-auto flex items-center text-[13px] font-medium text-teal-text hover:underline"
+          className="flex items-center text-[13px] font-medium text-teal-text hover:underline"
         >
           See all
           <ChevronRight className="size-4" aria-hidden />
         </Link>
-      </div>
-
+      }
+    >
       <ul className="flex flex-col divide-y divide-warmgray">
         {wins.map((post) => (
           <li key={post.ulid}>
@@ -73,6 +72,6 @@ export function RecentWinsCard() {
           </li>
         ))}
       </ul>
-    </section>
+    </HomeCard>
   );
 }

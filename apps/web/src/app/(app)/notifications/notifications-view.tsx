@@ -127,7 +127,7 @@ function NotificationRow({
     >
       <div className="relative shrink-0">
         {isRank || !actor ? (
-          <span className="flex size-10 items-center justify-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">
+          <span className="flex size-10 items-center justify-center rounded-full bg-gold/15 text-gold-text">
             <Trophy className="size-5" aria-hidden />
           </span>
         ) : (

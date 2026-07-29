@@ -50,7 +50,7 @@ export function Row({ row, isViewer }: { row: LeaderboardRow; isViewer: boolean 
       className={cn(
         "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors hover:bg-accent/40",
         isViewer && "border-primary/40 bg-accent/40",
-        position <= 3 && "border-amber-500/30",
+        position <= 3 && "border-gold/30",
       )}
     >
       <PositionMarker position={position} />

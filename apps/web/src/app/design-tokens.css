@@ -4,7 +4,7 @@
  * warmgray. Components must reference these variables (via the Tailwind
  * theme mapping in globals.css), never raw hex.
  *
- * Dark mode: not in this pass. Add a `.dark { … }` block that swaps the
+ * Dark mode: the `.dark { … }` block at the foot of this file swaps the
  * SEMANTIC variables (surface/text/border) only — brand hues stay put.
  */
 
@@ -16,6 +16,7 @@
   --sbh-plum-tint: #5c354f;
   --sbh-sage: #5d7868;          /* success/positive */
   --sbh-sage-tint: #50695a;
+  --sbh-gold: #a8801e;          /* reward/streak fills (gamification) */
   --sbh-slate: #484851;         /* dark UI surfaces, primary buttons, bottom nav */
   --sbh-slate-tint: #3a3a43;
   --sbh-warmgray: #e0dedd;      /* borders, dividers, input backgrounds */
@@ -34,6 +35,15 @@
   /* Teal for small text: teal-tint passes AA on white (4.83:1) but not on
      the app background (4.40:1); use this deeper step there (4.83:1). */
   --sbh-teal-text: #417471;
+
+  /* Sage for small text: sage itself measures 4.40:1 on the app background —
+     below AA — so small sage text takes this deeper step (6.72:1 white /
+     6.13:1 app bg). Same pattern as teal-text above. */
+  --sbh-sage-text: #4a6153;
+
+  /* Gold for small text: the reward hue at AA on both light surfaces
+     (5.96:1 white / 5.43:1 app bg). */
+  --sbh-gold-text: #7d5f1c;
 
   /* ------ Washes (low-alpha brand overlays) ------ */
   --sbh-slate-wash: rgb(72 72 81 / 4%);    /* card header bands */
@@ -61,6 +71,10 @@
   --sbh-text-secondary: #a5a5ae;
   --sbh-text-muted: #6f6f78;
   --sbh-teal-text: #8fc1be;
+  /* 7.30:1 on the dark surface, 8.16:1 on the dark background. */
+  --sbh-sage-text: #9dbcab;
+  /* 7.60:1 on the dark surface, 8.49:1 on the dark background. */
+  --sbh-gold-text: #d9b45c;
 
   /* Warm gray family becomes the dark border/divider/input family. */
   --sbh-warmgray: #3a3a44;

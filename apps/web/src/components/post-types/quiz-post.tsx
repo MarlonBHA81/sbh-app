@@ -222,7 +222,7 @@ export function QuizPost({ post }: { post: Post }) {
                             className={cn(
                               "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm",
                               isCorrect &&
-                                "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+                                "bg-sage/10 text-sage-text",
                               isUser &&
                                 !isCorrect &&
                                 "bg-destructive/10 text-destructive",

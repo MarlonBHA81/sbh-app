@@ -53,7 +53,7 @@ export function ParentCard({
           <span className="truncate">{post.profile.name}</span>
           {post.profile.is_verified ? (
             <BadgeCheck
-              className="size-3.5 shrink-0 text-sky-500"
+              className="size-3.5 shrink-0 text-teal-text"
               aria-label="Verified"
             />
           ) : null}

@@ -55,7 +55,7 @@ function DirectoryCard({
           <span className="truncate">{profile.name}</span>
           {profile.is_verified ? (
             <BadgeCheck
-              className="size-4 shrink-0 text-sky-500"
+              className="size-4 shrink-0 text-teal-text"
               aria-label="Verified"
             />
           ) : null}

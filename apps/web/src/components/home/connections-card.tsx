@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { ProfileFollowButton } from "@/components/business/profile-follow-button";
+import { HomeCard, type HomeCardTier } from "@/components/home/home-card";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import * as api from "@/lib/api/client";
 import type { ConnectionSuggestion, Profile } from "@/lib/api/types";
@@ -13,7 +14,7 @@ import type { ConnectionSuggestion, Profile } from "@/lib/api/types";
  * "Today's Connections" (V1 · CONNECT): a few people to meet, each with a
  * reason, and a one-tap follow. A preview of the Daily Home dashboard card.
  */
-export function ConnectionsCard() {
+export function ConnectionsCard({ tier }: { tier?: HomeCardTier }) {
   const [items, setItems] = useState<ConnectionSuggestion[] | null>(null);
 
   useEffect(() => {
@@ -42,16 +43,7 @@ export function ConnectionsCard() {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-full bg-plum/12 text-plum-tint">
-          <UserPlus className="size-4" aria-hidden />
-        </span>
-        <h2 className="font-heading text-[15px] font-semibold text-text-primary">
-          People to meet today
-        </h2>
-      </div>
-
+    <HomeCard tier={tier} tone="plum" icon={UserPlus} title="People to meet today">
       <ul className="flex flex-col divide-y divide-warmgray">
         {items.map(({ profile, reason }) => (
           <li key={profile.ulid} className="flex items-center gap-3 py-2.5">
@@ -72,6 +64,6 @@ export function ConnectionsCard() {
           </li>
         ))}
       </ul>
-    </section>
+    </HomeCard>
   );
 }

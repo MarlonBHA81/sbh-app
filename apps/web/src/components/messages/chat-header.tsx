@@ -65,7 +65,7 @@ export function ChatHeader({
         )}
         {!isGroup && online ? (
           <span
-            className="absolute end-0 bottom-0 size-3 rounded-full bg-emerald-500 ring-2 ring-background"
+            className="absolute end-0 bottom-0 size-3 rounded-full bg-sage ring-2 ring-background"
             aria-label="Online"
           />
         ) : null}

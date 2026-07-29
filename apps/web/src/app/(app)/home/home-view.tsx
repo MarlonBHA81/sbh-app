@@ -10,6 +10,7 @@ import { ConnectionsCard } from "@/components/home/connections-card";
 import { DailyBriefCard } from "@/components/home/daily-brief-card";
 import { DailyChallengeCard } from "@/components/home/daily-challenge-card";
 import { HeroPrompt } from "@/components/home/hero-prompt";
+import type { HomeCardTier } from "@/components/home/home-card";
 import { HomeHeader } from "@/components/home/home-header";
 import { OnboardingChecklist } from "@/components/home/onboarding-checklist";
 import { RecentWinsCard } from "@/components/home/recent-wins-card";
@@ -42,7 +43,7 @@ function cardOrder(stage: string | null | undefined): Card[] {
   }
 }
 
-const CARD: Record<Card, React.ComponentType> = {
+const CARD: Record<Card, React.ComponentType<{ tier?: HomeCardTier }>> = {
   challenge: DailyChallengeCard,
   opportunities: TodaysOpportunitiesCard,
   connections: ConnectionsCard,
@@ -71,20 +72,27 @@ export function HomeView() {
       <HeroPrompt />
       <ComposerBar />
 
-      {/* Today's dashboard — ordered to the member's journey stage. */}
-      {cardOrder(stage).map((key) => {
+      {/* Today's dashboard — ordered to the member's journey stage. The
+          stage-led card takes the lead tier so the ordering is legible at a
+          glance; the rest sit back. */}
+      {cardOrder(stage).map((key, i) => {
         const Component = CARD[key];
-        return <Component key={key} />;
+        return <Component key={key} tier={i === 0 ? "lead" : "default"} />;
       })}
 
       {/* Daily Business Brief (V2 · Feature 7) — self-hides when there are no items. */}
       <DailyBriefCard />
 
-      {/* Today's lesson (V2 · LEARN) — self-hides when there are no lessons. */}
-      <TodaysLessonCard />
+      {/* Supporting cards drop to the quiet tier and group under a hairline,
+          so the daily dashboard reads as two bands rather than one long run
+          of identically-weighted cards. */}
+      <section className="flex flex-col gap-2 border-t border-warmgray pt-4">
+        {/* Today's lesson (V2 · LEARN) — self-hides when there are no lessons. */}
+        <TodaysLessonCard tier="quiet" />
 
-      {/* Recent wins (V2 · BELONG) — self-hides when there are none. */}
-      <RecentWinsCard />
+        {/* Recent wins (V2 · BELONG) — self-hides when there are none. */}
+        <RecentWinsCard tier="quiet" />
+      </section>
 
       <OnboardingChecklist />
       <QuickAccess />

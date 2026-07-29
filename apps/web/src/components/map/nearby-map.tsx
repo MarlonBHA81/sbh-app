@@ -47,8 +47,8 @@ export function NearbyMap({
       {/* Viewer's own position marker. */}
       <Overlay anchor={center} offset={[8, 8]}>
         <span className="relative flex size-4">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-sky-500/60 motion-reduce:hidden" />
-          <span className="relative inline-flex size-4 rounded-full border-2 border-background bg-sky-500 shadow" />
+          <span className="absolute inline-flex size-full animate-ping rounded-full bg-teal/60 motion-reduce:hidden" />
+          <span className="relative inline-flex size-4 rounded-full border-2 border-background bg-teal shadow" />
         </span>
       </Overlay>
 
@@ -64,14 +64,14 @@ export function NearbyMap({
               className="relative block size-10 rounded-full outline-none"
             >
               {present ? (
-                <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500/50 motion-reduce:hidden" />
+                <span className="absolute inset-0 animate-ping rounded-full bg-sage/50 motion-reduce:hidden" />
               ) : null}
               <ProfileAvatar
                 profile={user}
                 className={cn(
                   "relative size-10 shadow-md ring-2 transition-transform",
                   present
-                    ? "ring-emerald-500"
+                    ? "ring-sage"
                     : "ring-background",
                   selected &&
                     "scale-110 ring-primary ring-offset-2 ring-offset-background",

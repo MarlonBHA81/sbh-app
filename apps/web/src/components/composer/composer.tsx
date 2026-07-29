@@ -1118,7 +1118,7 @@ export function Composer({
       </div>
 
       {mediaProcessing ? (
-        <p className="text-xs text-amber-600 dark:text-amber-500" aria-live="polite">
+        <p className="text-xs text-gold-text" aria-live="polite">
           {t("processingHint")}
         </p>
       ) : null}

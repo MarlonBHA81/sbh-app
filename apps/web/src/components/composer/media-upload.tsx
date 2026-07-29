@@ -178,7 +178,7 @@ export function MediaUpload({
               {fileMeta?.name ?? `Your ${noun}`}
             </span>
             {processing ? (
-              <span className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-500">
+              <span className="flex items-center gap-1.5 text-xs text-gold-text">
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
                 Processing…
               </span>

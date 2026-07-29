@@ -4,6 +4,7 @@ import { ChevronRight, Clock, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { HomeCard, type HomeCardTier } from "@/components/home/home-card";
 import * as api from "@/lib/api/client";
 import type { Lesson } from "@/lib/api/types";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
@@ -14,7 +15,7 @@ import { useAuthStore } from "@/lib/stores/auth-store-provider";
  * card is never empty when lessons exist. Prefers an unfinished lesson. Reuses
  * the learn API — no new backend.
  */
-export function TodaysLessonCard() {
+export function TodaysLessonCard({ tier }: { tier?: HomeCardTier }) {
   const stage = useAuthStore((s) => s.activeProfile?.journey_stage ?? null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
 
@@ -48,23 +49,21 @@ export function TodaysLessonCard() {
   if (!lesson) return null;
 
   return (
-    <section className="flex flex-col gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card">
-      <div className="flex items-center gap-2">
-        <span className="flex size-8 items-center justify-center rounded-full bg-plum/12 text-plum">
-          <GraduationCap className="size-4" aria-hidden />
-        </span>
-        <h2 className="font-heading text-[15px] font-semibold text-text-primary">
-          Today&apos;s lesson
-        </h2>
+    <HomeCard
+      tier={tier}
+      tone="plum"
+      icon={GraduationCap}
+      title="Today's lesson"
+      aside={
         <Link
           href="/learn"
-          className="ms-auto flex items-center text-[13px] font-medium text-teal-text hover:underline"
+          className="flex items-center text-[13px] font-medium text-teal-text hover:underline"
         >
           All lessons
           <ChevronRight className="size-4" aria-hidden />
         </Link>
-      </div>
-
+      }
+    >
       <Link
         href={`/learn/${lesson.ulid}`}
         className="flex flex-col gap-1 active:scale-[0.99]"
@@ -77,6 +76,6 @@ export function TodaysLessonCard() {
           {lesson.minutes} min{lesson.is_completed ? " · completed" : ""}
         </span>
       </Link>
-    </section>
+    </HomeCard>
   );
 }

@@ -18,7 +18,7 @@ export function SectionHeader({
       {viewAllHref && viewAllLabel ? (
         <Link
           href={viewAllHref}
-          className="font-heading text-[13px] font-medium text-teal-text transition-opacity hover:opacity-80"
+          className="font-heading text-[13px] font-medium text-teal-text underline decoration-teal/0 underline-offset-4 transition-[color,text-decoration-color] duration-(--dur-fast) ease-(--ease-out) hover:text-teal hover:decoration-teal/60"
         >
           {viewAllLabel}
         </Link>

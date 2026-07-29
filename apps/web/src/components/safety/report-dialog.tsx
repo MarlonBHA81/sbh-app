@@ -195,7 +195,7 @@ export function ReportDialog({
         {done ? (
           <>
             <DialogHeader className="items-center text-center sm:items-center sm:text-center">
-              <div className="mb-1 flex size-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15">
+              <div className="mb-1 flex size-12 items-center justify-center rounded-full bg-sage/15 text-sage-text">
                 {step === "already" ? (
                   <ShieldCheck className="size-6" aria-hidden />
                 ) : (

@@ -285,7 +285,7 @@ function ReviewStep({
 function SuccessStep({ post }: { post: CampaignPost }) {
   return (
     <div className="flex flex-col items-center gap-4 py-8 text-center">
-      <div className="flex size-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+      <div className="flex size-14 items-center justify-center rounded-full bg-sage/15 text-sage-text">
         <Check className="size-7" aria-hidden />
       </div>
       <div className="flex flex-col gap-1">

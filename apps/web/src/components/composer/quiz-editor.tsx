@@ -121,8 +121,8 @@ export function QuizEditor({
                     className={cn(
                       "flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors",
                       correct
-                        ? "border-emerald-600 bg-emerald-600 text-white"
-                        : "border-input text-transparent hover:border-emerald-600/50",
+                        ? "border-sage bg-sage text-white"
+                        : "border-input text-transparent hover:border-sage/50",
                     )}
                   >
                     <Check className="size-3.5" aria-hidden />
