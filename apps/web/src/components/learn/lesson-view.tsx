@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import type { Lesson, LessonRef } from "@/lib/api/types";
@@ -119,14 +120,10 @@ export function LessonView({ ulid }: { ulid: string }) {
 
           {lesson.external_url ? (
             <Button asChild variant="outline" className="h-11">
-              <a
-                href={lesson.external_url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <OutboundLink href={lesson.external_url}>
                 Open the full lesson
                 <ExternalLink className="size-4" aria-hidden />
-              </a>
+              </OutboundLink>
             </Button>
           ) : null}
 

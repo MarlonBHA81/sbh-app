@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import * as api from "@/lib/api/client";
 import { trackSlotClick, trackSlotImpression } from "@/lib/ads/track";
 import type { AdSlot } from "@/lib/api/types";
@@ -150,15 +151,14 @@ export function SponsorCard({
       </div>
 
       <Button asChild variant="outline" size="sm" className="w-full">
-        <a
+        <OutboundLink
           href={slot.sponsor_url}
-          target="_blank"
           rel="sponsored noopener noreferrer"
           onClick={() => trackSlotClick(slot.key)}
         >
           Visit
           <ExternalLink className="size-4" aria-hidden />
-        </a>
+        </OutboundLink>
       </Button>
     </aside>
   );

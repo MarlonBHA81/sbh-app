@@ -28,6 +28,7 @@ import {
   LinkedinIcon,
   WhatsappIcon,
 } from "@/components/brand/social-icons";
+import { ExternalLink } from "@/components/ui/external-link";
 import { useComposer } from "@/components/composer/composer-provider";
 import { GuestCta, PublicPostCard } from "@/components/posts/public-post-card";
 import { SectionHeader } from "@/components/home/section-header";
@@ -204,16 +205,14 @@ function SocialLinkRow({
   return (
     <div className="mt-1 flex items-center gap-2">
       {entries.map(([label, url, Icon]) => (
-        <a
+        <ExternalLink
           key={label}
           href={url as string}
-          target="_blank"
-          rel="noopener noreferrer"
           aria-label={`${profile.name} on ${label}`}
           className="flex size-10 items-center justify-center rounded-full border border-warmgray bg-card text-teal-text transition-colors hover:bg-accent active:scale-[0.98]"
         >
           <Icon />
-        </a>
+        </ExternalLink>
       ))}
     </div>
   );
@@ -668,15 +667,13 @@ export function ProfileClient({ handle }: { handle: string }) {
               </span>
             ) : null}
             {profile.website ? (
-              <a
+              <ExternalLink
                 href={profile.website}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="flex items-center gap-1 text-teal-text underline-offset-4 hover:underline"
               >
                 <Globe className="size-3.5" aria-hidden />
                 {profile.website.replace(/^https?:\/\//, "")}
-              </a>
+              </ExternalLink>
             ) : null}
           </div>
           <div className="flex gap-6 text-sm">
@@ -813,14 +810,12 @@ export function ProfileClient({ handle }: { handle: string }) {
                     <>
                       <dt className="font-medium text-foreground">Website</dt>
                       <dd>
-                        <a
+                        <ExternalLink
                           href={profile.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="underline-offset-4 hover:underline"
                         >
                           {profile.website}
-                        </a>
+                        </ExternalLink>
                       </dd>
                     </>
                   ) : null}

@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { ScreenHeader } from "@/components/shell/screen-header";
 import { Button } from "@/components/ui/button";
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import {
@@ -217,16 +218,15 @@ function RoomCard({
               ) : null}
             </div>
             {m.sponsor_url ? (
-              <a
+              <OutboundLink
                 href={m.sponsor_url}
-                target="_blank"
                 rel="sponsored noopener noreferrer"
                 onClick={() => trackSponsoredRoomClick(m.ulid)}
                 className="flex shrink-0 items-center gap-1 text-[12px] font-medium text-teal-text hover:underline"
               >
                 Visit
                 <ExternalLink className="size-3.5" aria-hidden />
-              </a>
+              </OutboundLink>
             ) : null}
           </div>
         ) : null}

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { HomeCard, type HomeCardTier } from "@/components/home/home-card";
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import * as api from "@/lib/api/client";
 import type { BriefItem, DailyBriefData } from "@/lib/api/types";
 
@@ -79,15 +80,21 @@ function BriefRow({ item, kindLabel }: { item: BriefItem; kindLabel: string }) {
   if (item.url) {
     return (
       <li>
-        <Link
-          href={item.url}
-          className="flex flex-col gap-1 active:scale-[0.99]"
-          {...(isExternal
-            ? { target: "_blank", rel: "noopener noreferrer" }
-            : {})}
-        >
-          {body}
-        </Link>
+        {isExternal ? (
+          <OutboundLink
+            href={item.url}
+            className="flex flex-col gap-1 active:scale-[0.99]"
+          >
+            {body}
+          </OutboundLink>
+        ) : (
+          <Link
+            href={item.url}
+            className="flex flex-col gap-1 active:scale-[0.99]"
+          >
+            {body}
+          </Link>
+        )}
       </li>
     );
   }

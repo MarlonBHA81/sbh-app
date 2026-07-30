@@ -4,6 +4,7 @@ import { Briefcase, ExternalLink, MapPin } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import type { EmploymentType, Post } from "@/lib/api/types";
 
 import { PostBody } from "./post-body";
@@ -89,15 +90,10 @@ export function JobPost({ post }: { post: Post }) {
         </Button>
       ) : (
         <Button asChild className="h-11">
-          <a
-            href={job.apply_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => event.stopPropagation()}
-          >
+          <OutboundLink href={job.apply_url} stopPropagation>
             Apply
             <ExternalLink className="size-4" aria-hidden />
-          </a>
+          </OutboundLink>
         </Button>
       )}
     </div>

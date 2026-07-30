@@ -4,6 +4,7 @@ import { ExternalLink, Wrench } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import type { Product } from "@/lib/api/types";
 import { fetchOwnedFile } from "@/lib/shop";
 
@@ -38,14 +39,10 @@ export function ToolViewer({ product }: { product: Product }) {
   if (isExternal) {
     return (
       <Button asChild className="h-11 gap-1.5">
-        <a
-          href={product.external_url ?? "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+        <OutboundLink href={product.external_url}>
           <ExternalLink className="size-4" aria-hidden />
           Launch tool
-        </a>
+        </OutboundLink>
       </Button>
     );
   }

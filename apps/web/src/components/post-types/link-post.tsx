@@ -1,6 +1,7 @@
 import { Link2 } from "lucide-react";
 
 import type { LinkPayload, Post } from "@/lib/api/types";
+import { ExternalLink } from "@/components/ui/external-link";
 
 import { PostBody } from "./post-body";
 
@@ -19,11 +20,9 @@ export function LinkPost({ post }: { post: Post }) {
   return (
     <div className="flex flex-col gap-2">
       {post.body ? <PostBody text={post.body} /> : null}
-      <a
+      <ExternalLink
         href={payload.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(event) => event.stopPropagation()}
+        stopPropagation
         className="flex flex-col gap-1 rounded-xl border p-3 transition-colors hover:bg-accent/50"
       >
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -38,7 +37,7 @@ export function LinkPost({ post }: { post: Post }) {
             {payload.description}
           </span>
         ) : null}
-      </a>
+      </ExternalLink>
     </div>
   );
 }

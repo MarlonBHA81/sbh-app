@@ -1,6 +1,8 @@
 "use client";
 
 import { Bookmark, ExternalLink, Tag } from "lucide-react";
+
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -69,12 +71,7 @@ export function ResourceCard({
         </button>
       </div>
 
-      <a
-        href={resource.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex flex-col gap-2"
-      >
+      <OutboundLink href={resource.url} className="flex flex-col gap-2">
         <h3 className="font-heading text-[16px] leading-snug font-semibold text-text-primary">
           {resource.title}
         </h3>
@@ -85,7 +82,7 @@ export function ResourceCard({
           Open resource
           <ExternalLink className="size-3.5" aria-hidden />
         </span>
-      </a>
+      </OutboundLink>
     </article>
   );
 }

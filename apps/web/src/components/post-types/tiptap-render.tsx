@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
 import type { TiptapDoc, TiptapMark, TiptapNode } from "@/lib/api/types";
+import { ExternalLink } from "@/components/ui/external-link";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,15 +32,14 @@ function applyMarks(text: string, marks: TiptapMark[] | undefined, key: number):
         const href =
           typeof mark.attrs?.href === "string" ? mark.attrs.href : "#";
         return (
-          <a
+          <ExternalLink
             href={href}
-            target="_blank"
             rel="noopener noreferrer nofollow"
+            stopPropagation
             className="text-primary underline underline-offset-4"
-            onClick={(event) => event.stopPropagation()}
           >
             {node}
-          </a>
+          </ExternalLink>
         );
       }
       default:

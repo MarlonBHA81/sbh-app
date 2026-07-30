@@ -18,6 +18,7 @@ import { toast } from "sonner";
 
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import {
@@ -160,10 +161,8 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
           <div className="flex flex-col gap-2 sm:flex-row">
             {state.opportunity.url ? (
               <Button asChild className="h-11 flex-1">
-                <a
+                <OutboundLink
                   href={state.opportunity.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   onClick={() => {
                     if (state.opportunity?.is_sponsored) {
                       trackOpportunityClick(state.opportunity.ulid);
@@ -172,7 +171,7 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
                 >
                   Apply / read more
                   <ExternalLink className="size-4" aria-hidden />
-                </a>
+                </OutboundLink>
               </Button>
             ) : null}
             <Button
@@ -197,14 +196,12 @@ export function OpportunityDetail({ ulid }: { ulid: string }) {
               ) : null}
               Source:{" "}
               {state.opportunity.source_url ? (
-                <a
+                <OutboundLink
                   href={state.opportunity.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="font-medium text-teal-text hover:underline"
                 >
                   {state.opportunity.source}
-                </a>
+                </OutboundLink>
               ) : (
                 <span className="font-medium text-text-primary">
                   {state.opportunity.source}

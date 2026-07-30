@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { ExternalLink } from "@/components/ui/external-link";
 import { cn } from "@/lib/utils";
 
 const TOKEN_RE = /(https?:\/\/[^\s<]+|@[a-z0-9_]{2,30}|#[\p{L}\p{N}_]{1,50})/giu;
@@ -27,16 +28,14 @@ export function PostBody({
       {parts.map((part, i) => {
         if (/^https?:\/\//i.test(part)) {
           return (
-            <a
+            <ExternalLink
               key={i}
               href={part}
-              target="_blank"
-              rel="noopener noreferrer"
+              stopPropagation
               className="text-primary underline-offset-4 hover:underline"
-              onClick={(event) => event.stopPropagation()}
             >
               {part.replace(/^https?:\/\//, "")}
-            </a>
+            </ExternalLink>
           );
         }
         if (part.startsWith("@")) {

@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ExternalLink as OutboundLink } from "@/components/ui/external-link";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import type {
@@ -279,10 +280,10 @@ function LessonPane({
         </div>
       ) : lesson.video_url ? (
         <Button asChild variant="outline" className="h-10 w-fit gap-1.5">
-          <a href={lesson.video_url} target="_blank" rel="noopener noreferrer">
+          <OutboundLink href={lesson.video_url}>
             <PlayCircle className="size-4" aria-hidden />
             Watch video
-          </a>
+          </OutboundLink>
         </Button>
       ) : null}
 
