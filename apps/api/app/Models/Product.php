@@ -37,6 +37,8 @@ class Product extends Model
         'title',
         'description',
         'price_cents',
+        'sale_price_cents',
+        'sale_ends_at',
         'currency',
         'cover_path',
         'download_path',
@@ -49,6 +51,8 @@ class Product extends Model
     {
         return [
             'price_cents' => 'integer',
+            'sale_price_cents' => 'integer',
+            'sale_ends_at' => 'datetime',
             'is_published' => 'boolean',
             'published_at' => 'datetime',
         ];
@@ -94,10 +98,31 @@ class Product extends Model
         return $this->type === 'course';
     }
 
+    /** Whether a sale price is set and still within its window. */
+    public function onSale(): bool
+    {
+        if ($this->sale_price_cents === null || $this->sale_price_cents < 0) {
+            return false;
+        }
+        if ($this->price_cents !== null && $this->sale_price_cents >= $this->price_cents) {
+            return false;
+        }
+
+        return $this->sale_ends_at === null || $this->sale_ends_at->isFuture();
+    }
+
+    /** The price a buyer actually pays right now (sale price when on sale). */
+    public function effectivePriceCents(): ?int
+    {
+        return $this->onSale() ? (int) $this->sale_price_cents : $this->price_cents;
+    }
+
     /** A free product (price unset or zero) can be enrolled in without checkout. */
     public function isFree(): bool
     {
-        return $this->price_cents === null || $this->price_cents <= 0;
+        $price = $this->effectivePriceCents();
+
+        return $price === null || $price <= 0;
     }
 
     /** Whether the deliverable is a self-contained HTML tool (rendered in-app). */

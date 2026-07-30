@@ -3,22 +3,27 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Coupon;
+use App\Models\CouponRedemption;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Profile;
 use App\Services\Payments\PaymentGateway;
+use App\Services\Shop\CheckoutPricing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Marketplace checkout (Shop P2). Builds a pending order (primary product +
- * optional bumps), then returns the provider redirect. Payment is confirmed
- * later by the ITN webhook — never here.
+ * optional bumps, sale prices, coupon and inclusive VAT), then returns the
+ * provider redirect. Payment is confirmed later by the ITN webhook — never here.
  */
 class CheckoutController extends Controller
 {
+    public function __construct(private CheckoutPricing $pricing) {}
+
     public function store(Request $request, PaymentGateway $gateway): JsonResponse
     {
         abort_unless($gateway->enabled(), 422, 'Payments are not configured yet.');
@@ -29,54 +34,55 @@ class CheckoutController extends Controller
             'product_ulid' => ['required', 'string'],
             'bump_ulids' => ['sometimes', 'array', 'max:5'],
             'bump_ulids.*' => ['string'],
+            'coupon_code' => ['sometimes', 'nullable', 'string', 'max:60'],
         ]);
 
-        $product = Product::query()->visible()->where('ulid', $data['product_ulid'])->firstOrFail();
-        abort_if($product->price_cents === null || $product->price_cents <= 0, 422, 'This product is not for sale.');
+        $product = $this->resolveProduct($data['product_ulid']);
+        $bumps = $this->resolveBumps($product, $data['bump_ulids'] ?? []);
 
-        // Bumps must be configured bumps on this product (and visible).
-        $bumpIds = $product->offers()->where('kind', Product::OFFER_BUMP)->pluck('related_product_id');
-        $bumps = empty($data['bump_ulids'])
-            ? collect()
-            : Product::query()->visible()
-                ->whereIn('ulid', $data['bump_ulids'])
-                ->whereIn('id', $bumpIds)
-                ->get();
+        $coupon = null;
+        if (! empty($data['coupon_code'])) {
+            $coupon = Coupon::query()->where('code', strtoupper(trim($data['coupon_code'])))->first();
+            abort_if($coupon === null, 422, 'That coupon code is not valid.');
+        }
 
-        $order = DB::transaction(function () use ($buyer, $product, $bumps) {
+        $quote = $this->pricing->quote($product, $bumps, $coupon, $buyer);
+
+        // A supplied code that resolves but can't be applied is a hard error at
+        // checkout (the buyer explicitly entered it) — the quote endpoint is the
+        // place to preview validity without failing.
+        abort_if($coupon !== null && $quote['coupon'] === null, 422, 'That coupon can’t be applied to this order.');
+
+        $order = DB::transaction(function () use ($buyer, $product, $quote) {
             $order = Order::create([
                 'buyer_profile_id' => $buyer->id,
                 'store_id' => $product->store_id,
+                'coupon_id' => $quote['coupon']?->id,
                 'status' => Order::STATUS_PENDING,
-                'total_cents' => 0,
+                'total_cents' => $quote['total_cents'],
+                'discount_cents' => $quote['discount_cents'],
+                'vat_cents' => $quote['vat_cents'],
+                'vat_rate_bp' => $quote['vat_rate_bp'],
                 'currency' => $product->currency,
             ]);
 
-            $total = (int) $product->price_cents;
-            $order->items()->create([
-                'product_id' => $product->id,
-                'title' => $product->title,
-                'unit_cents' => $product->price_cents,
-                'kind' => OrderItem::KIND_ITEM,
-            ]);
-
-            foreach ($bumps as $bump) {
-                $offer = $product->offers()
-                    ->where('kind', Product::OFFER_BUMP)
-                    ->where('related_product_id', $bump->id)
-                    ->first();
-                $price = max(0, (int) ($bump->price_cents ?? 0) - (int) ($offer?->discount_cents ?? 0));
-                $total += $price;
-
+            foreach ($quote['items'] as $item) {
                 $order->items()->create([
-                    'product_id' => $bump->id,
-                    'title' => $bump->title,
-                    'unit_cents' => $price,
-                    'kind' => OrderItem::KIND_BUMP,
+                    'product_id' => $item['product']->id,
+                    'title' => $item['title'],
+                    'unit_cents' => $item['unit_cents'],
+                    'kind' => $item['kind'],
                 ]);
             }
 
-            $order->update(['total_cents' => $total]);
+            if ($quote['coupon'] !== null) {
+                CouponRedemption::create([
+                    'coupon_id' => $quote['coupon']->id,
+                    'order_id' => $order->id,
+                    'buyer_profile_id' => $buyer->id,
+                ]);
+                $quote['coupon']->increment('redeemed_count');
+            }
 
             return $order->load('items', 'buyer.user');
         });
@@ -92,6 +98,46 @@ class CheckoutController extends Controller
         ]);
     }
 
+    /**
+     * Dry-run price preview (sale prices, coupon, VAT) without creating an order
+     * — powers the checkout box so the buyer sees the total before paying.
+     */
+    public function quote(Request $request): JsonResponse
+    {
+        $buyer = $this->activeProfile($request);
+
+        $data = $request->validate([
+            'product_ulid' => ['required', 'string'],
+            'bump_ulids' => ['sometimes', 'array', 'max:5'],
+            'bump_ulids.*' => ['string'],
+            'coupon_code' => ['sometimes', 'nullable', 'string', 'max:60'],
+        ]);
+
+        $product = $this->resolveProduct($data['product_ulid']);
+        $bumps = $this->resolveBumps($product, $data['bump_ulids'] ?? []);
+
+        $couponCode = ! empty($data['coupon_code']) ? strtoupper(trim($data['coupon_code'])) : null;
+        $coupon = $couponCode !== null
+            ? Coupon::query()->where('code', $couponCode)->first()
+            : null;
+
+        $quote = $this->pricing->quote($product, $bumps, $coupon, $buyer);
+
+        return response()->json([
+            'data' => [
+                'subtotal_cents' => $quote['subtotal_cents'],
+                'discount_cents' => $quote['discount_cents'],
+                'total_cents' => $quote['total_cents'],
+                'vat_cents' => $quote['vat_cents'],
+                'vat_rate_bp' => $quote['vat_rate_bp'],
+                'currency' => $product->currency,
+                'coupon_applied' => $quote['coupon'] !== null,
+                // Distinguish "no code given" from "code given but rejected".
+                'coupon_invalid' => $couponCode !== null && $quote['coupon'] === null,
+            ],
+        ]);
+    }
+
     /** Order status (for the success page to poll after redirect). */
     public function show(Request $request, Order $order): JsonResponse
     {
@@ -103,9 +149,39 @@ class CheckoutController extends Controller
                 'ulid' => $order->ulid,
                 'status' => $order->status,
                 'total_cents' => $order->total_cents,
+                'discount_cents' => $order->discount_cents,
+                'vat_cents' => $order->vat_cents,
                 'currency' => $order->currency,
             ],
         ]);
+    }
+
+    private function resolveProduct(string $ulid): Product
+    {
+        $product = Product::query()->visible()->where('ulid', $ulid)->firstOrFail();
+        abort_if($product->isFree(), 422, 'This product is not for sale.');
+        $product->loadMissing('store');
+
+        return $product;
+    }
+
+    /**
+     * @param  array<int, string>  $bumpUlids
+     * @return Collection<int, Product>
+     */
+    private function resolveBumps(Product $product, array $bumpUlids): Collection
+    {
+        if (empty($bumpUlids)) {
+            return collect();
+        }
+
+        // Bumps must be configured bumps on this product (and visible).
+        $bumpIds = $product->offers()->where('kind', Product::OFFER_BUMP)->pluck('related_product_id');
+
+        return Product::query()->visible()
+            ->whereIn('ulid', $bumpUlids)
+            ->whereIn('id', $bumpIds)
+            ->get();
     }
 
     private function activeProfile(Request $request): Profile

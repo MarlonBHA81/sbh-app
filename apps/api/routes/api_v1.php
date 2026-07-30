@@ -329,6 +329,7 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
         Route::post('me/store/products/{product}/file', [StoreProductController::class, 'uploadFile'])->middleware('throttle:uploads');
 
         // Checkout + orders + entitlements (Shop P2). Payment is confirmed by the ITN.
+        Route::post('shop/checkout/quote', [CheckoutController::class, 'quote'])->middleware('throttle:60,1');
         Route::post('shop/checkout', [CheckoutController::class, 'store'])->middleware('throttle:checkout');
         Route::get('shop/orders/{order}', [CheckoutController::class, 'show']);
         Route::get('me/orders', [OrderController::class, 'index']);

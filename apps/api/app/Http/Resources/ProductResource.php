@@ -17,6 +17,9 @@ class ProductResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'price_cents' => $this->price_cents,
+            'sale_price_cents' => $this->when($this->onSale(), fn () => (int) $this->sale_price_cents),
+            'effective_price_cents' => $this->effectivePriceCents(),
+            'on_sale' => $this->onSale(),
             'currency' => $this->currency,
             'cover_url' => $this->coverUrl(),
             'external_url' => $this->external_url,
@@ -32,6 +35,8 @@ class ProductResource extends JsonResource
             'store' => $this->whenLoaded('store', fn () => [
                 'slug' => $this->store->slug,
                 'name' => $this->store->name,
+                'vat_registered' => (bool) $this->store->is_vat_registered,
+                'vat_rate_bp' => $this->store->is_vat_registered ? (int) $this->store->vat_rate_bp : 0,
             ]),
             // Cross-sells ("you may also like") when the offers relation is loaded.
             'cross_sells' => $this->whenLoaded('offers', function () {
@@ -56,9 +61,24 @@ class ProductResource extends JsonResource
                     ->map(fn (ProductOffer $offer) => [
                         'ulid' => $offer->related->ulid,
                         'title' => $offer->related->title,
-                        'price_cents' => max(0, (int) ($offer->related->price_cents ?? 0) - (int) ($offer->discount_cents ?? 0)),
+                        'price_cents' => max(0, (int) $offer->related->effectivePriceCents() - (int) ($offer->discount_cents ?? 0)),
                         'original_price_cents' => $offer->related->price_cents,
                         'currency' => $offer->related->currency,
+                    ])
+                    ->values();
+            }),
+            // Post-purchase upsells ("add this too") surfaced after checkout.
+            'upsells' => $this->whenLoaded('offers', function () {
+                return $this->offers
+                    ->where('kind', Product::OFFER_UPSELL)
+                    ->filter(fn (ProductOffer $offer) => $offer->related !== null && $offer->related->is_published)
+                    ->map(fn (ProductOffer $offer) => [
+                        'ulid' => $offer->related->ulid,
+                        'title' => $offer->related->title,
+                        'price_cents' => max(0, (int) $offer->related->effectivePriceCents() - (int) ($offer->discount_cents ?? 0)),
+                        'original_price_cents' => $offer->related->price_cents,
+                        'currency' => $offer->related->currency,
+                        'cover_url' => $offer->related->coverUrl(),
                     ])
                     ->values();
             }),

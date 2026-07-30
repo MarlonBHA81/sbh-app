@@ -30,6 +30,9 @@ class Store extends Model
         'logo_path',
         'banner_path',
         'policies',
+        'is_vat_registered',
+        'vat_rate_bp',
+        'vat_number',
         'is_active',
         'published_at',
     ];
@@ -38,8 +41,27 @@ class Store extends Model
     {
         return [
             'is_active' => 'boolean',
+            'is_vat_registered' => 'boolean',
+            'vat_rate_bp' => 'integer',
             'published_at' => 'datetime',
         ];
+    }
+
+    /** VAT rate as a fraction (0.15 for 15%) when the store is VAT registered. */
+    public function vatRate(): float
+    {
+        return $this->is_vat_registered ? $this->vat_rate_bp / 10000 : 0.0;
+    }
+
+    /**
+     * The inclusive VAT portion within a gross (VAT-inclusive) amount. Prices
+     * are quoted inclusive, so VAT = gross - gross / (1 + rate).
+     */
+    public function inclusiveVatCents(int $grossCents): int
+    {
+        $rate = $this->vatRate();
+
+        return $rate <= 0 ? 0 : (int) round($grossCents - $grossCents / (1 + $rate));
     }
 
     protected static function booted(): void

@@ -26,8 +26,12 @@ class Order extends Model
         'reference',
         'buyer_profile_id',
         'store_id',
+        'coupon_id',
         'status',
         'total_cents',
+        'discount_cents',
+        'vat_cents',
+        'vat_rate_bp',
         'currency',
         'platform_fee_cents',
         'vendor_amount_cents',
@@ -39,6 +43,9 @@ class Order extends Model
     {
         return [
             'total_cents' => 'integer',
+            'discount_cents' => 'integer',
+            'vat_cents' => 'integer',
+            'vat_rate_bp' => 'integer',
             'platform_fee_cents' => 'integer',
             'vendor_amount_cents' => 'integer',
             'paid_at' => 'datetime',
@@ -66,6 +73,11 @@ class Order extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function items(): HasMany
