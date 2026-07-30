@@ -5,7 +5,9 @@ services:
   mysql:
     image: mysql:8.0
     restart: unless-stopped
-    env_file: .env.prod
+    # Only the MYSQL_* vars it needs (resolved from --env-file at compose time),
+    # NOT the whole .env.prod — the DB container has no business holding APP_KEY,
+    # provider API keys, SMTP or VAPID secrets.
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-sbh}
       MYSQL_USER: ${DB_USERNAME:-sbh}
