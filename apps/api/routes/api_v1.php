@@ -222,16 +222,18 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('analytics/posts', [AnalyticsController::class, 'posts']);
 
     // Gamification: XP, ranks and leaderboards.
-    Route::get('me/xp', [GamificationController::class, 'xp']);
-    Route::get('gamification/leaderboard', [GamificationController::class, 'leaderboard']);
-    Route::get('challenges', [ChallengeController::class, 'index']);
-    // Facilitator-created challenges (Roles P2) — gated by ChallengePolicy.
-    Route::post('challenges', [ChallengeController::class, 'store']);
-    Route::get('challenges/{challenge}', [ChallengeController::class, 'show']);
-    Route::patch('challenges/{challenge}', [ChallengeController::class, 'update']);
-    Route::post('challenges/{challenge}/join', [ChallengeController::class, 'join']);
-    Route::delete('challenges/{challenge}/join', [ChallengeController::class, 'leave']);
-    Route::get('gamification/ranks', [GamificationController::class, 'ranks']);
+    Route::middleware('feature:gamification')->group(function () {
+        Route::get('me/xp', [GamificationController::class, 'xp']);
+        Route::get('gamification/leaderboard', [GamificationController::class, 'leaderboard']);
+        Route::get('challenges', [ChallengeController::class, 'index']);
+        // Facilitator-created challenges (Roles P2) — gated by ChallengePolicy.
+        Route::post('challenges', [ChallengeController::class, 'store']);
+        Route::get('challenges/{challenge}', [ChallengeController::class, 'show']);
+        Route::patch('challenges/{challenge}', [ChallengeController::class, 'update']);
+        Route::post('challenges/{challenge}/join', [ChallengeController::class, 'join']);
+        Route::delete('challenges/{challenge}/join', [ChallengeController::class, 'leave']);
+        Route::get('gamification/ranks', [GamificationController::class, 'ranks']);
+    });
 
     // Today's connections (V1 · CONNECT) — people to meet, with a reason.
     Route::get('me/connections', [ConnectionController::class, 'today']);
@@ -252,18 +254,22 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('goals/{goal}', [GoalController::class, 'destroy']);
 
     // Wellness & resilience space (V3 · BELONG) — supportive, never gamified.
-    Route::get('wellness/resources', [WellnessController::class, 'resources']);
-    Route::get('me/wellness/checkins', [WellnessController::class, 'checkins']);
-    Route::post('me/wellness/checkins', [WellnessController::class, 'storeCheckin']);
+    Route::middleware('feature:wellness')->group(function () {
+        Route::get('wellness/resources', [WellnessController::class, 'resources']);
+        Route::get('me/wellness/checkins', [WellnessController::class, 'checkins']);
+        Route::post('me/wellness/checkins', [WellnessController::class, 'storeCheckin']);
+    });
 
     // Opportunities (V1 · GROW) — admin-curated tenders, funding, grants.
-    Route::get('opportunities', [OpportunityController::class, 'index']);
-    // Fit-ranked opportunities for the member (V3 · personalised Home).
-    Route::get('me/opportunities/suggested', [OpportunityController::class, 'suggested']);
-    Route::get('me/opportunities/saved', [OpportunityController::class, 'saved']);
-    Route::get('opportunities/{opportunity}', [OpportunityController::class, 'show']);
-    Route::post('opportunities/{opportunity}/save', [OpportunityController::class, 'save']);
-    Route::delete('opportunities/{opportunity}/save', [OpportunityController::class, 'unsave']);
+    Route::middleware('feature:opportunities')->group(function () {
+        Route::get('opportunities', [OpportunityController::class, 'index']);
+        // Fit-ranked opportunities for the member (V3 · personalised Home).
+        Route::get('me/opportunities/suggested', [OpportunityController::class, 'suggested']);
+        Route::get('me/opportunities/saved', [OpportunityController::class, 'saved']);
+        Route::get('opportunities/{opportunity}', [OpportunityController::class, 'show']);
+        Route::post('opportunities/{opportunity}/save', [OpportunityController::class, 'save']);
+        Route::delete('opportunities/{opportunity}/save', [OpportunityController::class, 'unsave']);
+    });
 
     // Resource Library (V2 · LEARN) — admin-curated templates, checklists,
     // toolkits and AI prompts, bookmarkable like opportunities.
@@ -274,17 +280,19 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('resources/{resource}/save', [ResourceController::class, 'unsave']);
 
     // Masterclasses & cohorts (V3 · LEARN) — longer programmes members enrol in.
-    Route::get('masterclasses', [MasterclassController::class, 'index']);
-    Route::get('masterclasses/{masterclass}', [MasterclassController::class, 'show']);
-    Route::post('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'enrol'])->middleware('throttle:checkout');
-    Route::delete('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'withdraw']);
-    // Live streaming (ask #4): members watch; hosting is admin-only.
-    Route::get('masterclasses/{masterclass}/live', [LiveSessionController::class, 'show']);
-    Route::post('masterclasses/{masterclass}/live/react', [LiveSessionController::class, 'react'])
-        ->middleware('throttle:60,1');
-    Route::middleware('admin')->group(function () {
-        Route::post('masterclasses/{masterclass}/live', [LiveSessionController::class, 'store']);
-        Route::delete('masterclasses/{masterclass}/live', [LiveSessionController::class, 'end']);
+    Route::middleware('feature:masterclasses')->group(function () {
+        Route::get('masterclasses', [MasterclassController::class, 'index']);
+        Route::get('masterclasses/{masterclass}', [MasterclassController::class, 'show']);
+        Route::post('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'enrol'])->middleware('throttle:checkout');
+        Route::delete('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'withdraw']);
+        // Live streaming (ask #4): members watch; hosting is admin-only.
+        Route::get('masterclasses/{masterclass}/live', [LiveSessionController::class, 'show']);
+        Route::post('masterclasses/{masterclass}/live/react', [LiveSessionController::class, 'react'])
+            ->middleware('throttle:60,1');
+        Route::middleware('admin')->group(function () {
+            Route::post('masterclasses/{masterclass}/live', [LiveSessionController::class, 'store']);
+            Route::delete('masterclasses/{masterclass}/live', [LiveSessionController::class, 'end']);
+        });
     });
 
     // Bite-size learning modules (V2 · LEARN) — short lessons that award XP.
@@ -294,51 +302,57 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('learn/lessons/{lesson}/complete', [LessonController::class, 'complete']);
 
     // AI Business Coach v1 (V2 · LEARN) — persisted chat; works with no API key.
-    Route::get('coach', [CoachController::class, 'show']);
-    // Deep Coach (V3) — fit-ranked opportunities + recommended lessons.
-    Route::get('coach/suggestions', [CoachController::class, 'suggestions']);
-    Route::post('coach/messages', [CoachController::class, 'store'])->middleware('throttle:coach');
-    Route::delete('coach', [CoachController::class, 'destroy']);
+    Route::middleware('feature:coach')->group(function () {
+        Route::get('coach', [CoachController::class, 'show']);
+        // Deep Coach (V3) — fit-ranked opportunities + recommended lessons.
+        Route::get('coach/suggestions', [CoachController::class, 'suggestions']);
+        Route::post('coach/messages', [CoachController::class, 'store'])->middleware('throttle:coach');
+        Route::delete('coach', [CoachController::class, 'destroy']);
+    });
 
     // Marketplace (Shop P1) — browse stores/products; vendor management under /me/store.
-    Route::get('shop/stores', [ShopController::class, 'stores']);
-    Route::get('shop/stores/{store}', [ShopController::class, 'store']);
-    Route::get('shop/stores/{store}/products', [ShopController::class, 'storeProducts']);
-    Route::get('shop/products/{product}', [ShopController::class, 'product']);
-    Route::get('me/store', [StoreController::class, 'show']);
-    Route::post('me/store', [StoreController::class, 'upsert']);
-    Route::get('me/store/products', [StoreProductController::class, 'index']);
-    Route::post('me/store/products', [StoreProductController::class, 'store']);
-    Route::patch('me/store/products/{product}', [StoreProductController::class, 'update']);
-    Route::delete('me/store/products/{product}', [StoreProductController::class, 'destroy']);
-    Route::post('me/store/products/{product}/file', [StoreProductController::class, 'uploadFile'])->middleware('throttle:uploads');
+    Route::middleware('feature:shop')->group(function () {
+        Route::get('shop/stores', [ShopController::class, 'stores']);
+        Route::get('shop/stores/{store}', [ShopController::class, 'store']);
+        Route::get('shop/stores/{store}/products', [ShopController::class, 'storeProducts']);
+        Route::get('shop/products/{product}', [ShopController::class, 'product']);
+        Route::get('me/store', [StoreController::class, 'show']);
+        Route::post('me/store', [StoreController::class, 'upsert']);
+        Route::get('me/store/products', [StoreProductController::class, 'index']);
+        Route::post('me/store/products', [StoreProductController::class, 'store']);
+        Route::patch('me/store/products/{product}', [StoreProductController::class, 'update']);
+        Route::delete('me/store/products/{product}', [StoreProductController::class, 'destroy']);
+        Route::post('me/store/products/{product}/file', [StoreProductController::class, 'uploadFile'])->middleware('throttle:uploads');
 
-    // Checkout + orders + entitlements (Shop P2). Payment is confirmed by the ITN.
-    Route::post('shop/checkout', [CheckoutController::class, 'store'])->middleware('throttle:checkout');
-    Route::get('shop/orders/{order}', [CheckoutController::class, 'show']);
-    Route::get('me/orders', [OrderController::class, 'index']);
-    Route::get('me/store/orders', [OrderController::class, 'storeOrders']);
-    Route::get('me/store/analytics', [StoreAnalyticsController::class, 'show']);
-    Route::post('shop/seen', [ShopSeenController::class, 'store'])->middleware('throttle:60,1');
-    Route::get('me/purchases', [PurchaseController::class, 'index']);
-    Route::get('me/purchases/{product}/download', [PurchaseController::class, 'download']);
+        // Checkout + orders + entitlements (Shop P2). Payment is confirmed by the ITN.
+        Route::post('shop/checkout', [CheckoutController::class, 'store'])->middleware('throttle:checkout');
+        Route::get('shop/orders/{order}', [CheckoutController::class, 'show']);
+        Route::get('me/orders', [OrderController::class, 'index']);
+        Route::get('me/store/orders', [OrderController::class, 'storeOrders']);
+        Route::get('me/store/analytics', [StoreAnalyticsController::class, 'show']);
+        Route::post('shop/seen', [ShopSeenController::class, 'store'])->middleware('throttle:60,1');
+        Route::get('me/purchases', [PurchaseController::class, 'index']);
+        Route::get('me/purchases/{product}/download', [PurchaseController::class, 'download']);
+    });
 
     // Courses + free enrolment + in-app tools (Shop P3). Content is gated by the Purchase entitlement.
-    Route::get('shop/products/{product}/curriculum', [CourseController::class, 'outline']);
-    Route::post('shop/products/{product}/enrol', [EnrolmentController::class, 'store'])->middleware('throttle:checkout');
-    Route::get('me/courses/lessons/{lesson}', [CourseController::class, 'lesson']);
-    Route::post('me/courses/lessons/{lesson}/complete', [CourseController::class, 'complete']);
-    Route::get('me/courses/lessons/{lesson}/attachment', [CourseController::class, 'attachment']);
-    // Vendor course authoring.
-    Route::get('me/store/products/{product}/curriculum', [StoreCourseController::class, 'index']);
-    Route::post('me/store/products/{product}/modules', [StoreCourseController::class, 'storeModule']);
-    Route::patch('me/store/modules/{module}', [StoreCourseController::class, 'updateModule']);
-    Route::delete('me/store/modules/{module}', [StoreCourseController::class, 'destroyModule']);
-    Route::post('me/store/modules/{module}/lessons', [StoreCourseController::class, 'storeLesson']);
-    Route::patch('me/store/lessons/{lesson}', [StoreCourseController::class, 'updateLesson']);
-    Route::delete('me/store/lessons/{lesson}', [StoreCourseController::class, 'destroyLesson']);
-    Route::post('me/store/lessons/{lesson}/attachment', [StoreCourseController::class, 'uploadAttachment'])->middleware('throttle:uploads');
-    Route::post('me/store/products/{product}/curriculum/reorder', [StoreCourseController::class, 'reorder']);
+    Route::middleware('feature:courses')->group(function () {
+        Route::get('shop/products/{product}/curriculum', [CourseController::class, 'outline']);
+        Route::post('shop/products/{product}/enrol', [EnrolmentController::class, 'store'])->middleware('throttle:checkout');
+        Route::get('me/courses/lessons/{lesson}', [CourseController::class, 'lesson']);
+        Route::post('me/courses/lessons/{lesson}/complete', [CourseController::class, 'complete']);
+        Route::get('me/courses/lessons/{lesson}/attachment', [CourseController::class, 'attachment']);
+        // Vendor course authoring.
+        Route::get('me/store/products/{product}/curriculum', [StoreCourseController::class, 'index']);
+        Route::post('me/store/products/{product}/modules', [StoreCourseController::class, 'storeModule']);
+        Route::patch('me/store/modules/{module}', [StoreCourseController::class, 'updateModule']);
+        Route::delete('me/store/modules/{module}', [StoreCourseController::class, 'destroyModule']);
+        Route::post('me/store/modules/{module}/lessons', [StoreCourseController::class, 'storeLesson']);
+        Route::patch('me/store/lessons/{lesson}', [StoreCourseController::class, 'updateLesson']);
+        Route::delete('me/store/lessons/{lesson}', [StoreCourseController::class, 'destroyLesson']);
+        Route::post('me/store/lessons/{lesson}/attachment', [StoreCourseController::class, 'uploadAttachment'])->middleware('throttle:uploads');
+        Route::post('me/store/products/{product}/curriculum/reorder', [StoreCourseController::class, 'reorder']);
+    });
 
     // Daily Business Brief (V2 · Feature 7) — a personalised daily card; works with no API key.
     Route::get('me/brief', [BriefController::class, 'show']);

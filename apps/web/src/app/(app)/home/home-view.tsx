@@ -56,6 +56,7 @@ export function HomeView() {
   const stage = useAuthStore((s) => s.activeProfile?.journey_stage ?? null);
   const briefOn = useFeature("daily_brief");
   const coursesOn = useFeature("courses");
+  const opportunitiesOn = useFeature("opportunities");
 
   // Carry a compose draft through signup (UX pattern 4): arriving with
   // ?compose=draft and a saved draft reopens the composer with the text intact.
@@ -77,10 +78,12 @@ export function HomeView() {
       {/* Today's dashboard — ordered to the member's journey stage. The
           stage-led card takes the lead tier so the ordering is legible at a
           glance; the rest sit back. */}
-      {cardOrder(stage).map((key, i) => {
-        const Component = CARD[key];
-        return <Component key={key} tier={i === 0 ? "lead" : "default"} />;
-      })}
+      {cardOrder(stage)
+        .filter((key) => key !== "opportunities" || opportunitiesOn)
+        .map((key, i) => {
+          const Component = CARD[key];
+          return <Component key={key} tier={i === 0 ? "lead" : "default"} />;
+        })}
 
       {/* Daily Business Brief (V2 · Feature 7) — super-admin togglable;
           self-hides when there are no items. */}

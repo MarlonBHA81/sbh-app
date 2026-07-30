@@ -19,7 +19,7 @@ import { SearchTrigger } from "@/components/search/search-trigger";
 import { AccountSwitcher } from "@/components/shell/account-switcher";
 import { NAV_ITEMS } from "@/components/shell/nav-items";
 import { Button } from "@/components/ui/button";
-import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useAuthStore, useFeature } from "@/lib/stores/auth-store-provider";
 import { useMessagesStore } from "@/lib/stores/messages-store";
 import { useNotificationsStore } from "@/lib/stores/notifications-store";
 import { cn } from "@/lib/utils";
@@ -33,6 +33,7 @@ export function SidebarNav() {
   const t = useTranslations("nav");
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const isAdmin = useAuthStore((s) => Boolean(s.user?.is_admin));
+  const gamificationOn = useFeature("gamification");
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const unreadMessages = useMessagesStore((s) => s.unreadTotal);
   const { openComposer } = useComposer();
@@ -105,21 +106,23 @@ export function SidebarNav() {
           <Briefcase className="size-5" aria-hidden />
           {t("business")}
         </Link>
-        <Link
-          href="/leaderboard"
-          aria-current={
-            pathname === "/leaderboard" ? "page" : undefined
-          }
-          className={cn(
-            "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
-            pathname === "/leaderboard"
-              ? "bg-accent text-accent-foreground"
-              : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
-          )}
-        >
-          <Trophy className="size-5" aria-hidden />
-          {t("leaderboard")}
-        </Link>
+        {gamificationOn ? (
+          <Link
+            href="/leaderboard"
+            aria-current={
+              pathname === "/leaderboard" ? "page" : undefined
+            }
+            className={cn(
+              "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+              pathname === "/leaderboard"
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+            )}
+          >
+            <Trophy className="size-5" aria-hidden />
+            {t("leaderboard")}
+          </Link>
+        ) : null}
         {isAdmin ? (
           <Link
             href="/ads"

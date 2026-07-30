@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureFeatureEnabled;
 use App\Http\Middleware\EnsureNotBanned;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\SetActiveProfile;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'not_banned' => EnsureNotBanned::class,
             'profile.active' => SetActiveProfile::class,
             'admin' => EnsureUserIsAdmin::class,
+            'feature' => EnsureFeatureEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

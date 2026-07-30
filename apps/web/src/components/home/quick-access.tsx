@@ -22,6 +22,7 @@ import { useTranslations } from "next-intl";
 
 import { SwirlWatermark } from "@/components/brand/swirl-watermark";
 import { SectionHeader } from "@/components/home/section-header";
+import { useAuthStore } from "@/lib/stores/auth-store-provider";
 
 interface Tile {
   labelKey:
@@ -43,6 +44,8 @@ interface Tile {
   icon: LucideIcon;
   /** Brand gradient (design tokens via Tailwind theme). */
   gradient: string;
+  /** Super-admin feature flag that must be on for this tile to show. */
+  feature?: string;
 }
 
 const TILES: Tile[] = [
@@ -57,12 +60,14 @@ const TILES: Tile[] = [
     href: "/opportunities",
     icon: Sparkles,
     gradient: "from-teal to-sage",
+    feature: "opportunities",
   },
   {
     labelKey: "wellness",
     href: "/wellness",
     icon: HeartHandshake,
     gradient: "from-sage to-plum",
+    feature: "wellness",
   },
   {
     labelKey: "resources",
@@ -81,18 +86,21 @@ const TILES: Tile[] = [
     href: "/coach",
     icon: Bot,
     gradient: "from-teal to-plum",
+    feature: "coach",
   },
   {
     labelKey: "masterclasses",
     href: "/masterclasses",
     icon: School,
     gradient: "from-plum to-teal",
+    feature: "masterclasses",
   },
   {
     labelKey: "shop",
     href: "/shop",
     icon: ShoppingBag,
     gradient: "from-teal to-sage",
+    feature: "shop",
   },
   {
     labelKey: "mentors",
@@ -135,6 +143,10 @@ const TILES: Tile[] = [
 /** Horizontally scrollable brand-gradient tiles (Home, reskin spec). */
 export function QuickAccess() {
   const t = useTranslations("home");
+  const features = useAuthStore((s) => s.features);
+  const tiles = TILES.filter(
+    (tile) => !tile.feature || (features[tile.feature] ?? true),
+  );
 
   return (
     <section className="flex flex-col gap-3">
@@ -144,7 +156,7 @@ export function QuickAccess() {
         viewAllLabel={t("viewAll")}
       />
       <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {TILES.map(({ labelKey, href, icon: Icon, gradient }) => (
+        {tiles.map(({ labelKey, href, icon: Icon, gradient }) => (
           <Link
             key={labelKey}
             href={href}

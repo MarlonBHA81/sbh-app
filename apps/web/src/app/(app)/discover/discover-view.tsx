@@ -10,6 +10,7 @@ import { TopicChip } from "@/components/topics/topic-chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import * as api from "@/lib/api/client";
 import type { Topic } from "@/lib/api/types";
+import { useFeature } from "@/lib/stores/auth-store-provider";
 import { cn } from "@/lib/utils";
 
 function formatCount(n: number): string {
@@ -124,6 +125,7 @@ export function DiscoverView() {
   const [retry, setRetry] = useState(0);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const busySlugs = useRef(new Set<string>());
+  const gamificationOn = useFeature("gamification");
 
   useEffect(() => {
     let cancelled = false;
@@ -233,26 +235,28 @@ export function DiscoverView() {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link
-        href="/leaderboard"
-        className="flex items-center gap-3 rounded-xl border bg-accent/40 p-3 transition-colors hover:bg-accent/60"
-      >
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-gold-text">
-          <Trophy className="size-5" aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold">
-            Community leaderboard
+      {gamificationOn ? (
+        <Link
+          href="/leaderboard"
+          className="flex items-center gap-3 rounded-xl border bg-accent/40 p-3 transition-colors hover:bg-accent/60"
+        >
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-gold-text">
+            <Trophy className="size-5" aria-hidden />
           </span>
-          <span className="block text-xs text-muted-foreground">
-            See who&apos;s earning the most XP this week.
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">
+              Community leaderboard
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              See who&apos;s earning the most XP this week.
+            </span>
           </span>
-        </span>
-        <ChevronRight
-          className="size-5 shrink-0 text-muted-foreground"
-          aria-hidden
-        />
-      </Link>
+          <ChevronRight
+            className="size-5 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+        </Link>
+      ) : null}
 
       <Link
         href="/business"
