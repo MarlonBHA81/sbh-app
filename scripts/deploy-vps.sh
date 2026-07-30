@@ -55,6 +55,7 @@ if [ ! -f .env.prod ]; then
 
   DB_PASSWORD="$(rand)"; DB_ROOT_PASSWORD="$(rand)"
   REVERB_KEY="$(rand)"; REVERB_SECRET="$(rand)"
+  REDIS_PASSWORD="$(rand)"
 
   # Start from pristine templates so re-runs with a corrected domain work.
   git checkout -- docker/nginx/prod.conf 2>/dev/null || true
@@ -66,6 +67,7 @@ if [ ! -f .env.prod ]; then
     -e "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$DB_ROOT_PASSWORD|" \
     -e "s|^REVERB_APP_KEY=.*|REVERB_APP_KEY=$REVERB_KEY|" \
     -e "s|^REVERB_APP_SECRET=.*|REVERB_APP_SECRET=$REVERB_SECRET|" \
+    -e "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$REDIS_PASSWORD|" \
     -e "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=$EMAIL|" \
     -e "s|^VAPID_SUBJECT=.*|VAPID_SUBJECT=mailto:$EMAIL|" \
     .env.prod
@@ -101,9 +103,14 @@ say "Running migrations + seeders"
 docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T api php artisan migrate --force --seed
 
 say "Generating web push (VAPID) keys"
-docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T api php artisan webpush:vapid --show 2>/dev/null || true
-echo "  ^ Copy VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY into .env.prod, set"
-echo "    NEXT_PUBLIC_VAPID_PUBLIC_KEY as a web build arg, then re-run this script (idempotent)."
+# Write to a root-only file rather than stdout so the private key never lands
+# in terminal scrollback / a screen share.
+umask 077
+docker compose --env-file .env.prod -f docker-compose.prod.yml exec -T api php artisan webpush:vapid --show 2>/dev/null > .vapid-keys.txt || true
+chmod 600 .vapid-keys.txt 2>/dev/null || true
+echo "  ^ Keys written to ./.vapid-keys.txt (mode 600). Copy VAPID_PUBLIC_KEY /"
+echo "    VAPID_PRIVATE_KEY into .env.prod, set NEXT_PUBLIC_VAPID_PUBLIC_KEY as a"
+echo "    web build arg, re-run this script (idempotent), then: rm .vapid-keys.txt"
 
 say "Create your admin account (Filament panel at https://$DOMAIN/admin)"
 docker compose --env-file .env.prod -f docker-compose.prod.yml exec api php artisan make:admin < /dev/tty || true

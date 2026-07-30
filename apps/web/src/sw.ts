@@ -115,6 +115,21 @@ const serwist = new Serwist({
 
 serwist.addEventListeners();
 
+// --- Per-user cache purge -------------------------------------------------
+// The API caches below hold per-user data (session/profile, feeds,
+// notifications) in origin-wide Cache Storage. On logout the app posts this
+// message so the next user on a shared device can't be served the previous
+// user's cached data.
+const USER_CACHES = ["sbh-api-me", "sbh-api-feeds", "sbh-api-notifications"];
+
+self.addEventListener("message", (event) => {
+  if ((event.data as { type?: string } | undefined)?.type === "sbh-purge-user-cache") {
+    event.waitUntil(
+      Promise.all(USER_CACHES.map((name) => caches.delete(name))),
+    );
+  }
+});
+
 // --- Web push -------------------------------------------------------------
 
 interface PushPayload {

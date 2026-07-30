@@ -24,7 +24,12 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    # Require a password when REDIS_PASSWORD is set (new deploys generate one);
+    # unset → no auth, unchanged from before. Redis is internal-only (no ports).
+    # `$$` defers expansion to the container shell so it reads the env var.
+    command: sh -c 'redis-server --appendonly yes $${REDIS_PASSWORD:+--requirepass "$$REDIS_PASSWORD"}'
     volumes:
       - redis-data:/data
 
@@ -62,6 +67,10 @@ services:
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
+    # Reload every 6h so renewed certbot certificates are picked up without a
+    # manual deploy (certbot writes to the shared cert volume but can't signal
+    # this container). nginx stays PID 1 via exec, so a crash still restarts.
+    command: sh -c "(while :; do sleep 6h; nginx -s reload 2>/dev/null; done) & exec nginx -g 'daemon off;'"
     ports:
       - "80:80"
       - "443:443"

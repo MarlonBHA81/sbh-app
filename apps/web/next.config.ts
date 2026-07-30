@@ -9,13 +9,30 @@ const withSerwist = withSerwistInit({
   swDest: "public/sw.js",
 });
 
+// Restrict the Next image optimizer to our own media host, derived from the
+// public API/app URL at build time. A wildcard (`hostname: "**"`) would let
+// anyone use /_next/image as an open proxy against arbitrary hosts (bandwidth
+// abuse + limited SSRF); all app media is served same-origin from /storage.
+const apiHost = (() => {
+  try {
+    return new URL(
+      process.env.NEXT_PUBLIC_API_URL ??
+        process.env.NEXT_PUBLIC_APP_URL ??
+        "http://localhost:8000",
+    ).hostname;
+  } catch {
+    return "localhost";
+  }
+})();
+
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
-    // Media is served by the Laravel API / storage disk.
+    // Media is served same-origin by the Laravel API / storage disk.
     remotePatterns: [
       { protocol: "http", hostname: "localhost" },
-      { protocol: "https", hostname: "**" },
+      { protocol: "https", hostname: apiHost },
+      { protocol: "http", hostname: apiHost },
     ],
   },
 };

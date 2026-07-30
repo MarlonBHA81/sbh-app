@@ -66,6 +66,18 @@ function persistProfileId(ulid: string | null): void {
   }
 }
 
+/**
+ * Ask the service worker to drop the per-user API caches (session/profile,
+ * feeds, notifications) so a shared device can't serve the previous user's
+ * cached data after logout.
+ */
+function purgeUserCaches(): void {
+  if (typeof navigator === "undefined") return;
+  navigator.serviceWorker?.controller?.postMessage({
+    type: "sbh-purge-user-cache",
+  });
+}
+
 export const defaultAuthState: AuthState = {
   user: null,
   profiles: [],
@@ -128,6 +140,7 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
       }
       api.setActiveProfileId(null);
       persistProfileId(null);
+      purgeUserCaches();
       useModerationStore.getState().reset();
       set({
         user: null,
