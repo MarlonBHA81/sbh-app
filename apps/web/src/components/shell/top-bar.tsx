@@ -31,7 +31,7 @@ export function TopBar() {
   if (hasOwnHeader(pathname)) return null;
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/90 px-4 backdrop-blur md:hidden">
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-warmgray bg-background px-4 md:hidden">
       <Link href="/home" aria-label="SBH Community — home">
         <SbhLogo markClassName="size-8" textClassName="text-base" />
       </Link>

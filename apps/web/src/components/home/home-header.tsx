@@ -40,7 +40,7 @@ export function HeaderIconButton({
     </>
   );
   const classes = cn(
-    "relative flex size-10 shrink-0 items-center justify-center rounded-full border border-warmgray bg-card text-text-primary transition-colors hover:bg-accent active:scale-[0.98]",
+    "relative flex size-10 shrink-0 items-center justify-center rounded-full border border-warmgray bg-card text-text-primary shadow-card transition-colors hover:bg-accent active:scale-[0.98]",
     className,
   );
   if (href) {

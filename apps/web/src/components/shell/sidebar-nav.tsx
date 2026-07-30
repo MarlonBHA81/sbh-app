@@ -169,6 +169,7 @@ export function SidebarNav() {
         </Link>
         <Button
           type="button"
+          variant="hero"
           className="mt-3 h-11 gap-2"
           onClick={() => openComposer()}
         >
