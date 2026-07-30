@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\Products;
 
+use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
+use App\Filament\Resources\Products\RelationManagers\OffersRelationManager;
 use App\Models\Product;
 use BackedEnum;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -36,6 +39,13 @@ class ProductResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
+            Select::make('store_id')
+                ->label('Store')
+                ->relationship('store', 'name')
+                ->searchable()
+                ->preload()
+                ->required()
+                ->helperText('The storefront this product belongs to.'),
             TextInput::make('title')->required()->maxLength(160),
             Select::make('type')
                 ->required()
@@ -43,6 +53,12 @@ class ProductResource extends Resource
             Textarea::make('description')->required()->rows(4)->maxLength(5000),
             TextInput::make('price_cents')->numeric()->minValue(0)
                 ->helperText('Price in cents (e.g. 9900 = R99.00).'),
+            TextInput::make('sale_price_cents')->numeric()->minValue(0)
+                ->label('Sale price (cents)')
+                ->helperText('Optional. When set (and below the price), buyers pay this.'),
+            DateTimePicker::make('sale_ends_at')
+                ->label('Sale ends at')
+                ->helperText('Optional. Leave blank for an open-ended sale.'),
             TextInput::make('currency')->maxLength(3)->default('ZAR'),
             TextInput::make('external_url')->url()->maxLength(500),
             Toggle::make('is_published')
@@ -59,6 +75,8 @@ class ProductResource extends Resource
                 TextColumn::make('type')->badge()->sortable(),
                 TextColumn::make('price_cents')->label('Price')
                     ->formatStateUsing(fn (?int $state, Product $r) => $state === null ? '—' : $r->currency.' '.number_format($state / 100, 2)),
+                IconColumn::make('on_sale')->boolean()->label('On sale')
+                    ->state(fn (Product $r) => $r->onSale())->toggleable(),
                 IconColumn::make('is_published')->boolean()->label('Published')->sortable(),
             ])
             ->filters([
@@ -68,10 +86,16 @@ class ProductResource extends Resource
             ->defaultSort('created_at', 'desc');
     }
 
+    public static function getRelations(): array
+    {
+        return [OffersRelationManager::class];
+    }
+
     public static function getPages(): array
     {
         return [
             'index' => ListProducts::route('/'),
+            'create' => CreateProduct::route('/create'),
             'edit' => EditProduct::route('/{record}/edit'),
         ];
     }
