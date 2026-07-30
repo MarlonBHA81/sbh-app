@@ -182,8 +182,8 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('media/{media}', [MediaController::class, 'show']);
 
     // Chunked video/audio uploads.
-    Route::post('uploads', [UploadController::class, 'store']);
-    Route::put('uploads/{upload}/chunks/{index}', [UploadController::class, 'chunk'])->whereNumber('index');
+    Route::post('uploads', [UploadController::class, 'store'])->middleware('throttle:uploads');
+    Route::put('uploads/{upload}/chunks/{index}', [UploadController::class, 'chunk'])->whereNumber('index')->middleware('throttle:uploads');
     Route::post('uploads/{upload}/complete', [UploadController::class, 'complete']);
     Route::delete('uploads/{upload}', [UploadController::class, 'destroy']);
 
@@ -276,7 +276,7 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // Masterclasses & cohorts (V3 · LEARN) — longer programmes members enrol in.
     Route::get('masterclasses', [MasterclassController::class, 'index']);
     Route::get('masterclasses/{masterclass}', [MasterclassController::class, 'show']);
-    Route::post('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'enrol']);
+    Route::post('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'enrol'])->middleware('throttle:checkout');
     Route::delete('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'withdraw']);
     // Live streaming (ask #4): members watch; hosting is admin-only.
     Route::get('masterclasses/{masterclass}/live', [LiveSessionController::class, 'show']);
@@ -311,10 +311,10 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('me/store/products', [StoreProductController::class, 'store']);
     Route::patch('me/store/products/{product}', [StoreProductController::class, 'update']);
     Route::delete('me/store/products/{product}', [StoreProductController::class, 'destroy']);
-    Route::post('me/store/products/{product}/file', [StoreProductController::class, 'uploadFile']);
+    Route::post('me/store/products/{product}/file', [StoreProductController::class, 'uploadFile'])->middleware('throttle:uploads');
 
     // Checkout + orders + entitlements (Shop P2). Payment is confirmed by the ITN.
-    Route::post('shop/checkout', [CheckoutController::class, 'store']);
+    Route::post('shop/checkout', [CheckoutController::class, 'store'])->middleware('throttle:checkout');
     Route::get('shop/orders/{order}', [CheckoutController::class, 'show']);
     Route::get('me/orders', [OrderController::class, 'index']);
     Route::get('me/store/orders', [OrderController::class, 'storeOrders']);
@@ -325,7 +325,7 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
 
     // Courses + free enrolment + in-app tools (Shop P3). Content is gated by the Purchase entitlement.
     Route::get('shop/products/{product}/curriculum', [CourseController::class, 'outline']);
-    Route::post('shop/products/{product}/enrol', [EnrolmentController::class, 'store']);
+    Route::post('shop/products/{product}/enrol', [EnrolmentController::class, 'store'])->middleware('throttle:checkout');
     Route::get('me/courses/lessons/{lesson}', [CourseController::class, 'lesson']);
     Route::post('me/courses/lessons/{lesson}/complete', [CourseController::class, 'complete']);
     Route::get('me/courses/lessons/{lesson}/attachment', [CourseController::class, 'attachment']);
@@ -337,7 +337,7 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('me/store/modules/{module}/lessons', [StoreCourseController::class, 'storeLesson']);
     Route::patch('me/store/lessons/{lesson}', [StoreCourseController::class, 'updateLesson']);
     Route::delete('me/store/lessons/{lesson}', [StoreCourseController::class, 'destroyLesson']);
-    Route::post('me/store/lessons/{lesson}/attachment', [StoreCourseController::class, 'uploadAttachment']);
+    Route::post('me/store/lessons/{lesson}/attachment', [StoreCourseController::class, 'uploadAttachment'])->middleware('throttle:uploads');
     Route::post('me/store/products/{product}/curriculum/reorder', [StoreCourseController::class, 'reorder']);
 
     // Daily Business Brief (V2 · Feature 7) — a personalised daily card; works with no API key.

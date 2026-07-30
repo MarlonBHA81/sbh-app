@@ -26,7 +26,9 @@ return [
         'merchant_id' => env('PAYFAST_MERCHANT_ID'),
         'merchant_key' => env('PAYFAST_MERCHANT_KEY'),
         'passphrase' => env('PAYFAST_PASSPHRASE'),
-        'sandbox' => (bool) env('PAYFAST_SANDBOX', true),
+        // Default OFF: a production instance must opt IN to sandbox, so a
+        // misconfigured deploy never silently runs test transactions as real.
+        'sandbox' => (bool) env('PAYFAST_SANDBOX', false),
         'timeout' => (int) env('PAYFAST_TIMEOUT', 15),
     ],
 

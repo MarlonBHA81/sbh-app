@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EncryptedJson;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
@@ -14,8 +15,10 @@ class Setting extends Model
 
     protected function casts(): array
     {
+        // Encrypted at rest: settings hold live integration credentials. The
+        // cast tolerates existing plaintext rows and re-encrypts them on write.
         return [
-            'value' => 'array',
+            'value' => EncryptedJson::class,
         ];
     }
 

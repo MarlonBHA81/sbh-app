@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\EncryptedString;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -30,6 +31,9 @@ class WebhookEndpoint extends Model
         return [
             'events' => 'array',
             'is_active' => 'boolean',
+            // Signing secret + bearer/header value encrypted at rest.
+            'secret' => EncryptedString::class,
+            'header_value' => EncryptedString::class,
         ];
     }
 

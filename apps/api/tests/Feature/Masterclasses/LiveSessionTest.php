@@ -135,6 +135,27 @@ test('the provider webhook flips the session to live', function () {
     expect($session->fresh()->status)->toBe(MasterclassLiveSession::STATUS_IDLE);
 });
 
+test('an unsigned webhook is rejected in production when no secret is set', function () {
+    useMux(); // webhook_secret is null
+    $admin = adminWithProfile();
+    $room = liveRoom();
+    $this->actingAs($admin)->postJson("/api/v1/masterclasses/{$room->ulid}/live")->assertCreated();
+
+    // Outside local/testing, a missing secret must fail closed: a forged,
+    // unsigned webhook cannot flip the room live or inject a recording.
+    app()->detectEnvironment(fn () => 'production');
+
+    $this->flushHeaders();
+    $this->postJson('/api/v1/streaming/webhook', [
+        'type' => 'video.live_stream.active',
+        'data' => ['id' => 'stream_abc'],
+    ])->assertOk(); // controller always 200 so the provider stops retrying
+
+    $session = MasterclassLiveSession::where('masterclass_id', $room->id)->first();
+    expect($session->status)->toBe(MasterclassLiveSession::STATUS_IDLE)
+        ->and($session->started_at)->toBeNull();
+});
+
 test('a ready recording becomes a replay for members', function () {
     useMux();
     $admin = adminWithProfile();

@@ -5,6 +5,7 @@ namespace App\Services\Streaming;
 use App\Models\MasterclassLiveSession;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Mux (mux.com) live-streaming provider. Creates an RTMP live stream and exposes
@@ -107,13 +108,25 @@ class MuxStreamDriver implements StreamProvider
     }
 
     /**
-     * Verify the Mux-Signature header (t=timestamp,v1=hmac). Skipped when no
-     * webhook secret is configured (e.g. local/dev).
+     * Verify the Mux-Signature header (t=timestamp,v1=hmac).
+     *
+     * The webhook route is unauthenticated, so an unsigned request must NOT be
+     * trusted in production: without this a forged webhook could flip a room's
+     * live status or inject an arbitrary recording URL. When no secret is
+     * configured we therefore FAIL CLOSED everywhere except local/testing (so
+     * dev and the suite still work without a secret) and log a warning so the
+     * missing configuration is visible.
      */
     private function verifySignature(Request $request): bool
     {
         $secret = $this->config['webhook_secret'] ?? null;
         if (empty($secret)) {
+            if (! app()->environment('local', 'testing')) {
+                Log::warning('Mux webhook rejected: MUX_WEBHOOK_SECRET is not configured.');
+
+                return false;
+            }
+
             return true;
         }
 

@@ -16,6 +16,7 @@ use App\Services\Streaming\NullStreamDriver;
 use App\Services\Streaming\StreamProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -92,5 +93,40 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('coach', function (Request $request) {
             return Limit::perMinute(15)->by($request->user()?->id ?: $request->ip());
         });
+
+        // File uploads (chunked media, product files, course attachments): a
+        // single account could otherwise exhaust the storage volume.
+        RateLimiter::for('uploads', function (Request $request) {
+            return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
+        });
+
+        // Money/entitlement writes (checkout, free enrol): cap spam that would
+        // create unbounded orders and fan out a webhook per call.
+        RateLimiter::for('checkout', function (Request $request) {
+            return Limit::perMinute(12)->by($request->user()?->id ?: $request->ip());
+        });
+
+        $this->warnOnRiskyPaymentConfig();
+    }
+
+    /**
+     * Surface payment-integrity foot-guns in production: PayFast running in
+     * sandbox (test transactions treated as real) or without a passphrase (the
+     * MD5 signature is then forgeable and only the ITN postback protects
+     * checkout). Log-only — never blocks boot.
+     */
+    private function warnOnRiskyPaymentConfig(): void
+    {
+        if (! app()->isProduction() || config('payments.driver') !== 'payfast') {
+            return;
+        }
+
+        if (config('payments.payfast.sandbox')) {
+            Log::warning('PayFast is in SANDBOX mode in production — real checkouts hit the sandbox.');
+        }
+
+        if (empty(config('payments.payfast.passphrase'))) {
+            Log::warning('PayFast has no passphrase set — the ITN signature is forgeable; set one in Integrations.');
+        }
     }
 }

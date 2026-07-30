@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -89,35 +90,53 @@ class Order extends Model
 
     /**
      * Mark paid, grant entitlements, and split the vendor/platform amounts.
-     * Idempotent: a second call (duplicate ITN) is a no-op.
+     * Idempotent AND race-safe: PayFast retries ITNs, so two deliveries can
+     * arrive concurrently. We re-read the row under a lock inside a transaction
+     * and bail if another request already flipped it to paid — so the
+     * entitlements and vendor/platform accounting are applied exactly once.
      */
     public function markPaid(): bool
     {
-        if ($this->isPaid()) {
-            return false;
-        }
+        // Carry any pending changes the caller set on this instance but hasn't
+        // saved yet (e.g. the PayFast ITN sets pf_payment_id before calling us).
+        $pending = $this->getDirty();
 
-        $feePercent = (float) config('payments.platform_fee_percent', 0);
-        $fee = (int) round($this->total_cents * $feePercent / 100);
+        return DB::transaction(function () use ($pending) {
+            $fresh = static::query()->lockForUpdate()->find($this->getKey());
 
-        $this->forceFill([
-            'status' => self::STATUS_PAID,
-            'paid_at' => now(),
-            'platform_fee_cents' => $fee,
-            'vendor_amount_cents' => $this->total_cents - $fee,
-        ])->save();
-
-        foreach ($this->items as $item) {
-            if ($item->product_id === null) {
-                continue;
+            if ($fresh === null || $fresh->isPaid()) {
+                return false;
             }
 
-            Purchase::query()->firstOrCreate(
-                ['buyer_profile_id' => $this->buyer_profile_id, 'product_id' => $item->product_id],
-                ['order_id' => $this->id],
-            );
-        }
+            if ($pending !== []) {
+                $fresh->forceFill($pending);
+            }
 
-        return true;
+            $feePercent = (float) config('payments.platform_fee_percent', 0);
+            $fee = (int) round($fresh->total_cents * $feePercent / 100);
+
+            $fresh->forceFill([
+                'status' => self::STATUS_PAID,
+                'paid_at' => now(),
+                'platform_fee_cents' => $fee,
+                'vendor_amount_cents' => $fresh->total_cents - $fee,
+            ])->save();
+
+            foreach ($fresh->items as $item) {
+                if ($item->product_id === null) {
+                    continue;
+                }
+
+                Purchase::query()->firstOrCreate(
+                    ['buyer_profile_id' => $fresh->buyer_profile_id, 'product_id' => $item->product_id],
+                    ['order_id' => $fresh->id],
+                );
+            }
+
+            // Keep the in-memory instance consistent for the caller.
+            $this->setRawAttributes($fresh->getAttributes(), true);
+
+            return true;
+        });
     }
 }
