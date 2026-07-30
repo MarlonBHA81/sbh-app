@@ -1,5 +1,9 @@
 import * as api from "@/lib/api/client";
-import type { CheckoutRedirect, ProductType } from "@/lib/api/types";
+import type {
+  CheckoutQuote,
+  CheckoutRedirect,
+  ProductType,
+} from "@/lib/api/types";
 
 /** Format a minor-unit price (cents) as a currency string, or "Free". */
 export function formatPrice(
@@ -61,12 +65,34 @@ export async function fetchOwnedFile(productUlid: string): Promise<string> {
 export async function startCheckout(
   productUlid: string,
   bumpUlids: string[] = [],
+  couponCode?: string,
 ): Promise<void> {
   const res = await api.post<{ data: CheckoutRedirect }>(
     "/api/v1/shop/checkout",
-    { product_ulid: productUlid, bump_ulids: bumpUlids },
+    {
+      product_ulid: productUlid,
+      bump_ulids: bumpUlids,
+      ...(couponCode ? { coupon_code: couponCode } : {}),
+    },
   );
   submitPayFast(res.data.process_url, res.data.fields);
+}
+
+/** Preview a checkout total (sale prices, coupon, VAT) without ordering. */
+export async function quoteCheckout(input: {
+  productUlid: string;
+  bumpUlids?: string[];
+  couponCode?: string;
+}): Promise<CheckoutQuote> {
+  const res = await api.post<{ data: CheckoutQuote }>(
+    "/api/v1/shop/checkout/quote",
+    {
+      product_ulid: input.productUlid,
+      bump_ulids: input.bumpUlids ?? [],
+      ...(input.couponCode ? { coupon_code: input.couponCode } : {}),
+    },
+  );
+  return res.data;
 }
 
 /**

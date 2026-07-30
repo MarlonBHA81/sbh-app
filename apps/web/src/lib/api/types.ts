@@ -916,6 +916,9 @@ export interface Product {
   title: string;
   description: string;
   price_cents: number | null;
+  sale_price_cents?: number | null;
+  effective_price_cents?: number | null;
+  on_sale?: boolean;
   currency: string;
   cover_url: string | null;
   external_url: string | null;
@@ -924,7 +927,12 @@ export interface Product {
   is_html_tool?: boolean;
   is_free?: boolean;
   course?: { modules_count?: number; lessons_count?: number };
-  store?: { slug: string; name: string };
+  store?: {
+    slug: string;
+    name: string;
+    vat_registered?: boolean;
+    vat_rate_bp?: number;
+  };
   cross_sells?: {
     ulid: string;
     title: string;
@@ -939,6 +947,26 @@ export interface Product {
     original_price_cents: number | null;
     currency: string;
   }[];
+  upsells?: {
+    ulid: string;
+    title: string;
+    price_cents: number;
+    original_price_cents: number | null;
+    currency: string;
+    cover_url: string | null;
+  }[];
+}
+
+/** Dry-run checkout price preview (sale prices, coupon, inclusive VAT). */
+export interface CheckoutQuote {
+  subtotal_cents: number;
+  discount_cents: number;
+  total_cents: number;
+  vat_cents: number;
+  vat_rate_bp: number;
+  currency: string;
+  coupon_applied: boolean;
+  coupon_invalid: boolean;
 }
 
 /** A marketplace order (Shop P2). */
@@ -946,9 +974,12 @@ export interface Order {
   ulid: string;
   status: "pending" | "paid" | "cancelled" | "failed";
   total_cents: number;
+  discount_cents?: number;
+  vat_cents?: number;
   currency: string;
   paid_at?: string | null;
   created_at?: string | null;
+  product_ulid?: string | null;
   items?: { title: string; unit_cents: number; kind: string }[];
 }
 

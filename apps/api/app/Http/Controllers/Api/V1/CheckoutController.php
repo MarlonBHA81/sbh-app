@@ -144,6 +144,10 @@ class CheckoutController extends Controller
         $buyer = $this->activeProfile($request);
         abort_unless($order->buyer_profile_id === $buyer->id, 403);
 
+        // The primary item's product, so the success page can offer its upsells.
+        $order->loadMissing('items.product');
+        $primary = $order->items->firstWhere('kind', 'item')?->product;
+
         return response()->json([
             'data' => [
                 'ulid' => $order->ulid,
@@ -152,6 +156,7 @@ class CheckoutController extends Controller
                 'discount_cents' => $order->discount_cents,
                 'vat_cents' => $order->vat_cents,
                 'currency' => $order->currency,
+                'product_ulid' => $primary?->ulid,
             ],
         ]);
     }

@@ -1,12 +1,13 @@
 "use client";
 
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Plus, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import * as api from "@/lib/api/client";
-import type { Order } from "@/lib/api/types";
+import type { Order, Product } from "@/lib/api/types";
+import { formatPrice, startCheckout } from "@/lib/shop";
 
 /**
  * Post-redirect checkout screen (Shop P2). PayFast returns the buyer here after
@@ -23,6 +24,9 @@ export function CheckoutResultView({
   const [status, setStatus] = useState<Order["status"] | "unknown">(
     outcome === "cancel" ? "cancelled" : "pending",
   );
+  const [upsells, setUpsells] = useState<
+    NonNullable<Product["upsells"]>
+  >([]);
   const attempts = useRef(0);
 
   useEffect(() => {
@@ -40,6 +44,17 @@ export function CheckoutResultView({
         if (res.data.status === "pending" && attempts.current < 15) {
           attempts.current += 1;
           timer = setTimeout(poll, 2000);
+        }
+        // Once paid, offer the primary product's upsells ("add this too").
+        if (res.data.status === "paid" && res.data.product_ulid) {
+          api
+            .get<{ data: Product }>(
+              `/api/v1/shop/products/${res.data.product_ulid}`,
+            )
+            .then((p) => {
+              if (!cancelled) setUpsells(p.data.upsells ?? []);
+            })
+            .catch(() => {});
         }
       } catch {
         if (!cancelled) setStatus("unknown");
@@ -80,6 +95,29 @@ export function CheckoutResultView({
         <Button asChild variant="outline" className="h-11">
           <Link href="/shop">Keep shopping</Link>
         </Button>
+        {upsells.length > 0 ? (
+          <div className="mt-2 flex flex-col gap-2 border-t border-warmgray pt-3 text-start">
+            <p className="text-[13px] font-semibold text-text-primary">
+              Add this too
+            </p>
+            {upsells.map((u) => (
+              <button
+                key={u.ulid}
+                type="button"
+                onClick={() => void startCheckout(u.ulid)}
+                className="flex items-center gap-2 rounded-lg border border-warmgray bg-card px-3 py-2 text-start transition-colors hover:bg-sage/10"
+              >
+                <Plus className="size-4 shrink-0 text-teal-text" aria-hidden />
+                <span className="flex-1 text-sm text-text-primary">
+                  {u.title}
+                </span>
+                <span className="text-sm font-semibold text-teal-text">
+                  {formatPrice(u.price_cents, u.currency)}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </Panel>
     );
   }
