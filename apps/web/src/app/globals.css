@@ -166,9 +166,12 @@
 
   /* ------ Elevation & shape ------ */
   --shadow-card: var(--sbh-shadow-card);
+  --shadow-lift: var(--sbh-shadow-lift);
+  --shadow-fab: var(--sbh-shadow-fab);
   --radius-card: var(--sbh-radius-card);
   --radius-tile: var(--sbh-radius-tile);
   --radius-media: var(--sbh-radius-media);
+  --radius-hero: var(--sbh-radius-hero);
 }
 
 @layer base {
@@ -193,6 +196,29 @@
   h5,
   h6 {
     font-family: var(--font-heading);
+  }
+}
+
+/* --- Playful reskin: soft hover-lift for interactive cards --------------- */
+/* Opt-in via className="sbh-lift". Pointer-only (no sticky hover on touch),
+   and flattened under reduced-motion. */
+.sbh-lift {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+@media (hover: hover) {
+  .sbh-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sbh-lift {
+    transition: none;
+  }
+  .sbh-lift:hover {
+    transform: none;
   }
 }
 
