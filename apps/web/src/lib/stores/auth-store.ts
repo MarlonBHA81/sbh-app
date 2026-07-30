@@ -1,7 +1,7 @@
 import { createStore } from "zustand/vanilla";
 
 import * as api from "@/lib/api/client";
-import type { MeResponse, Profile, User } from "@/lib/api/types";
+import type { FeatureFlags, MeResponse, Profile, User } from "@/lib/api/types";
 import { useModerationStore } from "@/lib/stores/moderation-store";
 
 const ACTIVE_PROFILE_KEY = "sbh.activeProfileId";
@@ -26,6 +26,8 @@ export interface AuthState {
   profiles: Profile[];
   activeProfile: Profile | null;
   status: AuthStatus;
+  /** Super-admin feature toggles from /me (empty until loaded). */
+  features: FeatureFlags;
 }
 
 export interface AuthActions {
@@ -69,6 +71,7 @@ export const defaultAuthState: AuthState = {
   profiles: [],
   activeProfile: null,
   status: "loading",
+  features: {},
 };
 
 export function createAuthStore(initialState: AuthState = defaultAuthState) {
@@ -79,7 +82,7 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
       const persisted = readPersistedProfileId();
       if (persisted) api.setActiveProfileId(persisted);
       try {
-        const { user, profiles, active_profile } =
+        const { user, profiles, active_profile, features } =
           await api.get<MeResponse>("/api/v1/me");
         const active =
           profiles.find((p) => p.ulid === persisted) ??
@@ -88,10 +91,22 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
           null;
         api.setActiveProfileId(active?.ulid ?? null);
         persistProfileId(active?.ulid ?? null);
-        set({ user, profiles, activeProfile: active, status: "authed" });
+        set({
+          user,
+          profiles,
+          activeProfile: active,
+          status: "authed",
+          features: features ?? {},
+        });
       } catch {
         api.setActiveProfileId(null);
-        set({ user: null, profiles: [], activeProfile: null, status: "guest" });
+        set({
+          user: null,
+          profiles: [],
+          activeProfile: null,
+          status: "guest",
+          features: {},
+        });
       }
     },
 
@@ -114,7 +129,13 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
       api.setActiveProfileId(null);
       persistProfileId(null);
       useModerationStore.getState().reset();
-      set({ user: null, profiles: [], activeProfile: null, status: "guest" });
+      set({
+        user: null,
+        profiles: [],
+        activeProfile: null,
+        status: "guest",
+        features: {},
+      });
     },
 
     switchProfile: (ulid) => {

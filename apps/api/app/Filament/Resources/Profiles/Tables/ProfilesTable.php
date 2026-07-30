@@ -6,7 +6,6 @@ use App\Models\Badge;
 use App\Models\BusinessCategory;
 use App\Models\Profile;
 use App\Support\Moderation;
-use Illuminate\Support\Str;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -17,6 +16,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class ProfilesTable
 {

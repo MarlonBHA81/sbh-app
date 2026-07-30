@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Services\SafetyService;
 use App\Observers\ProfileObserver;
+use App\Services\SafetyService;
 use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Builder;
@@ -165,9 +165,9 @@ class Profile extends Model
         );
     }
 
-    public function challenges(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function challenges(): BelongsToMany
     {
-        return $this->belongsToMany(\App\Models\Challenge::class, 'challenge_participants')
+        return $this->belongsToMany(Challenge::class, 'challenge_participants')
             ->withPivot('joined_at');
     }
 

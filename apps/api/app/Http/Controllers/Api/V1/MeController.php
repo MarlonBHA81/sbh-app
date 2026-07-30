@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateMeRequest;
 use App\Http\Resources\ProfileResource;
 use App\Http\Resources\UserResource;
 use App\Models\Profile;
+use App\Support\Features;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -35,6 +36,9 @@ class MeController extends Controller
             'user' => new UserResource($user),
             'profiles' => ProfileResource::collection($profiles),
             'active_profile' => $active ? new ProfileResource($active) : null,
+            // Super-admin feature toggles, so the client can hide switched-off
+            // surfaces on load (the single source of truth is the API).
+            'features' => Features::all(),
         ]);
     }
 

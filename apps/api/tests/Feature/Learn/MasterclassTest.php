@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Masterclass;
+use Database\Seeders\MasterclassSeeder;
 
 function makeMasterclass(array $attributes = []): Masterclass
 {
@@ -83,9 +84,9 @@ test('masterclasses require authentication', function () {
 });
 
 test('the masterclass seeder is idempotent', function () {
-    $this->seed(\Database\Seeders\MasterclassSeeder::class);
+    $this->seed(MasterclassSeeder::class);
     $count = Masterclass::query()->count();
-    $this->seed(\Database\Seeders\MasterclassSeeder::class);
+    $this->seed(MasterclassSeeder::class);
 
     expect(Masterclass::query()->count())->toBe($count)->toBeGreaterThan(0);
 });

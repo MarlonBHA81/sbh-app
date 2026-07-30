@@ -15,12 +15,14 @@ class DailyBrief extends Model
         'profile_id',
         'brief_date',
         'headline',
+        'item_ulids',
     ];
 
     protected function casts(): array
     {
         return [
             'brief_date' => 'date',
+            'item_ulids' => 'array',
         ];
     }
 

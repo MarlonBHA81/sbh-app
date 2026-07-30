@@ -2,6 +2,7 @@
 
 use App\Models\BriefItem;
 use App\Models\DailyBrief;
+use Database\Seeders\BriefItemSeeder;
 
 function makeBriefItem(array $attributes = []): BriefItem
 {
@@ -105,10 +106,10 @@ test('the brief requires authentication', function () {
 });
 
 test('the brief item seeder is idempotent', function () {
-    $this->seed(\Database\Seeders\BriefItemSeeder::class);
+    $this->seed(BriefItemSeeder::class);
     $count = BriefItem::query()->count();
 
-    $this->seed(\Database\Seeders\BriefItemSeeder::class);
+    $this->seed(BriefItemSeeder::class);
 
     expect(BriefItem::query()->count())->toBe($count)->toBeGreaterThan(0);
 });

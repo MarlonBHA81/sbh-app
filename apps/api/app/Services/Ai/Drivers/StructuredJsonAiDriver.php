@@ -91,6 +91,66 @@ abstract class StructuredJsonAiDriver implements AiGateway
         return array_slice(array_values(array_unique($slugs)), 0, $max);
     }
 
+    public function rankItems(string $context, array $candidates, int $max = 3): array
+    {
+        if (! $this->enabled() || $candidates === []) {
+            return [];
+        }
+
+        // Only the whitelisted keys may be returned; index candidate text.
+        $allowed = [];
+        $lines = [];
+
+        foreach ($candidates as $candidate) {
+            $key = (string) ($candidate['key'] ?? '');
+
+            if ($key === '') {
+                continue;
+            }
+
+            $allowed[$key] = true;
+            $label = trim(implode(' — ', array_filter([
+                isset($candidate['kind']) ? '['.$candidate['kind'].']' : null,
+                isset($candidate['title']) ? (string) $candidate['title'] : null,
+                isset($candidate['summary']) ? (string) $candidate['summary'] : null,
+            ])));
+            $lines[] = "{$key}: {$label}";
+        }
+
+        if ($allowed === []) {
+            return [];
+        }
+
+        $system = 'You curate a short daily business brief for one member of a '
+            .'small-business platform. Given the member context and a list of '
+            ."candidate items (each `key: description`), pick the {$max} most "
+            .'relevant items for THIS member, most relevant first. '
+            .'Respond with ONLY a JSON object of the shape {"keys": string[]}. '
+            .'Each entry MUST be one of the given keys, no duplicates, at most '
+            ."{$max} entries. Prefer items matching the member's industry, "
+            .'interests and recent activity.';
+
+        $userText = "MEMBER CONTEXT:\n{$context}\n\nCANDIDATE ITEMS:\n".implode("\n", $lines);
+
+        $data = $this->request($system, $userText, maxTokens: 200);
+
+        if (! is_array($data) || ! is_array($data['keys'] ?? null)) {
+            return [];
+        }
+
+        $chosen = [];
+
+        foreach ($data['keys'] as $key) {
+            $key = is_string($key) ? $key : '';
+
+            if ($key !== '' && isset($allowed[$key]) && ! in_array($key, $chosen, true)) {
+                $chosen[] = $key;
+            }
+        }
+
+        return array_slice($chosen, 0, $max);
+    }
+
     /**
      * Extract the first JSON object from the model's text output.
      *

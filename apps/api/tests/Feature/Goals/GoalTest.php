@@ -2,11 +2,12 @@
 
 use App\Models\Goal;
 use App\Models\Profile;
+use App\Models\User;
 use App\Models\XpAction;
 use App\Services\Gamification\GamificationService;
 use Database\Seeders\XpActionSeeder;
 
-function activeProfileOf(\App\Models\User $user): Profile
+function activeProfileOf(User $user): Profile
 {
     return $user->profiles()->first();
 }
@@ -44,7 +45,7 @@ test('a member never sees another member goals', function () {
 });
 
 test('completing a goal awards XP once', function () {
-    (new XpActionSeeder())->run();
+    (new XpActionSeeder)->run();
     expect(XpAction::where('key', GamificationService::GOAL_COMPLETED)->exists())->toBeTrue();
 
     $user = userWithProfile();

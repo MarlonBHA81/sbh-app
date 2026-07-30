@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Profile;
 use App\Services\Brief\BriefService;
+use App\Support\Features;
 use Illuminate\Console\Command;
 
 /**
@@ -20,6 +21,12 @@ class GenerateDailyBriefs extends Command
 
     public function handle(BriefService $briefs): int
     {
+        if (! Features::enabled('daily_brief')) {
+            $this->info('Daily Brief is disabled — nothing to prepare.');
+
+            return self::SUCCESS;
+        }
+
         $count = 0;
 
         Profile::query()

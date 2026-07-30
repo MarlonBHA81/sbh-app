@@ -7,7 +7,6 @@ use App\Http\Resources\ProfileResource;
 use App\Models\Profile;
 use App\Services\MediaService;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 /**
  * Upload / remove a profile's avatar (all profiles) and cover banner

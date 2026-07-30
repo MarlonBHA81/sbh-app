@@ -2,7 +2,6 @@
 
 use App\Models\Comment;
 use App\Models\Post;
-use App\Models\Profile;
 use Database\Seeders\XpActionSeeder;
 
 test('a post can be created as a question', function () {

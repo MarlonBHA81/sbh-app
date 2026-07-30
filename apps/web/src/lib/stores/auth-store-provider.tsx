@@ -40,6 +40,16 @@ export function useAuthStore<T>(selector: (store: AuthStore) => T): T {
 }
 
 /**
+ * Whether a super-admin feature flag is on. Defaults to `true` until /me has
+ * loaded (and for any flag the client doesn't know about) so features never
+ * flash hidden on first paint — the server is the source of truth and gates the
+ * data regardless.
+ */
+export function useFeature(key: string): boolean {
+  return useAuthStore((store) => store.features[key] ?? true);
+}
+
+/**
  * The raw store API (getState/setState) for reading fresh state imperatively —
  * e.g. the active profile right after register()/fetchMe() resolves, before a
  * re-render would surface it through the selector hook.

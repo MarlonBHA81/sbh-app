@@ -21,7 +21,7 @@ class WebhookDispatcher
 
     /**
      * @param  array<string, mixed>  $contact  {email, name, handle, ...}
-     * @param  array<string, mixed>  $data     event-specific extra data
+     * @param  array<string, mixed>  $data  event-specific extra data
      */
     public function dispatch(string $event, array $contact, array $data = []): void
     {

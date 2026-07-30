@@ -405,11 +405,15 @@ export interface AppNotification {
   created_at: string;
 }
 
+/** Super-admin feature toggles, keyed by flag name (config/features.php). */
+export type FeatureFlags = Record<string, boolean>;
+
 /** GET /api/v1/me returns this shape unwrapped (no `data` envelope). */
 export interface MeResponse {
   user: User;
   profiles: Profile[];
   active_profile: Profile | null;
+  features?: FeatureFlags;
 }
 
 export interface AppStatus {

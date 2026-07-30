@@ -38,6 +38,12 @@ class NullAiDriver implements AiGateway
         return CannedCoachReply::generate($last);
     }
 
+    public function rankItems(string $context, array $candidates, int $max = 3): array
+    {
+        // No AI: let the caller apply its own (industry-match) ordering.
+        return [];
+    }
+
     public function enabled(): bool
     {
         return false;

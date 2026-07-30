@@ -1,8 +1,9 @@
 <?php
 
 use App\Models\Conversation;
+use App\Models\User;
 
-function createGroupAs(\App\Models\User $creator, \App\Models\User $member): Conversation
+function createGroupAs(User $creator, User $member): Conversation
 {
     $ulid = test()->actingAs($creator)->postJson('/api/v1/conversations', [
         'kind' => 'group',

@@ -18,6 +18,7 @@ class UserResource extends JsonResource
             'locale' => $this->locale,
             'timezone' => $this->timezone,
             'is_admin' => $this->is_admin,
+            'is_super_admin' => $this->is_super_admin,
             'settings' => $this->settings,
             'created_at' => $this->created_at,
         ];

@@ -20,7 +20,7 @@ import { TodaysLessonCard } from "@/components/home/todays-lesson-card";
 import { TodaysOpportunitiesCard } from "@/components/home/todays-opportunities-card";
 import { HomeFeed } from "@/components/posts/home-feed";
 import { hasComposeDraft } from "@/lib/compose-draft";
-import { useAuthStore } from "@/lib/stores/auth-store-provider";
+import { useAuthStore, useFeature } from "@/lib/stores/auth-store-provider";
 
 type Card = "challenge" | "opportunities" | "connections";
 
@@ -54,6 +54,8 @@ export function HomeView() {
   const t = useTranslations("home");
   const { openComposer } = useComposer();
   const stage = useAuthStore((s) => s.activeProfile?.journey_stage ?? null);
+  const briefOn = useFeature("daily_brief");
+  const coursesOn = useFeature("courses");
 
   // Carry a compose draft through signup (UX pattern 4): arriving with
   // ?compose=draft and a saved draft reopens the composer with the text intact.
@@ -80,15 +82,16 @@ export function HomeView() {
         return <Component key={key} tier={i === 0 ? "lead" : "default"} />;
       })}
 
-      {/* Daily Business Brief (V2 · Feature 7) — self-hides when there are no items. */}
-      <DailyBriefCard />
+      {/* Daily Business Brief (V2 · Feature 7) — super-admin togglable;
+          self-hides when there are no items. */}
+      {briefOn ? <DailyBriefCard /> : null}
 
       {/* Supporting cards drop to the quiet tier and group under a hairline,
           so the daily dashboard reads as two bands rather than one long run
           of identically-weighted cards. */}
       <section className="flex flex-col gap-2 border-t border-warmgray pt-4">
         {/* Today's lesson (V2 · LEARN) — self-hides when there are no lessons. */}
-        <TodaysLessonCard tier="quiet" />
+        {coursesOn ? <TodaysLessonCard tier="quiet" /> : null}
 
         {/* Recent wins (V2 · BELONG) — self-hides when there are none. */}
         <RecentWinsCard tier="quiet" />

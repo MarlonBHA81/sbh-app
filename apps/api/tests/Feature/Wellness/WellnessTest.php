@@ -2,6 +2,7 @@
 
 use App\Models\WellnessCheckin;
 use App\Models\WellnessResource;
+use Database\Seeders\WellnessResourceSeeder;
 
 test('the resources list shows only published wellness resources', function () {
     $user = userWithProfile();
@@ -77,8 +78,8 @@ test('wellness endpoints require authentication', function () {
 });
 
 test('the wellness seeder is idempotent', function () {
-    (new Database\Seeders\WellnessResourceSeeder())->run();
-    (new Database\Seeders\WellnessResourceSeeder())->run();
+    (new WellnessResourceSeeder)->run();
+    (new WellnessResourceSeeder)->run();
 
     expect(WellnessResource::query()->count())->toBe(4);
 });

@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Lesson;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property \App\Models\Lesson $resource
+ * @property Lesson $resource
  */
 class LessonResource extends JsonResource
 {

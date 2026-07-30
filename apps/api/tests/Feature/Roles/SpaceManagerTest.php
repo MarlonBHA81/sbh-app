@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Conversation;
-use App\Models\ConversationParticipant;
 
 /**
  * A Space owner (facilitator) appoints a Manager (the admin role); the Manager

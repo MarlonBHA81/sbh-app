@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Lesson;
+use App\Models\LessonTrack;
 use App\Models\Profile;
 use App\Models\XpLedgerEntry;
 use Database\Seeders\XpActionSeeder;
@@ -86,7 +87,7 @@ test('the lesson list reflects the viewer completion state', function () {
 test('a lesson show returns the next lesson in its track', function () {
     $user = userWithProfile();
 
-    $track = \App\Models\LessonTrack::create(['title' => 'Foundations', 'is_published' => true]);
+    $track = LessonTrack::create(['title' => 'Foundations', 'is_published' => true]);
     $first = makeLesson(['title' => 'First', 'lesson_track_id' => $track->id, 'position' => 1]);
     $second = makeLesson(['title' => 'Second', 'lesson_track_id' => $track->id, 'position' => 2]);
 

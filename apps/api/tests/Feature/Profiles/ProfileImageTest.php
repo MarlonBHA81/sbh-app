@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Profile;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -56,7 +57,7 @@ test('a failed disk write surfaces as an error instead of a silent broken image'
     // touch) returns false. That must NOT be swallowed into a saved DB path
     // pointing at a file that never landed — otherwise the app serves a broken
     // image forever. Simulate the failure and assert the column stays null.
-    $disk = Mockery::mock(\Illuminate\Contracts\Filesystem\Filesystem::class);
+    $disk = Mockery::mock(Filesystem::class);
     $disk->shouldReceive('put')->andReturn(false);
     $disk->shouldReceive('delete')->andReturn(true);
     Storage::shouldReceive('disk')->with('public')->andReturn($disk);

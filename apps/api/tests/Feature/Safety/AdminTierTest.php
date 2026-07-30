@@ -1,7 +1,6 @@
 <?php
 
 use App\Filament\Resources\Users\Pages\ListUsers;
-use App\Models\User;
 use Livewire\Livewire;
 
 test('the user tier helpers reflect the flags', function () {

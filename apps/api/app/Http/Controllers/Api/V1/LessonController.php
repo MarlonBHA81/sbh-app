@@ -10,6 +10,7 @@ use App\Services\Gamification\GamificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
 class LessonController extends Controller
@@ -114,7 +115,7 @@ class LessonController extends Controller
     }
 
     /**
-     * @param  \Illuminate\Support\Collection<int, Lesson>  $lessons
+     * @param  Collection<int, Lesson>  $lessons
      */
     private function markCompleted($lessons, Profile $viewer): void
     {

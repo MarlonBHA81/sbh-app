@@ -3,6 +3,7 @@
 use App\Services\Ai\AiGateway;
 use App\Services\Ai\Drivers\AnthropicAiDriver;
 use App\Services\Ai\Drivers\NullAiDriver;
+use App\Services\Ai\Drivers\OpenAiDriver;
 use Illuminate\Support\Facades\Http;
 
 test('the null driver is the default and returns safe empty results', function () {
@@ -84,11 +85,11 @@ test('the container binds the openai driver when selected', function () {
     config(['ai.driver' => 'openai', 'ai.openai.api_key' => 'sk-test']);
     app()->forgetInstance(AiGateway::class);
 
-    expect(app(AiGateway::class))->toBeInstanceOf(\App\Services\Ai\Drivers\OpenAiDriver::class);
+    expect(app(AiGateway::class))->toBeInstanceOf(OpenAiDriver::class);
 });
 
 test('the openai driver is disabled without an api key', function () {
-    $driver = new \App\Services\Ai\Drivers\OpenAiDriver(['api_key' => null]);
+    $driver = new OpenAiDriver(['api_key' => null]);
 
     expect($driver->enabled())->toBeFalse()
         ->and($driver->moderateText('text'))->toBeNull()
@@ -107,7 +108,7 @@ test('the openai driver parses a moderation response', function () {
         ]),
     ]);
 
-    $driver = new \App\Services\Ai\Drivers\OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
+    $driver = new OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
 
     $result = $driver->moderateText('buy now cheap deal');
 
@@ -126,7 +127,7 @@ test('the openai driver parses a topic-suggestion response', function () {
         ]),
     ]);
 
-    $driver = new \App\Services\Ai\Drivers\OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
+    $driver = new OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
 
     expect($driver->suggestTopics('managing money'))->toBe(['cash-flow', 'finance']);
 });
@@ -136,7 +137,7 @@ test('the openai driver swallows transport and http failures', function () {
         'api.openai.com/*' => Http::response('nope', 500),
     ]);
 
-    $driver = new \App\Services\Ai\Drivers\OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
+    $driver = new OpenAiDriver(array_merge(config('ai.openai'), ['api_key' => 'sk-test']));
 
     expect($driver->moderateText('text'))->toBeNull()
         ->and($driver->suggestTopics('text'))->toBe([]);

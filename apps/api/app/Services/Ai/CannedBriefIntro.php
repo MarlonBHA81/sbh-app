@@ -30,7 +30,7 @@ class CannedBriefIntro
             $industry !== '' => "here's what's worth a look in {$industry} today.",
             $stage !== '' => 'here are a few things to move your business forward while '
                 .str_replace('_', ' ', $stage).'.',
-            default => "here are a few things worth your attention today.",
+            default => 'here are a few things worth your attention today.',
         };
 
         return "{$greeting} {$focus}";
