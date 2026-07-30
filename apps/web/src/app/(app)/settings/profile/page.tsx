@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import { PushSettings } from "@/components/notifications/push-settings";
 import { BusinessTeamSettings } from "@/components/settings/business-team-settings";
+import { MasterclassSettings } from "@/components/settings/masterclass-settings";
 import { ProfileImageUpload } from "@/components/settings/profile-image-upload";
 import { StoreSettings } from "@/components/settings/store-settings";
 import { DataPrivacySettings } from "@/components/settings/data-privacy-settings";
@@ -717,6 +718,7 @@ export default function ProfileSettingsPage() {
           <BusinessTeamSettings profile={activeProfile} />
         </>
       ) : null}
+      {activeProfile.is_facilitator ? <MasterclassSettings /> : null}
       <ContentSettings />
       <MessagingSettings />
       <PrivacySafetySettings />

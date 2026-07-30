@@ -13,6 +13,7 @@ use App\Services\Streaming\StreamProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Live streaming for masterclass rooms (ask #4). Members (enrolled) watch the
@@ -28,11 +29,11 @@ class LiveSessionController extends Controller
         abort_unless($masterclass->is_published, 404);
 
         $viewer = $this->activeProfile($request);
-        $isAdmin = (bool) $request->user()?->is_admin;
+        $isHost = $request->user()?->can('host', $masterclass) ?? false;
         $enrolled = $masterclass->participants()->where('profile_id', $viewer->id)->exists();
 
         $session = $masterclass->currentLiveSession();
-        $canWatch = $enrolled || $isAdmin;
+        $canWatch = $enrolled || $isHost;
 
         // Past sessions with a ready recording — the replays, for those who can watch.
         $replays = $canWatch
@@ -58,12 +59,12 @@ class LiveSessionController extends Controller
         return response()->json([
             'data' => [
                 'enabled' => $provider->enabled(),
-                'is_host' => $isAdmin,
+                'is_host' => $isHost,
                 'can_watch' => $canWatch,
                 'chat_conversation' => $chatUlid,
                 'session' => $session === null
                     ? null
-                    : $this->serialize($session, canWatch: $canWatch, isHost: $isAdmin),
+                    : $this->serialize($session, canWatch: $canWatch, isHost: $isHost),
                 'replays' => $replays->values(),
             ],
         ]);
@@ -73,6 +74,7 @@ class LiveSessionController extends Controller
     public function store(Request $request, Masterclass $masterclass, StreamProvider $provider, MessagingService $messaging): JsonResponse
     {
         abort_unless($provider->enabled(), 422, 'Live streaming is not configured yet.');
+        Gate::authorize('host', $masterclass);
 
         // Make sure the host is in the room chat so they can talk + moderate.
         $host = $this->activeProfile($request);
@@ -105,6 +107,8 @@ class LiveSessionController extends Controller
     /** End the current live stream — host only. */
     public function end(Request $request, Masterclass $masterclass, StreamProvider $provider): Response
     {
+        Gate::authorize('host', $masterclass);
+
         $session = $masterclass->currentLiveSession();
 
         if ($session !== null) {

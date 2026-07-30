@@ -45,6 +45,7 @@ use App\Http\Controllers\Api\V1\MentorController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\MessageReactionController;
 use App\Http\Controllers\Api\V1\MuteController;
+use App\Http\Controllers\Api\V1\MyMasterclassController;
 use App\Http\Controllers\Api\V1\MyPostController;
 use App\Http\Controllers\Api\V1\MyProfileController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -286,17 +287,21 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // Masterclasses & cohorts (V3 · LEARN) — longer programmes members enrol in.
     Route::middleware('feature:masterclasses')->group(function () {
         Route::get('masterclasses', [MasterclassController::class, 'index']);
+        // Facilitator self-serve authoring (mirrors the store-owner tier).
+        Route::get('me/masterclasses', [MyMasterclassController::class, 'index']);
+        Route::post('me/masterclasses', [MyMasterclassController::class, 'store']);
+        Route::patch('me/masterclasses/{masterclass}', [MyMasterclassController::class, 'update']);
+        Route::delete('me/masterclasses/{masterclass}', [MyMasterclassController::class, 'destroy']);
         Route::get('masterclasses/{masterclass}', [MasterclassController::class, 'show']);
         Route::post('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'enrol'])->middleware('throttle:checkout');
         Route::delete('masterclasses/{masterclass}/enrol', [MasterclassController::class, 'withdraw']);
-        // Live streaming (ask #4): members watch; hosting is admin-only.
+        // Live streaming (ask #4): members watch; hosting is the creator or an
+        // admin (authorised in the controller via MasterclassPolicy::host).
         Route::get('masterclasses/{masterclass}/live', [LiveSessionController::class, 'show']);
         Route::post('masterclasses/{masterclass}/live/react', [LiveSessionController::class, 'react'])
             ->middleware('throttle:60,1');
-        Route::middleware('admin')->group(function () {
-            Route::post('masterclasses/{masterclass}/live', [LiveSessionController::class, 'store']);
-            Route::delete('masterclasses/{masterclass}/live', [LiveSessionController::class, 'end']);
-        });
+        Route::post('masterclasses/{masterclass}/live', [LiveSessionController::class, 'store']);
+        Route::delete('masterclasses/{masterclass}/live', [LiveSessionController::class, 'end']);
     });
 
     // Bite-size learning modules (V2 · LEARN) — short lessons that award XP.
