@@ -22,7 +22,7 @@ export type HomeCardTone = "teal" | "sage" | "plum";
 const SURFACE: Record<HomeCardTier, string> = {
   lead: "gap-3.5 rounded-(--radius-tile) p-5",
   default:
-    "gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card",
+    "sbh-lift gap-3 rounded-(--radius-card) border border-warmgray bg-card p-4 shadow-card",
   quiet: "gap-2.5 rounded-(--radius-card) px-1 py-1",
 };
 
