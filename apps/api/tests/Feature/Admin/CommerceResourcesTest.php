@@ -12,6 +12,8 @@ test('the commerce admin pages render for an admin', function () {
     $this->actingAs($admin)->get('/admin/coupons')->assertSuccessful();
     $this->actingAs($admin)->get('/admin/coupons/create')->assertSuccessful();
     $this->actingAs($admin)->get('/admin/bug-reports')->assertSuccessful();
+    // Renders with the CSV ImportAction wired in.
+    $this->actingAs($admin)->get('/admin/opportunities')->assertSuccessful();
 });
 
 test('an admin can create a coupon from the panel', function () {

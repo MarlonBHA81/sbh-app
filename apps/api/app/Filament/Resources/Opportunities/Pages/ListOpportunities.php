@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\Opportunities\Pages;
 
+use App\Filament\Imports\OpportunityImporter;
 use App\Filament\Resources\Opportunities\OpportunityResource;
 use Filament\Actions\CreateAction;
+use Filament\Actions\ImportAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListOpportunities extends ListRecords
@@ -12,6 +14,11 @@ class ListOpportunities extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()];
+        return [
+            ImportAction::make()
+                ->importer(OpportunityImporter::class)
+                ->label('Import CSV'),
+            CreateAction::make(),
+        ];
     }
 }
