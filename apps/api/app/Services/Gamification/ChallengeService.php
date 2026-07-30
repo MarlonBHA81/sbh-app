@@ -55,11 +55,16 @@ class ChallengeService
                     ->get()
                     ->keyBy('id');
 
-                return $rows->values()->map(fn ($row, $index) => [
-                    'profile' => $profiles[$row->profile_id],
-                    'points' => (int) $row->points,
-                    'rank' => $index + 1,
-                ])->all();
+                // Drop rows whose profile is gone (soft-deleted / removed) so a
+                // stale participant row can't null-deref into the serializer.
+                return $rows
+                    ->filter(fn ($row) => $profiles->has($row->profile_id))
+                    ->values()
+                    ->map(fn ($row, $index) => [
+                        'profile' => $profiles[$row->profile_id],
+                        'points' => (int) $row->points,
+                        'rank' => $index + 1,
+                    ])->all();
             },
         );
     }

@@ -74,6 +74,31 @@ test('non-participants earn XP but stay off the challenge board', function () {
         ->not->toContain($bystander->personalProfile->handle);
 });
 
+test('a soft-deleted participant profile does not 500 the leaderboard', function () {
+    $viewer = userWithProfile();
+    $ghost = userWithProfile();
+    $challenge = makeChallenge();
+    $challenge->participants()->attach($viewer->personalProfile->id, ['joined_at' => now()]);
+    $challenge->participants()->attach($ghost->personalProfile->id, ['joined_at' => now()]);
+
+    grantXp($viewer->personalProfile->id, 40, now());
+    grantXp($ghost->personalProfile->id, 90, now());
+
+    // The higher-scoring participant's profile disappears (soft delete).
+    $ghost->personalProfile->delete();
+
+    $response = $this->actingAs($viewer)
+        ->getJson("/api/v1/challenges/{$challenge->ulid}")
+        ->assertOk();
+
+    $handles = collect($response->json('data.entries'))->pluck('profile.handle');
+    expect($handles)
+        ->toContain($viewer->personalProfile->handle)
+        ->not->toContain($ghost->personalProfile->handle);
+    // Surviving entry is re-ranked to position 1.
+    $response->assertJsonPath('data.entries.0.position', 1);
+});
+
 test('an ended challenge cannot be joined', function () {
     $user = userWithProfile();
     $challenge = makeChallenge([
