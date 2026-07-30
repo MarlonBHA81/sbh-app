@@ -420,7 +420,8 @@ export function PostCard({
       onClickCapture={trackPromotedLinkClick}
       className={cn(
         "flex flex-col overflow-hidden rounded-(--radius-card) border border-warmgray bg-card text-card-foreground shadow-card",
-        linkToDetail && "cursor-pointer transition-colors hover:border-warmgray-tint",
+        linkToDetail &&
+          "sbh-lift cursor-pointer hover:border-warmgray-tint",
       )}
     >
       <header className="flex items-center gap-2.5 bg-slate-wash px-3 py-2.5">

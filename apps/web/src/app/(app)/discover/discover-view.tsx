@@ -238,7 +238,7 @@ export function DiscoverView() {
       {gamificationOn ? (
         <Link
           href="/leaderboard"
-          className="flex items-center gap-3 rounded-xl border bg-accent/40 p-3 transition-colors hover:bg-accent/60"
+          className="sbh-lift flex items-center gap-3 rounded-(--radius-card) border border-warmgray bg-accent/40 p-3 hover:bg-accent/60"
         >
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-gold-text">
             <Trophy className="size-5" aria-hidden />
@@ -260,7 +260,7 @@ export function DiscoverView() {
 
       <Link
         href="/business"
-        className="flex items-center gap-3 rounded-xl border bg-accent/40 p-3 transition-colors hover:bg-accent/60"
+        className="sbh-lift flex items-center gap-3 rounded-(--radius-card) border border-warmgray bg-accent/40 p-3 hover:bg-accent/60"
       >
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-indigo-600 dark:text-indigo-400">
           <Briefcase className="size-5" aria-hidden />
@@ -279,7 +279,7 @@ export function DiscoverView() {
 
       <Link
         href="/map"
-        className="flex items-center gap-3 rounded-xl border bg-accent/40 p-3 transition-colors hover:bg-accent/60"
+        className="sbh-lift flex items-center gap-3 rounded-(--radius-card) border border-warmgray bg-accent/40 p-3 hover:bg-accent/60"
       >
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-sage-text">
           <MapPin className="size-5" aria-hidden />

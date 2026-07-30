@@ -95,6 +95,36 @@ function formatCount(n: number): string {
   return Intl.NumberFormat("en", { notation: "compact" }).format(n);
 }
 
+/** One column in the profile stat block (Posts / Followers / Following). */
+function StatColumn({
+  value,
+  label,
+  divider = false,
+  accent = false,
+}: {
+  value: string;
+  label: string;
+  divider?: boolean;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      className={`flex-1 px-2 py-3 text-center${
+        divider ? " border-s border-warmgray" : ""
+      }`}
+    >
+      <div
+        className={`font-heading text-base font-semibold tabular-nums${
+          accent ? " text-teal-text" : "text-text-primary"
+        }`}
+      >
+        {value}
+      </div>
+      <div className="text-[11px] text-text-secondary">{label}</div>
+    </div>
+  );
+}
+
 /** Read-only public posts list for logged-out visitors (SEO pages). */
 function PublicProfilePosts({
   handle,
@@ -450,6 +480,8 @@ export function ProfileClient({ handle }: { handle: string }) {
     profile.is_private &&
     profile.relationship !== "following" &&
     profile.relationship !== "self";
+  const coverPresent =
+    Boolean(profile.cover_url) && !isPrivateHidden && !isBlocked;
 
   let followLabel = "Follow";
   if (profile.relationship === "following") {
@@ -551,14 +583,23 @@ export function ProfileClient({ handle }: { handle: string }) {
         }
       />
 
-      {!isPrivateHidden && !isBlocked && profile.cover_url ? (
-        <div className="h-28 w-full overflow-hidden rounded-(--radius-card) bg-muted sm:h-40">
+      {coverPresent ? (
+        <div className="h-28 w-full overflow-hidden rounded-(--radius-hero) bg-muted sm:h-40">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={profile.cover_url} alt="" className="size-full object-cover" />
+          <img
+            src={profile.cover_url ?? ""}
+            alt=""
+            className="size-full object-cover"
+          />
         </div>
       ) : null}
 
-      <div className="flex flex-col items-center gap-2 text-center">
+      {/* Avatar overlaps the cover's lower edge — the banner sits behind it. */}
+      <div
+        className={`flex flex-col items-center gap-2 text-center${
+          coverPresent ? " -mt-14" : ""
+        }`}
+      >
         <ProfileAvatar
           profile={profile}
           className="size-22 text-xl ring-2 ring-teal ring-offset-4 ring-offset-background"
@@ -676,32 +717,25 @@ export function ProfileClient({ handle }: { handle: string }) {
               </ExternalLink>
             ) : null}
           </div>
-          <div className="flex gap-6 text-sm">
-            <span>
-              <strong className="font-heading font-semibold tabular-nums">
-                {formatCount(profile.posts_count)}
-              </strong>{" "}
-              <span className="text-text-secondary">Posts</span>
-            </span>
-            <span>
-              <strong className="font-heading font-semibold tabular-nums">
-                {formatCount(profile.followers_count)}
-              </strong>{" "}
-              <span className="text-text-secondary">Followers</span>
-            </span>
-            <span>
-              <strong className="font-heading font-semibold tabular-nums">
-                {formatCount(profile.following_count)}
-              </strong>{" "}
-              <span className="text-text-secondary">Following</span>
-            </span>
+          <div className="flex w-full rounded-(--radius-card) border border-warmgray bg-card shadow-card">
+            <StatColumn value={formatCount(profile.posts_count)} label="Posts" />
+            <StatColumn
+              value={formatCount(profile.followers_count)}
+              label="Followers"
+              divider
+            />
+            <StatColumn
+              value={formatCount(profile.following_count)}
+              label="Following"
+              divider
+            />
             {profile.helpful_count && profile.helpful_count > 0 ? (
-              <span>
-                <strong className="font-heading font-semibold tabular-nums text-teal-text">
-                  {formatCount(profile.helpful_count)}
-                </strong>{" "}
-                <span className="text-text-secondary">Helpful</span>
-              </span>
+              <StatColumn
+                value={formatCount(profile.helpful_count)}
+                label="Helpful"
+                divider
+                accent
+              />
             ) : null}
           </div>
         </div>
@@ -744,11 +778,17 @@ export function ProfileClient({ handle }: { handle: string }) {
         <div className="flex flex-col gap-3">
         <SectionHeader title="Activity" />
         <Tabs defaultValue="posts">
-          <TabsList className="w-full">
-            <TabsTrigger value="posts" className="h-10 flex-1">
+          <TabsList className="h-auto w-full rounded-full p-1">
+            <TabsTrigger
+              value="posts"
+              className="h-9 flex-1 rounded-full data-[state=active]:text-teal-text"
+            >
               Posts
             </TabsTrigger>
-            <TabsTrigger value="about" className="h-10 flex-1">
+            <TabsTrigger
+              value="about"
+              className="h-9 flex-1 rounded-full data-[state=active]:text-teal-text"
+            >
               About
             </TabsTrigger>
           </TabsList>

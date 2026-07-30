@@ -160,7 +160,7 @@ export function QuickAccess() {
           <Link
             key={labelKey}
             href={href}
-            className={`relative flex size-[150px] shrink-0 flex-col justify-between overflow-hidden rounded-(--radius-tile) bg-gradient-to-br p-3.5 transition-transform active:scale-[0.98] ${gradient}`}
+            className={`sbh-lift relative flex size-[150px] shrink-0 flex-col justify-between overflow-hidden rounded-(--radius-tile) bg-gradient-to-br p-3.5 active:scale-[0.98] ${gradient}`}
           >
             <SwirlWatermark className="-end-8 -bottom-8 size-40 opacity-10" />
             <span className="flex size-9 items-center justify-center rounded-full bg-slate/30 text-white">
