@@ -1,6 +1,8 @@
 <?php
 
 use App\Jobs\DeliverWebhook;
+use App\Mail\NewSaleMail;
+use App\Mail\OrderReceiptMail;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Profile;
@@ -10,6 +12,7 @@ use App\Models\WebhookEndpoint;
 use App\Services\Webhooks\WebhookDispatcher;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 /**
@@ -176,6 +179,17 @@ test('an ITN that fails PayFast postback validation is rejected', function () {
     $this->post('/api/v1/shop/payfast/itn', itnPayload($order))->assertOk();
 
     expect($order->fresh()->status)->toBe(Order::STATUS_PENDING);
+});
+
+test('a confirmed purchase emails the buyer a receipt and the vendor a sale notice', function () {
+    Http::fake(['sandbox.payfast.co.za/eng/query/validate' => Http::response('VALID', 200)]);
+    Mail::fake();
+
+    $order = pendingOrder(9900);
+    $this->post('/api/v1/shop/payfast/itn', itnPayload($order))->assertOk();
+
+    Mail::assertQueued(OrderReceiptMail::class);
+    Mail::assertQueued(NewSaleMail::class);
 });
 
 test('a confirmed purchase dispatches the CRM webhook', function () {
