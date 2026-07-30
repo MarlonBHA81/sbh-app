@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bug,
   Check,
   FileClock,
   Gauge,
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { CreateBusinessProfileDialog } from "@/components/shell/create-business-profile-dialog";
+import { BugReportDialog } from "@/components/support/bug-report-dialog";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -53,6 +55,7 @@ export function AccountSwitcher({
   const lowData = useSettingsStore((s) => s.lowData);
   const setLowData = useSettingsStore((s) => s.setLowData);
   const [createOpen, setCreateOpen] = useState(false);
+  const [bugOpen, setBugOpen] = useState(false);
 
   function handleSwitch(ulid: string) {
     if (ulid === activeProfile?.ulid) return;
@@ -156,6 +159,13 @@ export function AccountSwitcher({
           </DropdownMenuItem>
           <DropdownMenuItem
             className="min-h-11 gap-3"
+            onSelect={() => setBugOpen(true)}
+          >
+            <Bug className="size-4" aria-hidden />
+            Report a bug
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="min-h-11 gap-3"
             onSelect={(event) => {
               event.preventDefault();
               setLowData(!lowData);
@@ -217,6 +227,7 @@ export function AccountSwitcher({
         open={createOpen}
         onOpenChange={setCreateOpen}
       />
+      <BugReportDialog open={bugOpen} onOpenChange={setBugOpen} />
     </>
   );
 }

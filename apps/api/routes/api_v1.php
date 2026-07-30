@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
 use App\Http\Controllers\Api\V1\BlockController;
 use App\Http\Controllers\Api\V1\BriefController;
+use App\Http\Controllers\Api\V1\BugReportController;
 use App\Http\Controllers\Api\V1\BusinessCategoryController;
 use App\Http\Controllers\Api\V1\BusinessDirectoryController;
 use App\Http\Controllers\Api\V1\BusinessEventController;
@@ -177,6 +178,9 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::delete('profiles/{handle}/mute', [MuteController::class, 'destroy']);
 
     Route::post('reports', [ReportController::class, 'store'])->middleware('throttle:reports');
+
+    // Bug reports — members flag problems they hit; triaged in the admin panel.
+    Route::post('bug-reports', [BugReportController::class, 'store'])->middleware('throttle:reports');
 
     Route::post('media', [MediaController::class, 'store']);
     Route::get('media/{media}', [MediaController::class, 'show']);
