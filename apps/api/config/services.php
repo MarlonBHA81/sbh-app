@@ -59,4 +59,11 @@ return [
         'contact' => env('NOMINATIM_CONTACT'),
     ],
 
+    // GitHub API — used by the observability alert triage to file issues that a
+    // fix-agent picks up (see config/observability.php).
+    'github' => [
+        'token' => env('GITHUB_TOKEN'),
+        'repo' => env('GITHUB_REPO'),
+    ],
+
 ];

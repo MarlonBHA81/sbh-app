@@ -31,6 +31,7 @@ class IntegrationSettingsProvider extends ServiceProvider
             $this->applyTenderSettings();
             $this->applyPaymentSettings();
             $this->applyStreamingSettings();
+            $this->applyObservabilitySettings();
         } catch (Throwable) {
             // Missing table / unavailable database during bootstrap: fall back
             // to the config file / env values untouched.
@@ -140,6 +141,38 @@ class IntegrationSettingsProvider extends ServiceProvider
             'integrations.streaming.mux.token_id' => 'streaming.mux.token_id',
             'integrations.streaming.mux.token_secret' => 'streaming.mux.token_secret',
             'integrations.streaming.mux.webhook_secret' => 'streaming.mux.webhook_secret',
+        ];
+
+        foreach ($map as $settingKey => $configKey) {
+            $value = Setting::get($settingKey);
+
+            if ($value !== null && $value !== '') {
+                config([$configKey => $value]);
+            }
+        }
+    }
+
+    /**
+     * Layer error-tracking / alert-triage settings over config so a super admin
+     * can add a Sentry DSN, the alert-webhook secret, and GitHub credentials
+     * from the Integrations page without editing .env.
+     */
+    private function applyObservabilitySettings(): void
+    {
+        $dsn = Setting::get('integrations.observability.sentry_dsn');
+        if ($dsn !== null && $dsn !== '') {
+            config(['sentry.dsn' => $dsn]);
+        }
+
+        $driver = Setting::get('integrations.observability.driver');
+        if ($driver !== null && $driver !== '') {
+            config(['observability.driver' => $driver]);
+        }
+
+        $map = [
+            'integrations.observability.alert_secret' => 'observability.alert_webhook_secret',
+            'integrations.observability.github_token' => 'observability.github.token',
+            'integrations.observability.github_repo' => 'observability.github.repo',
         ];
 
         foreach ($map as $settingKey => $configKey) {

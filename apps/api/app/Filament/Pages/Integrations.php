@@ -120,6 +120,12 @@ class Integrations extends Page
             'mux_token_id' => (string) Setting::get('integrations.streaming.mux.token_id', ''),
             'mux_token_secret' => (string) Setting::get('integrations.streaming.mux.token_secret', ''),
             'mux_webhook_secret' => (string) Setting::get('integrations.streaming.mux.webhook_secret', ''),
+
+            'obs_driver' => Setting::get('integrations.observability.driver', config('observability.driver')) ?: 'null',
+            'obs_sentry_dsn' => (string) Setting::get('integrations.observability.sentry_dsn', ''),
+            'obs_alert_secret' => (string) Setting::get('integrations.observability.alert_secret', ''),
+            'obs_github_token' => (string) Setting::get('integrations.observability.github_token', ''),
+            'obs_github_repo' => (string) Setting::get('integrations.observability.github_repo', ''),
         ]);
     }
 
@@ -291,6 +297,41 @@ class Integrations extends Page
                             ->autocomplete(false)
                             ->helperText('From the Mux webhook settings. Point the webhook at /api/v1/streaming/webhook.'),
                     ]),
+
+                Section::make('Observability')
+                    ->description('Error tracking (Sentry) and alert triage. Alerts posted to /api/v1/observability/alert are filed as de-duplicated issues a fix-agent can pick up. Everything stays off until configured.')
+                    ->schema([
+                        TextInput::make('obs_sentry_dsn')
+                            ->label('Sentry DSN')
+                            ->password()
+                            ->revealable()
+                            ->autocomplete(false)
+                            ->helperText('From your Sentry project (Settings → Client Keys). Blank disables error reporting. Overrides SENTRY_LARAVEL_DSN.'),
+                        Select::make('obs_driver')
+                            ->label('Alert triage destination')
+                            ->options([
+                                'null' => 'Log only (no issues filed)',
+                                'github' => 'GitHub issues',
+                            ])
+                            ->default('null')
+                            ->required()
+                            ->helperText('GitHub files a de-duplicated issue per alert; a fix-agent watching the repo can open a PR for review.'),
+                        TextInput::make('obs_alert_secret')
+                            ->label('Alert webhook secret')
+                            ->password()
+                            ->revealable()
+                            ->autocomplete(false)
+                            ->helperText('Shared HMAC-SHA256 secret. The monitor signs the body as X-SBH-Signature (or Sentry-Hook-Signature). Blank rejects every alert.'),
+                        TextInput::make('obs_github_repo')
+                            ->label('GitHub repo (owner/repo)')
+                            ->helperText('Where triage issues are opened, e.g. marlonbha81/sbh-app.'),
+                        TextInput::make('obs_github_token')
+                            ->label('GitHub token')
+                            ->password()
+                            ->revealable()
+                            ->autocomplete(false)
+                            ->helperText('Fine-grained PAT with Issues: read & write on the repo above.'),
+                    ]),
             ])
             ->statePath('data');
     }
@@ -330,6 +371,12 @@ class Integrations extends Page
         Setting::set('integrations.streaming.mux.token_id', (string) ($data['mux_token_id'] ?? ''));
         Setting::set('integrations.streaming.mux.token_secret', (string) ($data['mux_token_secret'] ?? ''));
         Setting::set('integrations.streaming.mux.webhook_secret', (string) ($data['mux_webhook_secret'] ?? ''));
+
+        Setting::set('integrations.observability.driver', (string) ($data['obs_driver'] ?? 'null'));
+        Setting::set('integrations.observability.sentry_dsn', (string) ($data['obs_sentry_dsn'] ?? ''));
+        Setting::set('integrations.observability.alert_secret', (string) ($data['obs_alert_secret'] ?? ''));
+        Setting::set('integrations.observability.github_token', (string) ($data['obs_github_token'] ?? ''));
+        Setting::set('integrations.observability.github_repo', (string) ($data['obs_github_repo'] ?? ''));
 
         Notification::make()->title('Integration settings saved')->success()->send();
     }

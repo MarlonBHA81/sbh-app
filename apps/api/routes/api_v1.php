@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AdSlotController;
 use App\Http\Controllers\Api\V1\AdTrackController;
+use App\Http\Controllers\Api\V1\AlertWebhookController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
@@ -126,6 +127,10 @@ Route::post('shop/payfast/itn', PayFastWebhookController::class)->middleware('th
 
 // Streaming provider webhook (ask #4) — live-status updates; unauthenticated.
 Route::post('streaming/webhook', StreamingWebhookController::class)->middleware('throttle:120,1');
+
+// Observability alert receiver — error monitors POST signed alerts here; the
+// HMAC signature is verified in the controller (unauthenticated, server-to-server).
+Route::post('observability/alert', AlertWebhookController::class)->middleware('throttle:60,1');
 
 // Public profile routes (viewer resolved when authenticated).
 Route::middleware('profile.active')->group(function () {

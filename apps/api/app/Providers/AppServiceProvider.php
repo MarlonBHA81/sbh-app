@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
+use App\Contracts\IssueTracker;
 use App\Services\Ai\AiGateway;
 use App\Services\Ai\Drivers\AnthropicAiDriver;
 use App\Services\Ai\Drivers\NullAiDriver;
 use App\Services\Ai\Drivers\OpenAiDriver;
+use App\Services\Observability\GithubIssueTracker;
+use App\Services\Observability\NullIssueTracker;
 use App\Services\Payments\NullPaymentDriver;
 use App\Services\Payments\PayFastDriver;
 use App\Services\Payments\PaymentGateway;
@@ -57,6 +60,16 @@ class AppServiceProvider extends ServiceProvider
             return match (config('streaming.driver')) {
                 'mux' => new MuxStreamDriver(config('streaming.mux', [])),
                 default => new NullStreamDriver,
+            };
+        });
+
+        // Observability issue tracker — files a de-duplicated triage issue for
+        // inbound error alerts. Bound (not singleton) so runtime integration
+        // settings can switch the driver/credentials at resolution time.
+        $this->app->bind(IssueTracker::class, function () {
+            return match (config('observability.driver')) {
+                'github' => new GithubIssueTracker(config('observability.github', [])),
+                default => new NullIssueTracker,
             };
         });
     }
