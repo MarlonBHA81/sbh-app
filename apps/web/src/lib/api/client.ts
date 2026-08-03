@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/nextjs";
+
 import type { ApiValidationErrors } from "./types";
 
 export const API_URL =
@@ -117,12 +119,26 @@ async function request<T>(
       message?: string;
       errors?: ApiValidationErrors;
     } & Record<string, unknown>;
-    throw new ApiError(
+    const error = new ApiError(
       res.status,
       payload.message || res.statusText || "Request failed",
       payload.errors,
       payload,
     );
+
+    // Trail every failed call as a breadcrumb (method/path/status only — no
+    // body), and report server errors (5xx) to Sentry. Expected 4xx (auth,
+    // validation) are left as breadcrumbs so they don't drown the error stream.
+    Sentry.addBreadcrumb({
+      category: "api",
+      level: res.status >= 500 ? "error" : "warning",
+      message: `${method} ${path} → ${res.status}`,
+    });
+    if (res.status >= 500) {
+      Sentry.captureException(error);
+    }
+
+    throw error;
   }
 
   return json as T;
