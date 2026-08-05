@@ -131,6 +131,7 @@ test('a vendor cannot upload an executable as a product deliverable', function (
 
     $this->actingAs($owner)
         ->withHeader('X-Profile-Id', $business->ulid)
+        ->withHeader('Accept', 'application/json')
         ->post("/api/v1/me/store/products/{$product->ulid}/file", [
             'file' => UploadedFile::fake()->create('payload.exe', 50, 'application/x-msdownload'),
         ])
@@ -148,6 +149,7 @@ test('a vendor cannot smuggle a script past the allow-list by renaming it', func
     // detected type, so the rename must not help.
     $this->actingAs($owner)
         ->withHeader('X-Profile-Id', $business->ulid)
+        ->withHeader('Accept', 'application/json')
         ->post("/api/v1/me/store/products/{$product->ulid}/file", [
             'file' => UploadedFile::fake()->create('invoice.pdf', 20, 'application/x-sh'),
         ])

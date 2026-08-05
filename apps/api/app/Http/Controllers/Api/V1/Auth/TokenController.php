@@ -28,8 +28,15 @@ class TokenController extends Controller
             ], 403);
         }
 
+        // Stamp the configured expiry window onto the token itself (Sanctum only
+        // persists expires_at when passed explicitly). This makes the expiry
+        // visible in the token-management endpoints and enforced per token, on
+        // top of the global sanctum.expiration guard.
+        $minutes = (int) config('sanctum.expiration');
+        $expiresAt = $minutes > 0 ? now()->addMinutes($minutes) : null;
+
         return response()->json([
-            'token' => $user->createToken($request->string('device_name'))->plainTextToken,
+            'token' => $user->createToken($request->string('device_name'), ['*'], $expiresAt)->plainTextToken,
         ], 201);
     }
 }

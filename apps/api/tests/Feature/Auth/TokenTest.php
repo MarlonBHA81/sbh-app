@@ -65,7 +65,7 @@ test('issued tokens carry an expiry', function () {
         'email' => $user->email,
         'password' => 'secret-pass',
         'device_name' => 'iPhone',
-    ])->assertOk();
+    ])->assertCreated();
 
     expect($user->tokens()->first()->expires_at)->not->toBeNull();
 });
