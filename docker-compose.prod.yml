@@ -41,6 +41,11 @@ services:
       dockerfile: Dockerfile
       target: prod
     restart: unless-stopped
+    # Must exceed supervisord's longest stopwaitsecs (120s on the queue workers,
+    # see apps/api/docker/supervisord.conf). At the 10s default Docker SIGKILLed
+    # the container before Laravel's own graceful SIGTERM handling could drain a
+    # single job, so every deploy killed in-flight transcodes.
+    stop_grace_period: 150s
     env_file: .env.prod
     volumes:
       - media-storage:/app/storage/app
