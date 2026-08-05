@@ -4,5 +4,9 @@ node_modules/
 .DS_Store
 *.log
 
+# Production backups (scripts/backup-vps.sh) — full database dumps and uploaded
+# media. Never commit these: they contain live user PII and encrypted secrets.
+backups/
+
 # Claude Code agent worktrees (transient, per-session)
 .claude/worktrees/

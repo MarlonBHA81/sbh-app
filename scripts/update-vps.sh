@@ -57,6 +57,12 @@ echo "==> Rebuilding and restarting containers"
 echo "==> Restarting nginx to apply config"
 "${COMPOSE[@]}" restart nginx
 
+# Safety net: a schema change with no restore point is unrecoverable. Some
+# migrations are not cleanly reversible (e.g. the encrypted-column widening —
+# its down() would truncate ciphertext), so `migrate:rollback` is NOT a backup.
+echo "==> Taking a pre-migration database backup"
+./scripts/backup-vps.sh --db-only
+
 echo "==> Running database migrations"
 "${COMPOSE[@]}" exec -T api php artisan migrate --force
 
@@ -65,6 +71,12 @@ echo "==> Refreshing Laravel caches"
 "${COMPOSE[@]}" exec -T api php artisan storage:link >/dev/null 2>&1 || true
 
 if [ "$RESEED" = "1" ]; then
+  # --reseed drops and rebuilds the schema. Back up media too: the reseed can
+  # orphan or replace uploaded files, and the pre-migration backup above was
+  # database-only.
+  echo "==> Taking a full backup before the destructive reseed"
+  ./scripts/backup-vps.sh
+
   echo "==> Reseeding demo content (this wipes existing content)"
   "${COMPOSE[@]}" exec -T api php artisan demo:seed --fresh
 fi
