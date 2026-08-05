@@ -4,6 +4,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductOffer;
 use App\Models\Profile;
+use App\Models\Purchase;
 use App\Models\Store;
 use Illuminate\Support\Str;
 
@@ -180,4 +181,90 @@ test('the buyer can poll their own order status', function () {
     $this->actingAs($stranger)
         ->getJson("/api/v1/shop/orders/{$order}")
         ->assertForbidden();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Double-charge regressions (audit CB-6)
+|--------------------------------------------------------------------------
+| Entitlements are unique per (buyer, product), so markPaid()'s
+| Purchase::firstOrCreate silently no-ops a second grant. Without these guards
+| a buyer could pay twice and receive nothing the second time.
+*/
+
+test('a buyer who already owns a product cannot check out again', function () {
+    usePayFast();
+    [$store, $product] = shopFixtures();
+
+    $buyer = userWithProfile();
+    $buyerProfile = $buyer->profiles()->first();
+
+    Purchase::create([
+        'buyer_profile_id' => $buyerProfile->id,
+        'product_id' => $product->id,
+    ]);
+
+    $this->actingAs($buyer)
+        ->withHeader('X-Profile-Id', $buyerProfile->ulid)
+        ->postJson('/api/v1/shop/checkout', ['product_ulid' => $product->ulid])
+        ->assertStatus(409);
+
+    expect(Order::query()->count())->toBe(0);
+});
+
+test('re-submitting the same checkout reuses the pending order instead of creating another', function () {
+    usePayFast();
+    [$store, $product] = shopFixtures();
+
+    $buyer = userWithProfile();
+    $buyerProfile = $buyer->profiles()->first();
+
+    $first = $this->actingAs($buyer)
+        ->withHeader('X-Profile-Id', $buyerProfile->ulid)
+        ->postJson('/api/v1/shop/checkout', ['product_ulid' => $product->ulid])
+        ->assertOk()
+        ->json('data.order');
+
+    $second = $this->actingAs($buyer)
+        ->withHeader('X-Profile-Id', $buyerProfile->ulid)
+        ->postJson('/api/v1/shop/checkout', ['product_ulid' => $product->ulid])
+        ->assertOk()
+        ->json('data.order');
+
+    // Same order handed back, and only one payable order exists.
+    expect($second)->toBe($first)
+        ->and(Order::query()->count())->toBe(1);
+});
+
+test('a different basket still creates its own order', function () {
+    usePayFast();
+    [$store, $product] = shopFixtures();
+
+    $bump = $store->products()->create([
+        'type' => 'digital_download', 'title' => 'Bonus', 'description' => 'x',
+        'price_cents' => 2500, 'is_published' => true,
+    ]);
+    ProductOffer::create([
+        'product_id' => $product->id,
+        'related_product_id' => $bump->id,
+        'kind' => Product::OFFER_BUMP,
+        'discount_cents' => 0,
+    ]);
+
+    $buyer = userWithProfile();
+    $buyerProfile = $buyer->profiles()->first();
+
+    $this->actingAs($buyer)->withHeader('X-Profile-Id', $buyerProfile->ulid)
+        ->postJson('/api/v1/shop/checkout', ['product_ulid' => $product->ulid])
+        ->assertOk();
+
+    // Adding a bump changes the total, so this is a genuinely different basket.
+    $this->actingAs($buyer)->withHeader('X-Profile-Id', $buyerProfile->ulid)
+        ->postJson('/api/v1/shop/checkout', [
+            'product_ulid' => $product->ulid,
+            'bump_ulids' => [$bump->ulid],
+        ])
+        ->assertOk();
+
+    expect(Order::query()->count())->toBe(2);
 });

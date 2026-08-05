@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use App\Models\CouponRedemption;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Profile;
+use App\Models\Purchase;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Shop\CheckoutPricing;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +24,13 @@ use Illuminate\Support\Facades\DB;
  */
 class CheckoutController extends Controller
 {
+    /**
+     * How long an unpaid order stays reusable by an identical re-submission.
+     * Long enough to cover a retry or a trip to the payment page and back;
+     * short enough that a genuine later purchase attempt starts fresh.
+     */
+    private const PENDING_REUSE_MINUTES = 60;
+
     public function __construct(private CheckoutPricing $pricing) {}
 
     public function store(Request $request, PaymentGateway $gateway): JsonResponse
@@ -38,6 +47,16 @@ class CheckoutController extends Controller
         ]);
 
         $product = $this->resolveProduct($data['product_ulid']);
+
+        // Entitlements are unique per (buyer, product) — markPaid() grants via
+        // Purchase::firstOrCreate — so buying something already owned charges
+        // the buyer again and silently grants nothing. Refuse it outright.
+        abort_if(
+            Purchase::ownedBy($buyer, $product),
+            409,
+            'You already own this — check your purchases.',
+        );
+
         $bumps = $this->resolveBumps($product, $data['bump_ulids'] ?? []);
 
         $coupon = null;
@@ -53,7 +72,14 @@ class CheckoutController extends Controller
         // place to preview validity without failing.
         abort_if($coupon !== null && $quote['coupon'] === null, 422, 'That coupon can’t be applied to this order.');
 
-        $order = DB::transaction(function () use ($buyer, $product, $quote) {
+        // Re-submitting the same checkout (double-click, client retry, back
+        // button) previously minted a second order the buyer could also go on
+        // to pay — two charges, one entitlement. Hand back the equivalent
+        // pending order instead. A genuinely different basket changes the total
+        // or the coupon, so it still gets a fresh order.
+        $existing = $this->equivalentPendingOrder($buyer, $product, $quote);
+
+        $order = $existing ?? DB::transaction(function () use ($buyer, $product, $quote) {
             $order = Order::create([
                 'buyer_profile_id' => $buyer->id,
                 'store_id' => $product->store_id,
@@ -159,6 +185,41 @@ class CheckoutController extends Controller
                 'product_ulid' => $primary?->ulid,
             ],
         ]);
+    }
+
+    /**
+     * A still-payable pending order from this buyer for the same basket.
+     *
+     * Matched on product + total + coupon rather than a client-supplied
+     * idempotency key, so it protects against retries the client never labelled
+     * (double-click, back button, a flaky connection retrying the POST).
+     *
+     * @param  array<string, mixed>  $quote
+     */
+    private function equivalentPendingOrder(Profile $buyer, Product $product, array $quote): ?Order
+    {
+        $couponId = $quote['coupon']?->id;
+
+        $order = Order::query()
+            ->where('buyer_profile_id', $buyer->id)
+            ->where('status', Order::STATUS_PENDING)
+            ->where('total_cents', $quote['total_cents'])
+            // `where('coupon_id', null)` compiles to `= NULL`, which never
+            // matches — the no-coupon case must use whereNull.
+            ->when(
+                $couponId === null,
+                fn ($q) => $q->whereNull('coupon_id'),
+                fn ($q) => $q->where('coupon_id', $couponId),
+            )
+            ->where('created_at', '>=', now()->subMinutes(self::PENDING_REUSE_MINUTES))
+            ->whereHas('items', fn ($q) => $q
+                ->where('product_id', $product->id)
+                ->where('kind', OrderItem::KIND_ITEM))
+            ->latest('id')
+            ->first();
+
+        // checkout() reads the buyer's email and the item name off the order.
+        return $order?->loadMissing('items', 'buyer.user');
     }
 
     private function resolveProduct(string $ulid): Product
