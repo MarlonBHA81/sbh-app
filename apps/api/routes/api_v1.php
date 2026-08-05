@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\CoachController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\CommentReactionController;
 use App\Http\Controllers\Api\V1\ConnectionController;
+use App\Http\Controllers\Api\V1\ConsentController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\ConversationParticipantController;
 use App\Http\Controllers\Api\V1\CourseController;
@@ -133,6 +134,13 @@ Route::post('streaming/webhook', StreamingWebhookController::class)->middleware(
 // HMAC signature is verified in the controller (unauthenticated, server-to-server).
 Route::post('observability/alert', AlertWebhookController::class)->middleware('throttle:60,1');
 
+// Signed, short-lived download of an owned product file. The URL is minted by
+// GET me/purchases/{product}/download-url after an ownership check; the `signed`
+// middleware enforces the signature + expiry, so no session is needed here.
+Route::get('shop/download/{product}', [PurchaseController::class, 'signedDownload'])
+    ->middleware('signed')
+    ->name('shop.download.signed');
+
 // Public profile routes (viewer resolved when authenticated).
 Route::middleware('profile.active')->group(function () {
     Route::get('profiles/{handle}', [ProfileController::class, 'show']);
@@ -149,6 +157,10 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // Data-subject rights (GDPR/POPIA): export + account deletion.
     Route::get('me/export', [AccountController::class, 'export']);
     Route::delete('me/account', [AccountController::class, 'destroy'])->middleware('throttle:auth');
+
+    // Server-side cookie/privacy consent record (POPIA).
+    Route::get('me/consent', [ConsentController::class, 'show']);
+    Route::post('me/consent', [ConsentController::class, 'store']);
 
     // Bearer-token (device) management for clients that authenticate via
     // POST /auth/token. Throttled with the auth limiter: revocation is a
@@ -356,6 +368,7 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
         Route::post('shop/seen', [ShopSeenController::class, 'store'])->middleware('throttle:60,1');
         Route::get('me/purchases', [PurchaseController::class, 'index']);
         Route::get('me/purchases/{product}/download', [PurchaseController::class, 'download']);
+        Route::get('me/purchases/{product}/download-url', [PurchaseController::class, 'downloadUrl']);
     });
 
     // Courses + free enrolment + in-app tools (Shop P3). Content is gated by the Purchase entitlement.

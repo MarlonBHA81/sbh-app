@@ -9,6 +9,7 @@ use App\Models\Purchase;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -44,15 +45,53 @@ class PurchaseController extends Controller
     {
         $buyer = $this->activeProfile($request);
 
+        $this->assertOwns($buyer->id, $product);
+        abort_unless($product->download_path !== null && Storage::disk('local')->exists($product->download_path), 404);
+
+        return Storage::disk('local')->download($product->download_path, $product->title);
+    }
+
+    /**
+     * Mint a short-lived signed download URL for an owned product, so the client
+     * can trigger a plain-link download without a session cookie. Ownership is
+     * checked here; the signature + 5-minute expiry authorise the fetch.
+     */
+    public function downloadUrl(Request $request, Product $product): JsonResponse
+    {
+        $buyer = $this->activeProfile($request);
+
+        $this->assertOwns($buyer->id, $product);
+        abort_unless($product->download_path !== null, 404);
+
+        $url = URL::temporarySignedRoute('shop.download.signed', now()->addMinutes(5), [
+            'product' => $product->ulid,
+            'p' => $buyer->id,
+        ]);
+
+        return response()->json(['data' => ['url' => $url, 'expires_in' => 300]]);
+    }
+
+    /**
+     * Stream a product file from a valid signed URL (no session). The `signed`
+     * middleware has already verified the signature + expiry; we re-check that
+     * the embedded buyer still owns the product before serving.
+     */
+    public function signedDownload(Request $request, Product $product): StreamedResponse
+    {
+        $this->assertOwns((int) $request->query('p'), $product);
+        abort_unless($product->download_path !== null && Storage::disk('local')->exists($product->download_path), 404);
+
+        return Storage::disk('local')->download($product->download_path, $product->title);
+    }
+
+    private function assertOwns(int $buyerProfileId, Product $product): void
+    {
         $owns = Purchase::query()
-            ->where('buyer_profile_id', $buyer->id)
+            ->where('buyer_profile_id', $buyerProfileId)
             ->where('product_id', $product->id)
             ->exists();
 
         abort_unless($owns, 403, 'You don\'t own this product.');
-        abort_unless($product->download_path !== null && Storage::disk('local')->exists($product->download_path), 404);
-
-        return Storage::disk('local')->download($product->download_path, $product->title);
     }
 
     private function activeProfile(Request $request): Profile

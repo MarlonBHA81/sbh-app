@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Support\Activity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -44,6 +45,8 @@ class AccessTokenController extends Controller
 
         abort_if($deleted === 0, 404, 'Token not found.');
 
+        Activity::log('token.revoked', actor: $request->user(), meta: ['token_id' => $id]);
+
         return response()->json(['data' => ['revoked' => true]]);
     }
 
@@ -55,6 +58,8 @@ class AccessTokenController extends Controller
     public function destroyAll(Request $request): JsonResponse
     {
         $count = $request->user()->tokens()->delete();
+
+        Activity::log('token.revoked_all', actor: $request->user(), meta: ['count' => $count]);
 
         return response()->json(['data' => ['revoked' => $count]]);
     }
