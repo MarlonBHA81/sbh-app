@@ -116,3 +116,59 @@ test('the vendor sees paid order earnings', function () {
         ->assertJsonPath('data.gross_cents', 9900)
         ->assertJsonPath('data.earnings_cents', 8910);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Unrestricted-upload regressions (audit CB-3 / CB-4)
+|--------------------------------------------------------------------------
+| Both deliverable endpoints previously validated size only, so a vendor could
+| distribute arbitrary executables/scripts to buyers through the store.
+*/
+
+test('a vendor cannot upload an executable as a product deliverable', function () {
+    Storage::fake('local');
+    [$owner, $business, $store, $product] = deliveryFixtures();
+
+    $this->actingAs($owner)
+        ->withHeader('X-Profile-Id', $business->ulid)
+        ->post("/api/v1/me/store/products/{$product->ulid}/file", [
+            'file' => UploadedFile::fake()->create('payload.exe', 50, 'application/x-msdownload'),
+        ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('file');
+
+    expect($product->fresh()->download_path)->toBeNull();
+});
+
+test('a vendor cannot smuggle a script past the allow-list by renaming it', function () {
+    Storage::fake('local');
+    [$owner, $business, $store, $product] = deliveryFixtures();
+
+    // .pdf name, but the detected type is a shell script — `mimes:` checks the
+    // detected type, so the rename must not help.
+    $this->actingAs($owner)
+        ->withHeader('X-Profile-Id', $business->ulid)
+        ->post("/api/v1/me/store/products/{$product->ulid}/file", [
+            'file' => UploadedFile::fake()->create('invoice.pdf', 20, 'application/x-sh'),
+        ])
+        ->assertStatus(422);
+
+    expect($product->fresh()->download_path)->toBeNull();
+});
+
+test('a vendor cannot upload an executable as a course lesson attachment', function () {
+    Storage::fake('local');
+    [$owner, $business, $store, $product] = deliveryFixtures();
+
+    $module = $product->modules()->create(['title' => 'M1', 'position' => 1]);
+    $lesson = $module->lessons()->create(['title' => 'L1', 'position' => 1]);
+
+    $this->actingAs($owner)
+        ->withHeader('X-Profile-Id', $business->ulid)
+        ->post("/api/v1/me/store/lessons/{$lesson->ulid}/attachment", [
+            'file' => UploadedFile::fake()->create('payload.exe', 50, 'application/x-msdownload'),
+        ])
+        ->assertStatus(422);
+
+    expect($lesson->fresh()->attachment_path)->toBeNull();
+});

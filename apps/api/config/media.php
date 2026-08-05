@@ -23,6 +23,40 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Vendor deliverables (private disk)
+    |--------------------------------------------------------------------------
+    |
+    | Product download files and course lesson attachments are uploaded by
+    | vendors and served to buyers. These previously validated size only, which
+    | allowed arbitrary executables/scripts to be distributed through the store.
+    |
+    | Extensions are matched by Laravel's `mimes:` rule, which checks the file's
+    | detected MIME type against the extension — not just the filename — so a
+    | renamed .exe is rejected.
+    |
+    | Note: `zip` is intentionally allowed because it is the primary legitimate
+    | format for a digital download, and an archive can contain anything. An
+    | extension allow-list bounds the obvious cases; it is not a substitute for
+    | content scanning, which remains the real control for archive payloads.
+    |
+    | Keep nginx's client_max_body_size >= deliverable_max_kb; these are
+    | single-request uploads, so nginx rejects oversized bodies before Laravel
+    | ever validates them.
+    |
+    */
+
+    'deliverable_max_kb' => (int) env('MEDIA_DELIVERABLE_MAX_KB', 25600),
+
+    'deliverable_mimes' => env(
+        'MEDIA_DELIVERABLE_MIMES',
+        'pdf,epub,zip,doc,docx,xls,xlsx,ppt,pptx,csv,txt,rtf,odt,ods,'.
+        // svg is deliberately excluded: it can carry script, and it offers
+        // nothing here that png/webp/pdf don't.
+        'png,jpg,jpeg,webp,gif,mp3,m4a,wav,mp4,mov,webm'
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Chunked video/audio uploads
     |--------------------------------------------------------------------------
     |

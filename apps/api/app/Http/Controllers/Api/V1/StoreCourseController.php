@@ -94,7 +94,13 @@ class StoreCourseController extends Controller
     {
         $this->assertOwns($request, $lesson->module->product);
 
-        $request->validate(['file' => ['required', 'file', 'max:51200']]); // 50 MB
+        // See StoreProductController::uploadFile — same unrestricted-upload gap.
+        $request->validate(['file' => [
+            'required',
+            'file',
+            'mimes:'.config('media.deliverable_mimes'),
+            'max:'.config('media.deliverable_max_kb'),
+        ]]);
 
         $path = $request->file('file')->store('courses/'.$lesson->ulid, 'local');
         $lesson->update(['attachment_path' => $path]);

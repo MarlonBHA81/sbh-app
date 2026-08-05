@@ -64,8 +64,16 @@ class StoreProductController extends Controller
         $store = $this->vendorStore($request);
         abort_unless($product->store_id === $store->id, 403);
 
+        // Size-only validation here previously allowed a vendor to distribute
+        // arbitrary bytes (executables, scripts, polyglots) to buyers. `mimes:`
+        // checks the detected type, not just the filename.
         $request->validate([
-            'file' => ['required', 'file', 'max:51200'], // 50 MB
+            'file' => [
+                'required',
+                'file',
+                'mimes:'.config('media.deliverable_mimes'),
+                'max:'.config('media.deliverable_max_kb'),
+            ],
         ]);
 
         // Stored on the private "local" disk — only delivered to buyers who own it.
