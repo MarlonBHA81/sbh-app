@@ -134,7 +134,15 @@ class PayFastDriver implements PaymentGateway
     /**
      * Post the raw ITN back to PayFast; a genuine notification returns "VALID".
      *
+     * Returns false only when PayFast gives us a definitive "this is not valid".
+     * A network failure or a 5xx is NOT a verdict — it means we could not ask —
+     * so it throws PaymentGatewayUnavailable and the caller must respond 5xx so
+     * PayFast redelivers. Previously both cases returned false, which combined
+     * with the endpoint's unconditional 200 to silently drop confirmed payments.
+     *
      * @param  array<string, mixed>  $data
+     *
+     * @throws PaymentGatewayUnavailable
      */
     private function validatePostback(array $data): bool
     {
@@ -142,10 +150,19 @@ class PayFastDriver implements PaymentGateway
             $response = Http::asForm()
                 ->timeout($this->config['timeout'] ?? 15)
                 ->post($this->host().'/eng/query/validate', $data);
-
-            return trim($response->body()) === 'VALID';
-        } catch (\Throwable) {
-            return false;
+        } catch (\Throwable $e) {
+            throw new PaymentGatewayUnavailable(
+                'PayFast ITN validation could not be reached.', previous: $e
+            );
         }
+
+        // PayFast is up but broken — still not a verdict on this notification.
+        if ($response->serverError()) {
+            throw new PaymentGatewayUnavailable(
+                'PayFast ITN validation returned HTTP '.$response->status().'.'
+            );
+        }
+
+        return trim($response->body()) === 'VALID';
     }
 }

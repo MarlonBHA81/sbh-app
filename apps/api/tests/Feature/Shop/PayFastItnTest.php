@@ -10,6 +10,7 @@ use App\Models\Purchase;
 use App\Models\Store;
 use App\Models\WebhookEndpoint;
 use App\Services\Webhooks\WebhookDispatcher;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -213,4 +214,82 @@ test('a confirmed purchase dispatches the CRM webhook', function () {
         DeliverWebhook::class,
         fn (DeliverWebhook $job) => $job->event === WebhookDispatcher::PURCHASE_COMPLETED,
     );
+});
+
+/*
+|--------------------------------------------------------------------------
+| Payment-loss regressions (audit CB-9 / CB-13)
+|--------------------------------------------------------------------------
+| Before these, a transport blip while verifying an ITN was indistinguishable
+| from an invalid signature, and the endpoint 200'd either way — so PayFast
+| never redelivered and a real payment was lost silently.
+*/
+
+test('an unreachable PayFast validation endpoint responds 503 so PayFast retries', function () {
+    Http::fake(fn () => throw new ConnectionException('connection timed out'));
+
+    $order = pendingOrder();
+
+    $this->post('/api/v1/shop/payfast/itn', itnPayload($order))->assertStatus(503);
+
+    // Crucially NOT marked paid — we never verified it.
+    expect($order->fresh()->status)->toBe(Order::STATUS_PENDING);
+});
+
+test('a 5xx from PayFast validation responds 503 rather than discarding the notification', function () {
+    Http::fake(['sandbox.payfast.co.za/eng/query/validate' => Http::response('', 502)]);
+
+    $order = pendingOrder();
+
+    $this->post('/api/v1/shop/payfast/itn', itnPayload($order))->assertStatus(503);
+    expect($order->fresh()->status)->toBe(Order::STATUS_PENDING);
+});
+
+test('a receipt failure still returns 200 and leaves the order recoverable', function () {
+    Http::fake(['sandbox.payfast.co.za/eng/query/validate' => Http::response('VALID', 200)]);
+    Mail::shouldReceive('to')->andThrow(new RuntimeException('smtp down'));
+
+    $order = pendingOrder();
+
+    // 200: the payment is real and recorded. Re-driving it would make PayFast
+    // retry, find it already paid, and skip receipts forever.
+    $this->post('/api/v1/shop/payfast/itn', itnPayload($order))->assertOk();
+
+    $fresh = $order->fresh();
+    expect($fresh->status)->toBe(Order::STATUS_PAID)
+        ->and($fresh->receipts_sent_at)->toBeNull();
+});
+
+test('reconcile replays receipts for a paid order that never got them', function () {
+    Mail::fake();
+
+    $order = pendingOrder();
+    $order->markPaid();
+    $order->forceFill(['receipts_sent_at' => null])->save();
+
+    $this->artisan('shop:reconcile-orders')->assertExitCode(0);
+
+    Mail::assertQueued(OrderReceiptMail::class);
+    expect($order->fresh()->receipts_sent_at)->not->toBeNull();
+});
+
+test('reconcile is idempotent — a second run sends nothing further', function () {
+    Mail::fake();
+
+    $order = pendingOrder();
+    $order->markPaid();
+    $order->forceFill(['receipts_sent_at' => null])->save();
+
+    $this->artisan('shop:reconcile-orders');
+    Mail::fake(); // reset the recorder
+    $this->artisan('shop:reconcile-orders');
+
+    Mail::assertNothingQueued();
+});
+
+test('reconcile reports orders stuck pending and exits non-zero', function () {
+    $order = pendingOrder();
+    $order->forceFill(['created_at' => now()->subHours(6)])->save();
+
+    $this->artisan('shop:reconcile-orders')->assertExitCode(1);
 });

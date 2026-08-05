@@ -49,6 +49,7 @@ class Order extends Model
             'platform_fee_cents' => 'integer',
             'vendor_amount_cents' => 'integer',
             'paid_at' => 'datetime',
+            'receipts_sent_at' => 'datetime',
         ];
     }
 
