@@ -1,8 +1,4 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// All versioned API routes live in routes/api_v1.php (prefix /api/v1),
+// registered from bootstrap/app.php.

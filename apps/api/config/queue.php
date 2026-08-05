@@ -68,7 +68,11 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
+            // MUST stay greater than queue:work --timeout (600s, see
+            // docker/supervisord.conf). At the old 90s a transcode that ran
+            // longer was redelivered to a second worker while the first was
+            // still running, double-processing the same media.
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 660),
             'block_for' => null,
             'after_commit' => false,
         ],

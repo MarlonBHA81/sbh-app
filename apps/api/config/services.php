@@ -35,4 +35,35 @@ return [
         ],
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://localhost').'/api/v1/auth/google/callback'),
+    ],
+
+    'facebook' => [
+        'client_id' => env('FACEBOOK_CLIENT_ID'),
+        'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect' => env('FACEBOOK_REDIRECT_URI', env('APP_URL', 'http://localhost').'/api/v1/auth/facebook/callback'),
+    ],
+
+    'twitter' => [
+        'client_id' => env('TWITTER_CLIENT_ID'),
+        'client_secret' => env('TWITTER_CLIENT_SECRET'),
+        'redirect' => env('TWITTER_REDIRECT_URI', env('APP_URL', 'http://localhost').'/api/v1/auth/twitter/callback'),
+    ],
+
+    'nominatim' => [
+        'enabled' => env('NOMINATIM_ENABLED', true),
+        'base_url' => env('NOMINATIM_BASE_URL', 'https://nominatim.openstreetmap.org'),
+        'contact' => env('NOMINATIM_CONTACT'),
+    ],
+
+    // GitHub API — used by the observability alert triage to file issues that a
+    // fix-agent picks up (see config/observability.php).
+    'github' => [
+        'token' => env('GITHUB_TOKEN'),
+        'repo' => env('GITHUB_REPO'),
+    ],
+
 ];

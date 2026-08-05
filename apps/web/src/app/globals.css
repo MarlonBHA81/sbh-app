@@ -1,75 +1,87 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./design-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  /* 16px base radius: shadcn radius-lg == the feed-card radius. */
+  --radius: 1rem;
+  /* SBH Community reskin — semantic tokens map to design-tokens.css.
+     Dark mode later = swap these (and the sbh-* semantics), not components. */
+  --background: var(--sbh-bg);
+  --foreground: var(--sbh-text);
+  --card: var(--sbh-surface);
+  --card-foreground: var(--sbh-text);
+  --popover: var(--sbh-surface);
+  --popover-foreground: var(--sbh-text);
+  /* Primary actions are slate (white text: 9.05:1). */
+  --primary: var(--sbh-slate);
+  --primary-foreground: var(--sbh-white);
+  /* Warm gray family for secondary surfaces and inputs. */
+  --secondary: var(--sbh-warmgray);
+  --secondary-foreground: var(--sbh-text);
+  --muted: var(--sbh-warmgray-50);
+  --muted-foreground: var(--sbh-text-secondary);
+  /* Soft teal wash for hover/selected surfaces. */
+  --accent: var(--sbh-teal-wash);
+  --accent-foreground: var(--sbh-teal-tint);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: var(--sbh-warmgray);
+  --input: var(--sbh-warmgray);
+  --ring: var(--sbh-teal);
+  /* Brand-derived categorical set — CVD/contrast validated (light). */
+  --chart-1: oklch(0.58 0.11 193);
+  --chart-2: oklch(0.47 0.13 342);
+  --chart-3: oklch(0.63 0.11 150);
+  --chart-4: oklch(0.64 0.11 75);
+  --chart-5: oklch(0.47 0.105 286);
+  --sidebar: oklch(0.97 0.003 48);
+  --sidebar-foreground: oklch(0.352 0.015 285.6);
+  --sidebar-primary: oklch(0.544 0.059 191);
+  --sidebar-primary-foreground: oklch(0.985 0.002 48);
+  --sidebar-accent: oklch(0.94 0.018 193);
+  --sidebar-accent-foreground: oklch(0.4 0.06 192);
+  --sidebar-border: oklch(0.87 0.005 40);
+  --sidebar-ring: oklch(0.592 0.063 192.8);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* Semantic tokens re-mapped to the dark values in design-tokens.css.
+     Brand fills (teal/plum/sage/slate) intentionally unchanged. */
+  --background: var(--sbh-bg);
+  --foreground: var(--sbh-text);
+  --card: var(--sbh-surface);
+  --card-foreground: var(--sbh-text);
+  --popover: var(--sbh-surface);
+  --popover-foreground: var(--sbh-text);
+  /* Slate buttons, one step lighter so they read against dark cards. */
+  --primary: #55555f;
+  --primary-foreground: var(--sbh-white);
+  --secondary: var(--sbh-warmgray);
+  --secondary-foreground: var(--sbh-text);
+  --muted: var(--sbh-warmgray-50);
+  --muted-foreground: var(--sbh-text-secondary);
+  --accent: var(--sbh-teal-wash);
+  --accent-foreground: var(--sbh-teal-text);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --border: var(--sbh-warmgray);
+  --input: var(--sbh-warmgray);
+  --ring: #6ba8a5;
+  /* Brand-derived categorical set — CVD/contrast validated (dark). */
+  --chart-1: oklch(0.65 0.12 193);
+  --chart-2: oklch(0.53 0.14 342);
+  --chart-3: oklch(0.66 0.115 150);
+  --chart-4: oklch(0.66 0.11 75);
+  --chart-5: oklch(0.57 0.11 286);
+  --sidebar: #202027;
+  --sidebar-foreground: var(--sbh-text);
+  --sidebar-primary: #55555f;
+  --sidebar-primary-foreground: var(--sbh-white);
+  --sidebar-accent: var(--sbh-teal-wash);
+  --sidebar-accent-foreground: var(--sbh-teal-text);
+  --sidebar-border: var(--sbh-warmgray);
+  --sidebar-ring: #6ba8a5;
 }
 
 @theme inline {
@@ -108,15 +120,230 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --font-sans: var(--font-geist-sans);
+
+  /* ------ SBH brand utilities (bg-teal, text-plum, border-warmgray…) ------ */
+  --color-teal: var(--sbh-teal);
+  --color-teal-tint: var(--sbh-teal-tint);
+  --color-teal-text: var(--sbh-teal-text);
+  --color-teal-wash: var(--sbh-teal-wash);
+  --color-plum: var(--sbh-plum);
+  --color-plum-tint: var(--sbh-plum-tint);
+  --color-sage: var(--sbh-sage);
+  --color-sage-tint: var(--sbh-sage-tint);
+  /* `sage-ink` and `sage-text` were both in use across 8 files with no token
+     behind them — the utilities never generated and the type fell back to
+     body colour. Both names now resolve to the AA-checked sage step. */
+  --color-sage-ink: var(--sbh-sage-text);
+  --color-sage-text: var(--sbh-sage-text);
+  --color-gold: var(--sbh-gold);
+  --color-gold-text: var(--sbh-gold-text);
+  --color-slate: var(--sbh-slate);
+  --color-slate-tint: var(--sbh-slate-tint);
+  --color-slate-wash: var(--sbh-slate-wash);
+  --color-warmgray: var(--sbh-warmgray);
+  --color-warmgray-tint: var(--sbh-warmgray-tint);
+  --color-text-primary: var(--sbh-text);
+  --color-text-secondary: var(--sbh-text-secondary);
+  --color-text-muted: var(--sbh-text-muted);
+
+  /* ------ Typography ------ */
+  /* Body: Mulish. Avenir led this stack but is never loaded — it resolves
+     only on macOS/iOS, so Apple users saw a different body face from
+     everyone else. Mulish is the one face we actually ship. */
+  --font-sans: var(--font-mulish), system-ui, sans-serif;
+  --font-heading: var(--font-poppins), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
+
+  /* ------ Motion ------ */
+  /* Named easings and durations so animations stop being hand-tuned
+     one-offs. Spatial motion uses --ease-out; exits use --ease-in. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur-base: 240ms;
+  --dur-slow: 500ms;
+
+  /* ------ Elevation & shape ------ */
+  --shadow-card: var(--sbh-shadow-card);
+  --shadow-lift: var(--sbh-shadow-lift);
+  --shadow-fab: var(--sbh-shadow-fab);
+  --radius-card: var(--sbh-radius-card);
+  --radius-tile: var(--sbh-radius-tile);
+  --radius-media: var(--sbh-radius-media);
+  --radius-hero: var(--sbh-radius-hero);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  /* Guard against sideways scroll from absolutely-positioned motion (live
+     reactions, confetti). `clip` not `hidden` — `hidden` on the root would
+     break position: sticky in the shell. */
+  html,
+  body {
+    overflow-x: clip;
+  }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Headings, names, buttons and nav labels use Poppins (brand manual). */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* --- Playful reskin: soft hover-lift for interactive cards --------------- */
+/* Opt-in via className="sbh-lift". Pointer-only (no sticky hover on touch),
+   and flattened under reduced-motion. */
+.sbh-lift {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+@media (hover: hover) {
+  .sbh-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sbh-lift {
+    transition: none;
+  }
+  .sbh-lift:hover {
+    transform: none;
+  }
+}
+
+/* --- Gamification: rank-unlock celebration (Milestone 8) ----------------- */
+
+@keyframes sbh-rank-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Glow rides a pseudo-element's opacity/transform rather than animating
+   box-shadow, which repaints the element on every frame. */
+@keyframes sbh-rank-glow {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+}
+
+@keyframes sbh-confetti-fall {
+  0% {
+    transform: translate3d(0, -10%, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--sbh-confetti-x, 0), 320%, 0) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Floating live reactions in masterclass rooms (ask #4). */
+@keyframes sbh-float-up {
+  0% {
+    transform: translateY(0) scale(0.8);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-14rem) scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* Reduced-motion stand-in for sbh-float-up: no travel, just a crossfade. */
+@keyframes sbh-float-fade {
+  0% {
+    opacity: 0;
+  }
+  6%,
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.sbh-rank-icon {
+  position: relative;
+  animation: sbh-rank-pop var(--dur-slow) var(--ease-out) both;
+}
+
+/* Three pulses, then it stops — an unending glow reads as a notification
+   badge, not a celebration. */
+.sbh-rank-icon::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  background: radial-gradient(
+    circle,
+    var(--sbh-glow, oklch(0.64 0.11 75 / 55%)) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: sbh-rank-glow 2.4s var(--ease-in-out) 0.5s 3;
+}
+
+.sbh-confetti {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 12px;
+  border-radius: 2px;
+  will-change: transform, opacity;
+  animation: sbh-confetti-fall var(--sbh-confetti-dur, 2.4s) linear
+    var(--sbh-confetti-delay, 0s) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sbh-rank-icon,
+  .sbh-rank-icon::after {
+    animation: none;
+  }
+  .sbh-rank-icon::after {
+    display: none;
+  }
+  .sbh-confetti {
+    display: none;
+  }
+  /* Live reactions are the highest-frequency animation in the app; they
+     were the one keyframe the reduce block never covered. Collapse the
+     flight path to an in-place crossfade — the element is removed from the
+     DOM on a 2.6s timer either way (room-chat.tsx), so the fade has to
+     carry the same duration or reactions would vanish abruptly. */
+  [class*="sbh-float-up"] {
+    animation: sbh-float-fade 2.6s linear forwards;
   }
 }

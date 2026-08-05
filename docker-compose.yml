@@ -42,7 +42,10 @@ services:
       dockerfile: Dockerfile
       target: dev
     working_dir: /app
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    # Create the public/storage symlink on boot (it's gitignored, so it never
+    # exists in a fresh checkout) — without it php artisan serve 404s every
+    # /storage/* upload (avatars, covers, product images).
+    command: sh -c "php artisan storage:link --force >/dev/null 2>&1 || true; php artisan serve --host=0.0.0.0 --port=8000"
     environment: &api-env
       APP_ENV: local
       DB_CONNECTION: mysql
