@@ -50,7 +50,14 @@ return [
     |
     */
 
-    'expiration' => null,
+    // 90 days. Previously null (never expires), which meant a bearer token
+    // leaked from a device, a log or an XSS in a consuming client stayed valid
+    // forever with no way for the owner to revoke it. First-party SPA sessions
+    // are unaffected — this only governs personal access tokens from /auth/token.
+    //
+    // Note this applies to already-issued tokens too: on deploy, any token older
+    // than the window stops working and the client must re-authenticate.
+    'expiration' => (int) env('SANCTUM_EXPIRATION_MINUTES', 60 * 24 * 90),
 
     /*
     |--------------------------------------------------------------------------

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\AccessTokenController;
 use App\Http\Controllers\Api\V1\AccountController;
 use App\Http\Controllers\Api\V1\AdSlotController;
 use App\Http\Controllers\Api\V1\AdTrackController;
@@ -148,6 +149,13 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // Data-subject rights (GDPR/POPIA): export + account deletion.
     Route::get('me/export', [AccountController::class, 'export']);
     Route::delete('me/account', [AccountController::class, 'destroy'])->middleware('throttle:auth');
+
+    // Bearer-token (device) management for clients that authenticate via
+    // POST /auth/token. Throttled with the auth limiter: revocation is a
+    // security action and enumeration of token ids shouldn't be cheap.
+    Route::get('me/tokens', [AccessTokenController::class, 'index']);
+    Route::delete('me/tokens', [AccessTokenController::class, 'destroyAll'])->middleware('throttle:auth');
+    Route::delete('me/tokens/{id}', [AccessTokenController::class, 'destroy'])->middleware('throttle:auth');
 
     Route::get('me/profiles', [MyProfileController::class, 'index']);
     Route::post('me/profiles', [MyProfileController::class, 'store']);
