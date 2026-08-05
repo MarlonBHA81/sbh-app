@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { MediaImage } from "@/components/ui/media-image";
 import type { Media, Post } from "@/lib/api/types";
 import { useSettingsStore } from "@/lib/stores/settings-store";
 import { cn } from "@/lib/utils";
@@ -36,8 +37,7 @@ function GridImage({
       )}
       aria-label="View image"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <MediaImage
         src={media.thumb_url}
         alt=""
         loading="lazy"
@@ -110,8 +110,7 @@ export function ImagePost({ post }: { post: Post }) {
           <DialogTitle className="sr-only">Image</DialogTitle>
           {openItem ? (
             <div className="flex flex-col items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <MediaImage
                 src={showFull ? openItem.url : openItem.thumb_url}
                 alt=""
                 width={openItem.width}

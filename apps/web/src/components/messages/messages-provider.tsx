@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import * as api from "@/lib/api/client";
 import type {
@@ -8,7 +8,7 @@ import type {
   ConversationLastMessage,
   Paginated,
 } from "@/lib/api/types";
-import { useEchoPrivateEvents } from "@/lib/echo";
+import { useEchoPrivateEvents, usePollingFallback } from "@/lib/echo";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 import { useMessagesStore } from "@/lib/stores/messages-store";
 
@@ -63,6 +63,28 @@ export function MessagesProvider() {
       cancelled = true;
     };
   }, [activeUlid, setUnreadTotal, reset]);
+
+  // Without Reverb, `.ConversationBumped` never fires — poll the unread badge
+  // (and the list, if it's mounted) so messaging isn't silently frozen.
+  const refreshMessages = useCallback(() => {
+    if (!activeUlid) return;
+    api
+      .get<{ count: number }>("/api/v1/me/unread-messages-count")
+      .then((res) => setUnreadTotal(res.count ?? 0))
+      .catch(() => {});
+    if (useMessagesStore.getState().listLoaded) {
+      api
+        .get<Paginated<Conversation>>("/api/v1/conversations")
+        .then((res) =>
+          useMessagesStore
+            .getState()
+            .setConversations(res.data, res.meta.next_cursor),
+        )
+        .catch(() => {});
+    }
+  }, [activeUlid, setUnreadTotal]);
+
+  usePollingFallback(refreshMessages, { enabled: Boolean(activeUlid) });
 
   useEchoPrivateEvents(activeUlid ? `profile.${activeUlid}` : null, {
     ".ConversationBumped": (payload) => {
