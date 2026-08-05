@@ -67,9 +67,12 @@ function persistProfileId(ulid: string | null): void {
 }
 
 /**
- * Ask the service worker to drop the per-user API caches (session/profile,
- * feeds, notifications) so a shared device can't serve the previous user's
- * cached data after logout.
+ * Ask the service worker to drop every cache that could hold data belonging to
+ * the outgoing user or profile (API responses, media thumbnails) — everything
+ * except static assets and the build precache.
+ *
+ * Called on logout and on profile switch. Cache Storage is origin-wide, so
+ * without this a shared device can serve the previous user's data to the next.
  */
 function purgeUserCaches(): void {
   if (typeof navigator === "undefined") return;
@@ -156,6 +159,11 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
       if (!profile) return;
       api.setActiveProfileId(profile.ulid);
       persistProfileId(profile.ulid);
+      // Cached API responses are keyed by URL only — the profile travels in the
+      // X-Profile-Id header, which is not part of the cache key. Without this,
+      // switching profiles could serve the previous profile's feed/notifications
+      // from cache on a slow network.
+      purgeUserCaches();
       // Hidden (blocked/muted) sets are per-viewing-profile — clear on switch.
       useModerationStore.getState().reset();
       set({ activeProfile: profile });

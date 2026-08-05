@@ -5,6 +5,7 @@ import {
   CacheFirst,
   ExpirationPlugin,
   NetworkFirst,
+  NetworkOnly,
   Serwist,
   StaleWhileRevalidate,
 } from "serwist";
@@ -100,6 +101,26 @@ const serwist = new Serwist({
         ],
       }),
     },
+    {
+      // ---------------------------------------------------------------------
+      // Everything else under /api/ is NEVER cached. This rule must stay
+      // immediately above ...defaultCache.
+      //
+      // @serwist/next's defaultCache ends with a broad NetworkFirst rule for
+      // any same-origin /api/ GET, keyed by URL alone. Profile scoping in this
+      // app travels in the X-Profile-Id *header*, which is not part of the
+      // cache key — so conversations, DM bodies, unread counts and business
+      // matches were all being stored in origin-wide Cache Storage under keys
+      // that are identical across users. On a shared device a slow network
+      // could then serve the previous user's private data to the next one.
+      //
+      // The three endpoints deliberately cached for offline use are matched by
+      // the rules above; runtimeCaching is first-match-wins, so they still win.
+      // ---------------------------------------------------------------------
+      matcher: ({ url, sameOrigin }) =>
+        sameOrigin && url.pathname.startsWith("/api/"),
+      handler: new NetworkOnly(),
+    },
     ...defaultCache,
   ],
   fallbacks: {
@@ -116,17 +137,32 @@ const serwist = new Serwist({
 serwist.addEventListeners();
 
 // --- Per-user cache purge -------------------------------------------------
-// The API caches below hold per-user data (session/profile, feeds,
-// notifications) in origin-wide Cache Storage. On logout the app posts this
-// message so the next user on a shared device can't be served the previous
-// user's cached data.
-const USER_CACHES = ["sbh-api-me", "sbh-api-feeds", "sbh-api-notifications"];
+// Cache Storage is origin-wide, not per-account, so anything cached from an
+// authenticated response outlives the session that produced it. The app posts
+// this message on logout AND on profile switch so the next user (or the next
+// profile) on a shared device can't be served the previous one's data.
+//
+// This is an ALLOW-list of what survives, not a deny-list of what to delete.
+// The previous deny-list named three caches explicitly and silently missed the
+// "apis" bucket that @serwist/next's defaultCache adds — the exact leak this
+// exists to prevent. Inverting it means a bucket introduced by a dependency
+// upgrade is purged by default rather than forgotten.
+const survivesPurge = (name: string): boolean =>
+  // Icons/fonts: not user data, expensive to refetch.
+  name === "sbh-static-assets" ||
+  // Serwist's own precache of build assets; it manages its own lifecycle.
+  name.includes("precache");
+
+async function purgeUserCaches(): Promise<void> {
+  const names = await caches.keys();
+  await Promise.all(
+    names.filter((name) => !survivesPurge(name)).map((name) => caches.delete(name)),
+  );
+}
 
 self.addEventListener("message", (event) => {
   if ((event.data as { type?: string } | undefined)?.type === "sbh-purge-user-cache") {
-    event.waitUntil(
-      Promise.all(USER_CACHES.map((name) => caches.delete(name))),
-    );
+    event.waitUntil(purgeUserCaches());
   }
 });
 
