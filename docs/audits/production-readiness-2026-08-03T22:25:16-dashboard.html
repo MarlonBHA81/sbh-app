@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SBH — Production Readiness Audit</title>
+<style>
+  :root{
+    --bg:#f6f4f3; --surface:#fff; --ink:#1c1c20; --muted:#5f5f6b; --line:#e4dfdc;
+    --crit:#b3261e; --high:#b26a00; --med:#6b5f1e; --low:#5f6b6b;
+    --pass:#2f6b4f; --warn:#a8801e; --fail:#b3261e; --accent:#4e8a88;
+    --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.06);
+  }
+  @media (prefers-color-scheme:dark){
+    :root{--bg:#131316;--surface:#1c1c21;--ink:#ececf0;--muted:#a0a0ad;--line:#2e2e36;
+      --crit:#ff6b5e;--high:#f0a445;--med:#d6c65a;--low:#9aa8a8;
+      --pass:#5fc48f;--warn:#e0b849;--fail:#ff6b5e;--accent:#6fb3b0;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.5);}
+  }
+  :root[data-theme="dark"]{--bg:#131316;--surface:#1c1c21;--ink:#ececf0;--muted:#a0a0ad;--line:#2e2e36;
+    --crit:#ff6b5e;--high:#f0a445;--med:#d6c65a;--low:#9aa8a8;
+    --pass:#5fc48f;--warn:#e0b849;--fail:#ff6b5e;--accent:#6fb3b0;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.5);}
+  :root[data-theme="light"]{--bg:#f6f4f3;--surface:#fff;--ink:#1c1c20;--muted:#5f5f6b;--line:#e4dfdc;
+    --crit:#b3261e;--high:#b26a00;--med:#6b5f1e;--low:#5f6b6b;
+    --pass:#2f6b4f;--warn:#a8801e;--fail:#b3261e;--accent:#4e8a88;
+    --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.06);}
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;}
+  .wrap{max-width:1140px;margin:0 auto;padding:40px 20px 80px}
+  h1{font-size:clamp(26px,4vw,38px);margin:0 0 6px;letter-spacing:-.02em}
+  h2{font-size:20px;margin:44px 0 14px;letter-spacing:-.01em;
+     padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .sub{color:var(--muted);margin:0 0 28px;font-size:14px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;
+        padding:22px;box-shadow:var(--shadow)}
+
+  .hero{display:grid;grid-template-columns:minmax(220px,300px) 1fr;gap:22px;align-items:stretch}
+  @media(max-width:720px){.hero{grid-template-columns:1fr}}
+  .score{font-size:60px;font-weight:700;line-height:1;letter-spacing:-.03em;color:var(--fail)}
+  .score small{display:block;font-size:15px;font-weight:500;color:var(--muted);margin-top:8px;letter-spacing:0}
+  .verdict{display:inline-block;margin-top:14px;padding:6px 13px;border-radius:999px;
+    background:color-mix(in srgb,var(--fail) 14%,transparent);color:var(--fail);
+    font-weight:600;font-size:13px}
+  .callout{border-left:3px solid var(--accent);padding:2px 0 2px 16px;color:var(--muted);font-size:14.5px}
+  .callout strong{color:var(--ink)}
+
+  .counts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:22px}
+  @media(max-width:600px){.counts{grid-template-columns:repeat(2,1fr)}}
+  .cnt{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+  .cnt b{display:block;font-size:30px;line-height:1.1}
+  .cnt span{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+  .c-crit b{color:var(--crit)} .c-high b{color:var(--high)}
+  .c-med b{color:var(--med)} .c-low b{color:var(--low)}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tbody tr:last-child td{border-bottom:none}
+
+  .bar{height:7px;background:color-mix(in srgb,var(--ink) 9%,transparent);border-radius:99px;overflow:hidden;min-width:90px}
+  .bar i{display:block;height:100%;border-radius:99px}
+
+  .tag{font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:6px;white-space:nowrap}
+  .t-pass{background:color-mix(in srgb,var(--pass) 15%,transparent);color:var(--pass)}
+  .t-warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .t-fail{background:color-mix(in srgb,var(--fail) 14%,transparent);color:var(--fail)}
+  .t-na{background:color-mix(in srgb,var(--muted) 14%,transparent);color:var(--muted)}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+  .dim{border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:var(--surface)}
+  .dim .n{font-size:10.5px;color:var(--muted);letter-spacing:.05em}
+  .dim .t{font-size:13px;margin:3px 0 8px;line-height:1.35}
+  .dim .s{font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
+  .s9{color:var(--pass)} .s7{color:var(--pass)} .s4{color:var(--warn)} .s0{color:var(--fail)}
+
+  .cb{border:1px solid var(--line);border-left:3px solid var(--crit);border-radius:12px;
+      background:var(--surface);padding:16px 18px;margin-bottom:11px}
+  .cb h3{margin:0 0 6px;font-size:15.5px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+  .cb .id{color:var(--crit);font-weight:700;font-size:12.5px;letter-spacing:.05em}
+  .cb p{margin:0;color:var(--muted);font-size:14px}
+  .cb .meta{margin-top:8px;font-size:11.5px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .money{border-left-color:var(--high)}
+  .money .id{color:var(--high)}
+
+  ul.clean{margin:0;padding-left:19px;color:var(--muted);font-size:14.5px}
+  ul.clean li{margin-bottom:7px} ul.clean strong{color:var(--ink)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.two{grid-template-columns:1fr}}
+  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.9em;
+       background:color-mix(in srgb,var(--ink) 7%,transparent);padding:1px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>SBH — Production Readiness Audit</h1>
+  <p class="sub">Commit <code>6718601</code> · 2026-08-03 · 43 active dimensions · Laravel 12 + Next.js 16</p>
+
+  <div class="hero">
+    <div class="card">
+      <div class="score">46.4%<small>199.5 / 430 points</small></div>
+      <span class="verdict">NOT PRODUCTION READY</span>
+    </div>
+    <div class="card">
+      <p class="callout"><strong>Read this before the score.</strong> 46.4% substantially understates this
+      codebase. A large share of deducted points come from conformance with the Bee standards — a third-party
+      convention set this project never adopted. The genuine defects are concentrated and fixable; the
+      conformance gaps are a choice, not a fault. <strong>The 13 blockers are the deliverable, not the
+      number.</strong></p>
+      <p class="callout" style="margin-top:14px">The pattern across all 43 dimensions: <strong>application
+      logic is careful and well-tested; the operational envelope around it is thin.</strong> Nine of the
+      thirteen blockers are deploy/runtime/infrastructure concerns, not code defects.</p>
+    </div>
+  </div>
+
+  <div class="counts">
+    <div class="cnt c-crit"><b>13</b><span>Critical</span></div>
+    <div class="cnt c-high"><b>69</b><span>High</span></div>
+    <div class="cnt c-med"><b>103</b><span>Medium</span></div>
+    <div class="cnt c-low"><b>98</b><span>Low</span></div>
+  </div>
+
+  <h2>Category scoreboard</h2>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th>Category</th><th class="num">Score</th><th class="num">%</th>
+        <th style="width:180px">Progress</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>A · Code Structure &amp; Patterns</td><td class="num">64.75/110</td><td class="num">59%</td>
+          <td><span class="bar"><i style="width:59%;background:var(--warn)"></i></span></td>
+          <td><span class="tag t-warn">NEEDS WORK</span></td></tr>
+        <tr><td>B · Security &amp; Access Control</td><td class="num">41.5/90</td><td class="num">46%</td>
+          <td><span class="bar"><i style="width:46%;background:var(--warn)"></i></span></td>
+          <td><span class="tag t-warn">NEEDS WORK</span></td></tr>
+        <tr><td>C · Operational Readiness</td><td class="num">25.0/70</td><td class="num">36%</td>
+          <td><span class="bar"><i style="width:36%;background:var(--fail)"></i></span></td>
+          <td><span class="tag t-fail">FAIL</span></td></tr>
+        <tr><td>D · Quality &amp; Maintainability</td><td class="num">42.0/100</td><td class="num">42%</td>
+          <td><span class="bar"><i style="width:42%;background:var(--warn)"></i></span></td>
+          <td><span class="tag t-warn">NEEDS WORK</span></td></tr>
+        <tr><td>E · Infrastructure &amp; Hardening</td><td class="num">26.25/60</td><td class="num">44%</td>
+          <td><span class="bar"><i style="width:44%;background:var(--warn)"></i></span></td>
+          <td><span class="tag t-warn">NEEDS WORK</span></td></tr>
+      </tbody>
+    </table>
+    <p style="margin:14px 0 0;color:var(--muted);font-size:14px">Operational Readiness is the weakest category
+    and the honest headline: this application is <strong style="color:var(--ink)">built</strong> far better than
+    it is <strong style="color:var(--ink)">operable</strong>.</p>
+  </div>
+
+  <h2>All 43 dimensions</h2>
+  <div class="grid">
+    <div class="dim"><div class="n">01</div><div class="t">Pagination</div><div class="s s4">6.0</div></div>
+    <div class="dim"><div class="n">02</div><div class="t">Error Framework</div><div class="s s4">5.0</div></div>
+    <div class="dim"><div class="n">03</div><div class="t">Route Organization</div><div class="s s7">8.0</div></div>
+    <div class="dim"><div class="n">04</div><div class="t">Bootstrap &amp; Init</div><div class="s s0">2.0</div></div>
+    <div class="dim"><div class="n">05</div><div class="t">Runtime Safety</div><div class="s s4">5.5</div></div>
+    <div class="dim"><div class="n">06</div><div class="t">Auth Protection</div><div class="s s0">1.0</div></div>
+    <div class="dim"><div class="n">07</div><div class="t">IDOR &amp; Access Control</div><div class="s s9">9.0</div></div>
+    <div class="dim"><div class="n">08</div><div class="t">SQL Safety</div><div class="s s9">9.5</div></div>
+    <div class="dim"><div class="n">09</div><div class="t">Input Validation</div><div class="s s0">0.0</div></div>
+    <div class="dim"><div class="n">11</div><div class="t">Telemetry</div><div class="s s0">0.0</div></div>
+    <div class="dim"><div class="n">12</div><div class="t">Health Checks</div><div class="s s4">5.5</div></div>
+    <div class="dim"><div class="n">13</div><div class="t">Configuration</div><div class="s s4">6.0</div></div>
+    <div class="dim"><div class="n">14</div><div class="t">Connections</div><div class="s s4">4.0</div></div>
+    <div class="dim"><div class="n">15</div><div class="t">Logging &amp; PII</div><div class="s s4">6.0</div></div>
+    <div class="dim"><div class="n">16</div><div class="t">Idempotency</div><div class="s s0">2.0</div></div>
+    <div class="dim"><div class="n">17</div><div class="t">API Documentation</div><div class="s s4">6.0</div></div>
+    <div class="dim"><div class="n">18</div><div class="t">Technical Debt</div><div class="s s7">7.5</div></div>
+    <div class="dim"><div class="n">19</div><div class="t">Testing Coverage</div><div class="s s7">8.0</div></div>
+    <div class="dim"><div class="n">20</div><div class="t">Dependencies</div><div class="s s4">4.75</div></div>
+    <div class="dim"><div class="n">21</div><div class="t">Performance</div><div class="s s0">2.5</div></div>
+    <div class="dim"><div class="n">22</div><div class="t">Concurrency</div><div class="s s0">2.0</div></div>
+    <div class="dim"><div class="n">23</div><div class="t">Migration Safety</div><div class="s s0">2.0</div></div>
+    <div class="dim"><div class="n">24</div><div class="t">Container Security</div><div class="s s0">3.75</div></div>
+    <div class="dim"><div class="n">25</div><div class="t">HTTP Hardening</div><div class="s s0">1.75</div></div>
+    <div class="dim"><div class="n">26</div><div class="t">CI/CD Pipeline</div><div class="s s4">5.0</div></div>
+    <div class="dim"><div class="n">27</div><div class="t">Async Reliability</div><div class="s s0">0.5</div></div>
+    <div class="dim"><div class="n">28</div><div class="t">Core Dependencies</div><div class="s s0">1.25</div></div>
+    <div class="dim"><div class="n">29</div><div class="t">Naming Conventions</div><div class="s s7">8.0</div></div>
+    <div class="dim"><div class="n">30</div><div class="t">Domain Modeling</div><div class="s s4">6.25</div></div>
+    <div class="dim"><div class="n">31</div><div class="t">Linting &amp; Quality</div><div class="s s4">4.75</div></div>
+    <div class="dim"><div class="n">32</div><div class="t">Dev Tooling</div><div class="s s4">6.0</div></div>
+    <div class="dim" style="opacity:.55"><div class="n">33</div><div class="t">Multi-Tenant</div>
+      <div class="s" style="color:var(--muted);font-size:12px">N/A — inactive</div></div>
+    <div class="dim"><div class="n">34</div><div class="t">License Headers</div><div class="s s9">9.25</div></div>
+    <div class="dim"><div class="n">35</div><div class="t">Nil/Null Safety</div><div class="s s9">8.75</div></div>
+    <div class="dim"><div class="n">36</div><div class="t">Resilience</div><div class="s s0">3.5</div></div>
+    <div class="dim"><div class="n">37</div><div class="t">Secret Scanning</div><div class="s s9">9.25</div></div>
+    <div class="dim"><div class="n">38</div><div class="t">API Versioning</div><div class="s s7">8.25</div></div>
+    <div class="dim"><div class="n">39</div><div class="t">Graceful Degradation</div><div class="s s0">0.0</div></div>
+    <div class="dim"><div class="n">40</div><div class="t">Caching Patterns</div><div class="s s0">2.5</div></div>
+    <div class="dim"><div class="n">41</div><div class="t">Encryption at Rest</div><div class="s s0">1.75</div></div>
+    <div class="dim"><div class="n">42</div><div class="t">Resource Leaks</div><div class="s s4">5.75</div></div>
+    <div class="dim"><div class="n">43</div><div class="t">Rate Limiting</div><div class="s s0">2.0</div></div>
+    <div class="dim"><div class="n">44</div><div class="t">CORS Config</div><div class="s s9">9.0</div></div>
+  </div>
+
+  <h2>The 13 critical blockers</h2>
+  <p class="sub" style="margin-top:-6px">Every one independently re-verified against source before recording.
+  Amber = touches money directly.</p>
+
+  <div class="cb money"><h3><span class="id">CB-9</span> PayFast ITN silently drops confirmed payments</h3>
+    <p>Transport failure is indistinguishable from a bad signature, and the controller always returns 200 — so
+    PayFast never retries. Buyer charged, order stays <code>pending</code>, no entitlement, no receipt, no alert,
+    no reconciliation job.</p>
+    <div class="meta">PayFastDriver.php:139-150 · PayFastWebhookController.php:22-40</div></div>
+
+  <div class="cb money"><h3><span class="id">CB-6</span> Buyers can be charged twice for one entitlement</h3>
+    <p>No ownership or pending-order guard in checkout; the <code>purchases</code> unique constraint silently
+    no-ops the second grant. Deterministic — not a race.</p>
+    <div class="meta">CheckoutController.php:30-90</div></div>
+
+  <div class="cb money"><h3><span class="id">CB-13</span> PayFast receipts lost forever on queue failure</h3>
+    <p><code>markPaid()</code> commits, then queue dispatch throws before the 200 is returned. The retry finds
+    the order already paid and skips receipts permanently.</p>
+    <div class="meta">PayFastWebhookController.php:22-40</div></div>
+
+  <div class="cb"><h3><span class="id">CB-11</span> No backups exist anywhere</h3>
+    <p>Bare Docker volumes on one VPS. <code>migrate --force</code> runs against production with nothing to
+    restore from. Combined with CB-8 there is no recovery path from a bad migration.</p>
+    <div class="meta">scripts/ · docker-compose.prod.yml</div></div>
+
+  <div class="cb"><h3><span class="id">CB-1</span> Account pre-hijacking via unverified email + OAuth auto-link</h3>
+    <p>Register with a victim's email; when they "Sign in with Google" they land in the attacker's account —
+    which their own OAuth then marks verified. Attacker retains password access.</p>
+    <div class="meta">AuthService.php:37-73</div></div>
+
+  <div class="cb"><h3><span class="id">CB-10</span> Service worker serves one user's private DMs to the next</h3>
+    <p><code>...defaultCache</code> adds an <code>"apis"</code> bucket keyed by URL alone; profile scoping lives
+    in a header Workbox ignores. Not in the logout purge list.</p>
+    <div class="meta">sw.ts:103,123 · auth-store.ts:143,154</div></div>
+
+  <div class="cb"><h3><span class="id">CB-12</span> Redis is an unguarded SPOF for session + cache + queue</h3>
+    <p>Outage = total outage. Worse, the feature-flag kill switch reads Redis too, so it fails during the exact
+    incident it exists to contain.</p>
+    <div class="meta">Setting.php:32 · Features.php:56-59</div></div>
+
+  <div class="cb"><h3><span class="id">CB-3 / CB-4</span> Unrestricted file upload (product + course)</h3>
+    <p><code>['required','file','max:51200']</code> and nothing else — no MIME check, no extension allow-list,
+    no scan. Arbitrary bytes served to buyers.</p>
+    <div class="meta">StoreProductController.php:67-69 · StoreCourseController.php:97</div></div>
+
+  <div class="cb"><h3><span class="id">CB-2</span> Sanctum tokens never expire, no revocation route</h3>
+    <p><code>'expiration' =&gt; null</code>, no token-management endpoints. A leaked token is valid forever.</p>
+    <div class="meta">config/sanctum.php:53 · Auth/TokenController.php:32</div></div>
+
+  <div class="cb"><h3><span class="id">CB-5</span> Every deploy SIGKILLs in-flight jobs</h3>
+    <p>No <code>stopwaitsecs</code>, no <code>stop_grace_period</code> — both default to 10s. Laravel traps
+    SIGTERM correctly, but Docker kills the container first, mid-ffmpeg-transcode.</p>
+    <div class="meta">docker/supervisord.conf · docker-compose.prod.yml:38-54</div></div>
+
+  <div class="cb"><h3><span class="id">CB-7</span> N+1 on the main feed</h3>
+    <p><code>ProfileResource</code> costs 2–3 uncached queries per profile; a 20-post page issues ~40–60 extra.
+    <code>preventLazyLoading</code> absent, and dev/CI run SQLite where it goes unnoticed.</p>
+    <div class="meta">ProfileResource.php:20-21 · Profile.php:362-386</div></div>
+
+  <div class="cb"><h3><span class="id">CB-8</span> Migration <code>down()</code> destroys encrypted secrets</h3>
+    <p>Narrows <code>text</code>→<code>json</code> back over ciphertext. Rollback either throws or truncates
+    webhook HMAC secrets to 255 bytes.</p>
+    <div class="meta">2026_07_30_110000_widen_encrypted_columns.php:29-39</div></div>
+
+  <h2>What is genuinely strong</h2>
+  <div class="two">
+    <div class="card"><ul class="clean">
+      <li><strong>IDOR (9.0)</strong> — the <code>X-Profile-Id</code> header <em>is</em> properly ownership-verified
+        (owner or <code>ProfileMember</code> pivot); ~35 controllers follow a consistent scope-then-verify idiom.</li>
+      <li><strong>SQL Safety (9.5)</strong> — all 42 raw-SQL sites use bindings; the one interpolated identifier is
+        allow-listed immediately before use; migrations are 100% Schema-builder.</li>
+      <li><strong>Secret Scanning (9.25)</strong> — zero secrets in tracked files <em>or</em> git history,
+        verified including deleted-file history across 147 commits.</li>
+    </ul></div>
+    <div class="card"><ul class="clean">
+      <li><strong><code>Order::markPaid()</code></strong> is textbook-correct — transaction + <code>lockForUpdate</code>
+        + re-check + idempotent grant, with a real concurrency test. Payments is the best-tested domain in the repo.</li>
+      <li><strong>Technical debt is unusually low</strong> — 10 TODOs, zero FIXME/HACK/XXX, zero commented-out
+        blocks, zero <code>@ts-ignore</code>/<code>any</code> in authored web code, across ~1,100 files.</li>
+      <li><strong>All 63 foreign keys</strong> declare explicit cascade behaviour; money is integer cents throughout.</li>
+    </ul></div>
+  </div>
+
+  <h2>Remediation roadmap</h2>
+  <div class="card scroll">
+    <table>
+      <thead><tr><th style="width:120px">Phase</th><th>Work</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag t-fail">IMMEDIATE</span></td>
+          <td><strong>CB-11 backups first</strong> — nothing else matters until a restore path exists. Then
+          CB-9 / CB-13 payment loss, CB-6 double-charge, CB-1 takeover, CB-2 token expiry, CB-3/4 upload
+          allow-lists, CB-10 cache purge (a one-line <code>USER_CACHES</code> addition).</td></tr>
+        <tr><td><span class="tag t-warn">SPRINT</span></td>
+          <td>CB-5 shutdown grace · CB-8 make <code>down()</code> a no-op · CB-12 guard <code>Setting::get()</code>
+          and in-request <code>broadcast()</code> · CB-7 bulk-hydrate + <code>preventLazyLoading</code> · readiness
+          probe + compose healthchecks · job <code>$timeout</code>/<code>failed()</code> · throttle search.</td></tr>
+        <tr><td><span class="tag t-warn">QUARTER</span></td>
+          <td>CSP · <code>.dockerignore</code> · OpenAPI spec (blocks the mobile app) · PHPStan + Pint in CI ·
+          <code>composer audit</code> / Dependabot · coupon cap under lock · <code>xp_ledger</code> unique index ·
+          DM conversation uniqueness · Redis/PDO timeouts.</td></tr>
+        <tr><td><span class="tag t-na">DECIDE</span></td>
+          <td>Adopt or formally waive the Bee conformance items. <strong>Document the snake_case JSON decision
+          rather than remediating it</strong> — a rename touches ~327 files and creates a dangerous half-migrated
+          window for no user benefit.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Audit integrity</h2>
+  <div class="card"><ul class="clean">
+    <li><strong>Every CRITICAL was independently re-verified</strong> against source. Three explorer findings were
+      <strong>rejected or downgraded</strong>: the <code>streaming/webhook</code> "unauthenticated" claim (it
+      verifies an HMAC and fails closed), the <code>BROADCAST_CONNECTION=log</code> PII critical (prod correctly
+      sets <code>reverb</code>), and the <code>APP_PREVIOUS_KEYS</code> claim (it <em>is</em> configured).</li>
+    <li><strong>Three hypotheses deliberately planted in explorer prompts were disproven</strong>, not confirmed:
+      root ffmpeg worker, DB/Redis published in prod, CI not running on the working branch. All three are fine.</li>
+    <li><strong>Duplicates were reconciled, not double-counted</strong> — deploy-before-migrate, the coupon cap,
+      and the <code>PublishScheduledPost</code> double-publish were each found by 2–3 dimensions, recorded once.</li>
+    <li><code>devops.md</code> <strong>does not exist</strong> in the standards repo (404). Dimensions 24/26/32
+      fall back to generic practice.</li>
+    <li><strong>Not verifiable statically, and not claimed:</strong> test pass rate and coverage % (no PHP on this
+      machine; CI also disables coverage), live HTTP header behaviour, real CVE status, production runtime behaviour.</li>
+  </ul></div>
+
+  <footer>Generated by Claude Code · Production Readiness Skill v3.0 · 43 explorer agents across 5 batches ·
+  Standards: <code>php.md</code>, <code>typescript.md</code>, <code>frontend.md</code>, <code>database.md</code>,
+  <code>sre.md</code> · Full findings: <code>production-readiness-2026-08-03T22:25:16.md</code></footer>
+
+</div>
+</body>
+</html>
