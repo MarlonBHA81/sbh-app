@@ -40,7 +40,7 @@ class MediaService
         $path = "{$directory}/{$ulid}.webp";
         $thumbPath = "{$directory}/{$ulid}_thumb.webp";
 
-        $disk = Storage::disk('public');
+        $disk = Storage::disk(config('media.public_disk'));
         $disk->put($path, (string) $encoded);
         $disk->put($thumbPath, (string) $thumb);
 
@@ -48,7 +48,7 @@ class MediaService
             'ulid' => $ulid,
             'profile_id' => $profile->id,
             'type' => Media::TYPE_IMAGE,
-            'disk' => 'public',
+            'disk' => config('media.public_disk'),
             'path' => $path,
             'thumb_path' => $thumbPath,
             'width' => $image->width(),
@@ -110,7 +110,7 @@ class MediaService
         $existing = $profile->getAttribute($column);
 
         if ($existing) {
-            Storage::disk('public')->delete($existing);
+            Storage::disk(config('media.public_disk'))->delete($existing);
         }
 
         $profile->forceFill([$column => null])->save();
@@ -129,15 +129,17 @@ class MediaService
     {
         $previous = $profile->getAttribute($column);
 
-        if (Storage::disk('public')->put($path, $bytes) === false) {
+        $disk = config('media.public_disk');
+
+        if (Storage::disk($disk)->put($path, $bytes) === false) {
             throw new \RuntimeException(
-                "Failed to write image to public disk at [{$path}] — check that ".
-                'storage/app/public is writable by the web server user.'
+                "Failed to write image to the [{$disk}] disk at [{$path}] — check that ".
+                'the configured public media disk is writable by the web server user.'
             );
         }
 
         if ($previous && $previous !== $path) {
-            Storage::disk('public')->delete($previous);
+            Storage::disk($disk)->delete($previous);
         }
 
         $profile->forceFill([$column => $path])->save();

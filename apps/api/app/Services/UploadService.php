@@ -63,7 +63,7 @@ class UploadService
      */
     public function storeChunk(UploadSession $session, int $index, mixed $contents): void
     {
-        $disk = Storage::disk('local');
+        $disk = Storage::disk(config('media.private_disk'));
         $path = $session->chunkDirectory().'/'.$index;
 
         $alreadyStored = $disk->exists($path);
@@ -86,7 +86,7 @@ class UploadService
      */
     public function complete(UploadSession $session): Media
     {
-        $disk = Storage::disk('local');
+        $disk = Storage::disk(config('media.private_disk'));
         $dir = $session->chunkDirectory();
 
         for ($i = 0; $i < $session->total_chunks; $i++) {
@@ -109,7 +109,7 @@ class UploadService
             'ulid' => $ulid,
             'profile_id' => $session->profile_id,
             'type' => $session->media_type,
-            'disk' => 'public',
+            'disk' => config('media.public_disk'),
             'path' => $finalPath,
             'thumb_path' => null,
             'size_bytes' => $size,
@@ -138,7 +138,7 @@ class UploadService
      */
     public function abort(UploadSession $session): void
     {
-        Storage::disk('local')->deleteDirectory($session->chunkDirectory());
+        Storage::disk(config('media.private_disk'))->deleteDirectory($session->chunkDirectory());
 
         $session->update(['status' => UploadSession::STATUS_ABORTED]);
     }
@@ -148,8 +148,8 @@ class UploadService
      */
     private function assemble(UploadSession $session, string $finalPath): int
     {
-        $local = Storage::disk('local');
-        $public = Storage::disk('public');
+        $local = Storage::disk(config('media.private_disk'));
+        $public = Storage::disk(config('media.public_disk'));
         $dir = $session->chunkDirectory();
 
         $out = fopen('php://temp', 'w+b');

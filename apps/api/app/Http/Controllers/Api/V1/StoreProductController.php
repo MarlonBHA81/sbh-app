@@ -76,8 +76,8 @@ class StoreProductController extends Controller
             ],
         ]);
 
-        // Stored on the private "local" disk — only delivered to buyers who own it.
-        $path = $request->file('file')->store('products/'.$product->ulid, 'local');
+        // Stored on the private disk — only delivered to buyers who own it.
+        $path = $request->file('file')->store('products/'.$product->ulid, config('media.private_disk'));
 
         $product->update(['download_path' => $path]);
 

@@ -91,7 +91,7 @@ class Conversation extends Model
     {
         return $this->avatar_path === null
             ? null
-            : Storage::disk('public')->url($this->avatar_path);
+            : Storage::disk(config('media.public_disk'))->url($this->avatar_path);
     }
 
     public function isDm(): bool

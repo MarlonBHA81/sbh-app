@@ -243,7 +243,7 @@ class Profile extends Model
     {
         return $this->avatar_path === null
             ? null
-            : $this->cacheBust(Storage::disk('public')->url($this->avatar_path));
+            : $this->cacheBust(Storage::disk(config('media.public_disk'))->url($this->avatar_path));
     }
 
     /**
@@ -253,7 +253,7 @@ class Profile extends Model
     {
         return $this->cover_path === null
             ? null
-            : $this->cacheBust(Storage::disk('public')->url($this->cover_path));
+            : $this->cacheBust(Storage::disk(config('media.public_disk'))->url($this->cover_path));
     }
 
     /** Append the profile's updated timestamp so re-uploads bust caches. */

@@ -143,6 +143,6 @@ class Product extends Model
 
     public function coverUrl(): ?string
     {
-        return $this->cover_path === null ? null : Storage::disk('public')->url($this->cover_path);
+        return $this->cover_path === null ? null : Storage::disk(config('media.public_disk'))->url($this->cover_path);
     }
 }

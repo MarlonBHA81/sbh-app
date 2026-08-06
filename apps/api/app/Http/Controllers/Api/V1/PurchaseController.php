@@ -46,9 +46,8 @@ class PurchaseController extends Controller
         $buyer = $this->activeProfile($request);
 
         $this->assertOwns($buyer->id, $product);
-        abort_unless($product->download_path !== null && Storage::disk('local')->exists($product->download_path), 404);
 
-        return Storage::disk('local')->download($product->download_path, $product->title);
+        return $this->stream($product);
     }
 
     /**
@@ -79,9 +78,18 @@ class PurchaseController extends Controller
     public function signedDownload(Request $request, Product $product): StreamedResponse
     {
         $this->assertOwns((int) $request->query('p'), $product);
-        abort_unless($product->download_path !== null && Storage::disk('local')->exists($product->download_path), 404);
 
-        return Storage::disk('local')->download($product->download_path, $product->title);
+        return $this->stream($product);
+    }
+
+    /** Stream the product's file from the configured private disk (404 if missing). */
+    private function stream(Product $product): StreamedResponse
+    {
+        $disk = Storage::disk(config('media.private_disk'));
+
+        abort_unless($product->download_path !== null && $disk->exists($product->download_path), 404);
+
+        return $disk->download($product->download_path, $product->title);
     }
 
     private function assertOwns(int $buyerProfileId, Product $product): void
