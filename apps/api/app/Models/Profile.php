@@ -17,12 +17,29 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Laravel\Scout\Searchable;
 
 #[ObservedBy(ProfileObserver::class)]
 class Profile extends Model
 {
     /** @use HasFactory<ProfileFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, Searchable, SoftDeletes;
+
+    /**
+     * Columns the search engine matches against (handle, display name, bio).
+     * With the database driver these become case-insensitive LIKE targets;
+     * with a hosted engine they define the indexed document.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'handle' => $this->handle,
+            'name' => $this->name,
+            'bio' => $this->bio,
+        ];
+    }
 
     public const KIND_PERSONAL = 'personal';
 
@@ -243,7 +260,7 @@ class Profile extends Model
     {
         return $this->avatar_path === null
             ? null
-            : $this->cacheBust(Storage::disk('public')->url($this->avatar_path));
+            : $this->cacheBust(Storage::disk(config('media.public_disk'))->url($this->avatar_path));
     }
 
     /**
@@ -253,7 +270,7 @@ class Profile extends Model
     {
         return $this->cover_path === null
             ? null
-            : $this->cacheBust(Storage::disk('public')->url($this->cover_path));
+            : $this->cacheBust(Storage::disk(config('media.public_disk'))->url($this->cover_path));
     }
 
     /** Append the profile's updated timestamp so re-uploads bust caches. */

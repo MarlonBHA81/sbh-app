@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Product;
 use App\Models\Profile;
 use App\Models\Store;
 use Illuminate\Database\Seeder;

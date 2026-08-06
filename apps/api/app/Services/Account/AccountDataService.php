@@ -88,7 +88,7 @@ class AccountDataService
 
         foreach ($user->profiles as $profile) {
             foreach (array_filter([$profile->avatar_path, $profile->cover_path]) as $path) {
-                Storage::disk('public')->delete($path);
+                Storage::disk(config('media.public_disk'))->delete($path);
             }
         }
 

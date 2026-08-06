@@ -44,6 +44,6 @@ class AdSlot extends Model
 
     public function imageUrl(): ?string
     {
-        return $this->image_path ? Storage::disk('public')->url($this->image_path) : null;
+        return $this->image_path ? Storage::disk(config('media.public_disk'))->url($this->image_path) : null;
     }
 }

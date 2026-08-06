@@ -161,11 +161,11 @@ class Masterclass extends Model
 
     public function logoUrl(): ?string
     {
-        return $this->logo_path === null ? null : Storage::disk('public')->url($this->logo_path);
+        return $this->logo_path === null ? null : Storage::disk(config('media.public_disk'))->url($this->logo_path);
     }
 
     public function bannerUrl(): ?string
     {
-        return $this->banner_path === null ? null : Storage::disk('public')->url($this->banner_path);
+        return $this->banner_path === null ? null : Storage::disk(config('media.public_disk'))->url($this->banner_path);
     }
 }

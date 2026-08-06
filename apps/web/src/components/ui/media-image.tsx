@@ -1,49 +1,59 @@
 "use client";
 
 import { ImageOff } from "lucide-react";
-import { useState, type ImgHTMLAttributes } from "react";
+import Image, { type ImageProps } from "next/image";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+type MediaImageProps = Omit<ImageProps, "onError" | "alt"> & {
+  alt?: string;
+  /** Extra classes applied to the broken-image placeholder box. */
+  fallbackClassName?: string;
+};
+
 /**
- * A plain <img> that swaps to a muted placeholder when the source fails to load
- * (broken or expired media URL) instead of rendering the browser's default
- * broken-image glyph. Drop-in for content media (`className` carries the sizing,
- * e.g. `size-full object-cover`). Avatars keep using Radix's built-in fallback.
+ * User-uploaded media rendered through next/image (automatic responsive
+ * srcset + lazy loading via the `sizes` prop), with a graceful placeholder
+ * when the source 404s or fails to decode — media can be pruned or still be
+ * processing, and a raw broken <img> icon is jarring in the feed. Avatars keep
+ * using Radix's built-in fallback.
+ *
+ * Always pass `sizes` so the optimizer picks an appropriately sized source.
  */
 export function MediaImage({
   className,
+  fallbackClassName,
   alt = "",
-  onError,
+  fill,
   ...props
-}: ImgHTMLAttributes<HTMLImageElement>) {
-  const [failed, setFailed] = useState(false);
+}: MediaImageProps) {
+  const [errored, setErrored] = useState(false);
 
-  if (failed) {
+  if (errored) {
     return (
       <div
+        role="img"
+        aria-label={alt || undefined}
         className={cn(
           "flex items-center justify-center bg-muted text-muted-foreground",
+          fill ? "absolute inset-0 size-full" : "size-full",
           className,
+          fallbackClassName,
         )}
-        role="img"
-        aria-label={alt || "Image unavailable"}
       >
-        <ImageOff className="size-5 opacity-60" aria-hidden />
+        <ImageOff className="size-6" aria-hidden />
       </div>
     );
   }
 
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      {...props}
+    <Image
       alt={alt}
       className={className}
-      onError={(event) => {
-        setFailed(true);
-        onError?.(event);
-      }}
+      fill={fill}
+      onError={() => setErrored(true)}
+      {...props}
     />
   );
 }

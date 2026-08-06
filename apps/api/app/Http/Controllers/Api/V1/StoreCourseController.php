@@ -102,7 +102,7 @@ class StoreCourseController extends Controller
             'max:'.config('media.deliverable_max_kb'),
         ]]);
 
-        $path = $request->file('file')->store('courses/'.$lesson->ulid, 'local');
+        $path = $request->file('file')->store('courses/'.$lesson->ulid, config('media.private_disk'));
         $lesson->update(['attachment_path' => $path]);
 
         return response()->json(['data' => ['uploaded' => true]]);

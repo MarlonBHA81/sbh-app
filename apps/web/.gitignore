@@ -44,3 +44,8 @@ next-env.d.ts
 # serwist generated service worker
 public/sw.js
 public/swe-worker-*.js
+
+# playwright
+/test-results/
+/playwright-report/
+/playwright/.cache/

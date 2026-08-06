@@ -126,9 +126,12 @@ class CourseController extends Controller
         $product = $lesson->module->product;
 
         abort_unless($this->canAccess($request, $product) || $lesson->is_preview, 403);
-        abort_unless($lesson->attachment_path !== null && Storage::disk('local')->exists($lesson->attachment_path), 404);
 
-        return Storage::disk('local')->download($lesson->attachment_path, $lesson->title);
+        $disk = Storage::disk(config('media.private_disk'));
+
+        abort_unless($lesson->attachment_path !== null && $disk->exists($lesson->attachment_path), 404);
+
+        return $disk->download($lesson->attachment_path, $lesson->title);
     }
 
     /**

@@ -6,7 +6,9 @@ use App\Models\AdEvent;
 use App\Models\AdSlot;
 use App\Models\BusinessCategory;
 use App\Models\Campaign;
+use App\Models\Challenge;
 use App\Models\Comment;
+use App\Models\Conversation;
 use App\Models\Media;
 use App\Models\Message;
 use App\Models\Post;
@@ -894,7 +896,7 @@ class DemoContentSeeder extends Seeder
 
     private function seedChallenge(): void
     {
-        $challenge = \App\Models\Challenge::create([
+        $challenge = Challenge::create([
             'title' => 'July Hustle Challenge',
             'description' => 'Earn the most XP this month — post, engage and climb the board. Top three win a shout-out from SBH Community.',
             'starts_at' => now()->subDays(7),
@@ -951,7 +953,7 @@ class DemoContentSeeder extends Seeder
 
         // Demo group ships pre-approved so its seeded chatter can send.
         $group->update([
-            'approval_status' => \App\Models\Conversation::APPROVAL_APPROVED,
+            'approval_status' => Conversation::APPROVAL_APPROVED,
             'approved_at' => now(),
         ]);
 

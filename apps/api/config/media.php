@@ -4,6 +4,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Storage disks
+    |--------------------------------------------------------------------------
+    |
+    | Which filesystem disk backs public (world-readable media: images, posters,
+    | assembled video/audio) versus private (buyer-gated deliverables, in-flight
+    | upload chunks) storage. Defaults preserve the historical hardcoded
+    | behaviour (`public` / `local`). Point these at `s3` — a disk already
+    | defined in config/filesystems.php — to move media to object storage with
+    | no code changes; the `disk` recorded on each Media row is taken from
+    | `public_disk`, so Media::url() keeps resolving against the right disk.
+    |
+    */
+
+    'public_disk' => env('MEDIA_PUBLIC_DISK', 'public'),
+
+    'private_disk' => env('MEDIA_PRIVATE_DISK', 'local'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Image processing
     |--------------------------------------------------------------------------
     |
