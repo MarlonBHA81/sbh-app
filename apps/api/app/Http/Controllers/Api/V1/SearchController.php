@@ -41,15 +41,14 @@ class SearchController extends Controller
         $viewer = $request->attributes->get('activeProfile');
         $excluded = $viewer ? $this->safety->blockedProfileIds($viewer) : [];
 
-        $profiles = Profile::query()
-            ->where(function ($query) use ($term) {
-                $query->where('handle', 'like', $term.'%')
-                    ->orWhere('handle', 'like', '%'.$term.'%')
-                    ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$term.'%']);
-            })
-            ->when($excluded !== [], fn ($query) => $query->whereNotIn('id', $excluded))
-            ->orderBy('handle')
-            ->limit(self::TYPEAHEAD_LIMIT)
+        // Scout (database engine) matches the term as a substring across the
+        // Profile searchable columns (handle, name, bio). Blocked profiles and
+        // ordering stay in the underlying query via the query() callback.
+        $profiles = Profile::search($term)
+            ->query(fn ($query) => $query
+                ->when($excluded !== [], fn ($q) => $q->whereNotIn('id', $excluded))
+                ->orderBy('handle'))
+            ->take(self::TYPEAHEAD_LIMIT)
             ->get();
 
         $topics = Topic::query()
@@ -89,6 +88,12 @@ class SearchController extends Controller
         $viewer = $request->attributes->get('activeProfile');
         $excluded = $viewer ? $this->safety->feedExcludedProfileIds($viewer) : [];
 
+        // Post::search()/toSearchableArray('body') is wired for Scout, but this
+        // endpoint stays on a LIKE inside the Eloquent query: Scout's database
+        // engine cannot cursorPaginate, and bridging via ->search()->keys()
+        // would load every matching post id into memory before paginating — a
+        // scale regression on the largest table. When a hosted engine
+        // (Meilisearch/Typesense) is adopted this swaps to Post::search().
         $posts = Post::query()
             ->published()
             ->where('visibility', Post::VISIBILITY_PUBLIC)

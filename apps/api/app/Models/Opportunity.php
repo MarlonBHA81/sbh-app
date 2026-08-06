@@ -8,13 +8,28 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Laravel\Scout\Searchable;
 
 /**
  * A growth opportunity surfaced to members (V1 · GROW pillar).
  */
 class Opportunity extends Model
 {
-    use SoftDeletes;
+    use Searchable, SoftDeletes;
+
+    /**
+     * Text fields an opportunity search matches against.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'title' => $this->title,
+            'description' => $this->description,
+            'organisation' => $this->organisation,
+        ];
+    }
 
     /** Opportunity kinds shown as filter chips and badges. */
     public const TYPES = [

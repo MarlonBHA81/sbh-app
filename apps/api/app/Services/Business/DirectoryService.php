@@ -37,13 +37,15 @@ class DirectoryService
             ->when(
                 isset($filters['q']) && $filters['q'] !== null,
                 function (Builder $query) use ($filters) {
-                    $term = '%'.$filters['q'].'%';
+                    // Resolve the text match through Scout (database engine =
+                    // substring LIKE over Profile's searchable columns: name,
+                    // handle, bio), then constrain this cursor-paginated query
+                    // to those ids. The directory is business profiles only, a
+                    // bounded set, so materialising matched ids is cheap and we
+                    // keep the existing cursor pagination + ordering intact.
+                    $ids = Profile::search($filters['q'])->keys();
 
-                    $query->where(function (Builder $inner) use ($term) {
-                        $inner->where('name', 'like', $term)
-                            ->orWhere('handle', 'like', $term)
-                            ->orWhere('bio', 'like', $term);
-                    });
+                    $query->whereIn('id', $ids);
                 }
             )
             ->when(

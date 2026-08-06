@@ -15,11 +15,25 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Laravel\Scout\Searchable;
 
 class Post extends Model
 {
     /** @use HasFactory<PostFactory> */
-    use HasFactory, HasViewerReactionState, SoftDeletes;
+    use HasFactory, HasViewerReactionState, Searchable, SoftDeletes;
+
+    /**
+     * Only the post body is searchable, matching the existing body-substring
+     * search semantics. Visibility/safety scoping stays in the query layer.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'body' => $this->body,
+        ];
+    }
 
     public const STATUS_DRAFT = 'draft';
 
