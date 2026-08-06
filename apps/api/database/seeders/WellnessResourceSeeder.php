@@ -25,7 +25,7 @@ class WellnessResourceSeeder extends Seeder
             [
                 'category' => 'reflection',
                 'title' => 'One thing that went right',
-                'body' => "Take a moment to name one thing — however small — that went right this week. A customer who came back, an email you finally sent, a quiet afternoon. Progress is rarely loud. Noticing it is a skill worth practising.",
+                'body' => 'Take a moment to name one thing — however small — that went right this week. A customer who came back, an email you finally sent, a quiet afternoon. Progress is rarely loud. Noticing it is a skill worth practising.',
                 'position' => 2,
                 'is_published' => true,
             ],
