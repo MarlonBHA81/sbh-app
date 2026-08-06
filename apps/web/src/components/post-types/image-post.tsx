@@ -18,10 +18,12 @@ import { PostBody } from "./post-body";
 function GridImage({
   media,
   className,
+  sizes,
   onClick,
 }: {
   media: Media;
   className?: string;
+  sizes: string;
   onClick: () => void;
 }) {
   return (
@@ -32,7 +34,7 @@ function GridImage({
         onClick();
       }}
       className={cn(
-        "block overflow-hidden bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "relative block overflow-hidden bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         className,
       )}
       aria-label="View image"
@@ -40,10 +42,9 @@ function GridImage({
       <MediaImage
         src={media.thumb_url}
         alt=""
-        loading="lazy"
-        width={media.width}
-        height={media.height}
-        className="size-full object-cover"
+        fill
+        sizes={sizes}
+        className="object-cover"
       />
     </button>
   );
@@ -81,12 +82,17 @@ export function ImagePost({ post }: { post: Post }) {
         }
       >
         {single ? (
-          <GridImage media={media[0]} onClick={() => setOpenIndex(0)} />
+          <GridImage
+            media={media[0]}
+            sizes="(max-width: 640px) 100vw, 600px"
+            onClick={() => setOpenIndex(0)}
+          />
         ) : (
           media.map((item, index) => (
             <GridImage
               key={item.ulid}
               media={item}
+              sizes="(max-width: 640px) 50vw, 300px"
               onClick={() => setOpenIndex(index)}
               className={cn(
                 // 3 images: first spans full height on the left.
@@ -111,11 +117,15 @@ export function ImagePost({ post }: { post: Post }) {
           {openItem ? (
             <div className="flex flex-col items-center gap-3">
               <MediaImage
+                // Keying on the chosen source forces a fresh element (and error
+                // state) when low-data mode swaps the thumb for the full image.
+                key={showFull ? "full" : "thumb"}
                 src={showFull ? openItem.url : openItem.thumb_url}
                 alt=""
                 width={openItem.width}
                 height={openItem.height}
-                className="max-h-[85dvh] w-full rounded-lg object-contain"
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="h-auto max-h-[85dvh] w-full rounded-lg object-contain"
               />
               {!showFull ? (
                 <Button
