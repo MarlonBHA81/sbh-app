@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\Account\AccountDataService;
+use App\Support\Activity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -21,6 +22,8 @@ class AccountController extends Controller
     /** Right of access: a machine-readable export of the user's own data. */
     public function export(Request $request): JsonResponse
     {
+        Activity::log('account.exported', actor: $request->user());
+
         return response()->json([
             'data' => $this->data->export($request->user()),
         ]);
@@ -51,6 +54,13 @@ class AccountController extends Controller
                 ]);
             }
         }
+
+        // Log before deletion. The activity_logs.user_id FK is null-on-delete,
+        // so also stamp the id/handle into meta to preserve who erased the account.
+        Activity::log('account.deleted', actor: $user, meta: [
+            'user_id' => $user->id,
+            'handle' => $user->personalProfile?->handle,
+        ]);
 
         $this->data->deleteAccount($user);
 

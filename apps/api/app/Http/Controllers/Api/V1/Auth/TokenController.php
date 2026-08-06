@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\TokenRequest;
 use App\Models\User;
+use App\Support\Activity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -35,8 +36,12 @@ class TokenController extends Controller
         $minutes = (int) config('sanctum.expiration');
         $expiresAt = $minutes > 0 ? now()->addMinutes($minutes) : null;
 
+        $token = $user->createToken($request->string('device_name'), ['*'], $expiresAt);
+
+        Activity::log('token.issued', actor: $user, meta: ['device_name' => (string) $request->string('device_name')]);
+
         return response()->json([
-            'token' => $user->createToken($request->string('device_name'), ['*'], $expiresAt)->plainTextToken,
+            'token' => $token->plainTextToken,
         ], 201);
     }
 }

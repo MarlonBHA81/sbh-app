@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Support\Activity;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -37,6 +38,8 @@ class LoginController extends Controller
             $request->session()->regenerate();
         }
 
+        Activity::log('auth.login', actor: $user);
+
         return response()->json([
             'user' => new UserResource($user),
         ]);
@@ -44,6 +47,8 @@ class LoginController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        Activity::log('auth.logout', actor: $request->user());
+
         Auth::guard('web')->logout();
 
         if ($request->hasSession()) {

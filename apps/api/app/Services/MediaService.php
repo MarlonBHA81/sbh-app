@@ -22,11 +22,16 @@ class MediaService
     {
         $encoder = new WebpEncoder(quality: config('media.webp_quality'));
 
+        // orient() applies the EXIF orientation flag then drops it, so rotated
+        // phone photos are stored upright (the WebP re-encode also strips the
+        // rest of the EXIF, including GPS).
         $image = Image::decodePath($file->getRealPath())
+            ->orient()
             ->scaleDown(width: config('media.max_width'));
         $encoded = $image->encode($encoder);
 
         $thumb = Image::decodePath($file->getRealPath())
+            ->orient()
             ->scaleDown(width: config('media.thumb_width'))
             ->encode($encoder);
 

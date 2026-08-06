@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MediaImage } from "@/components/ui/media-image";
 import {
   Popover,
   PopoverAnchor,
@@ -50,8 +51,7 @@ function MessageMedia({ media }: { media: Media[] }) {
             style={single ? { aspectRatio: `${item.width} / ${item.height}` } : undefined}
             aria-label="View image"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <MediaImage
               src={item.thumb_url}
               alt=""
               loading="lazy"
@@ -75,8 +75,7 @@ function MessageMedia({ media }: { media: Media[] }) {
         <DialogContent className="max-w-[calc(100%-1rem)] border-none bg-transparent p-0 shadow-none sm:max-w-3xl">
           <DialogTitle className="sr-only">Image</DialogTitle>
           {openItem ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <MediaImage
               src={openItem.url}
               alt=""
               width={openItem.width}

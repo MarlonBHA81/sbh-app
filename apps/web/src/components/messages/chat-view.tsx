@@ -33,7 +33,7 @@ import type {
   Paginated,
   ProfileLite,
 } from "@/lib/api/types";
-import { useEchoPresence } from "@/lib/echo";
+import { useEchoPresence, usePollingFallback } from "@/lib/echo";
 import { dayKey, dayLabel, shouldGroup, toMessage } from "@/lib/messages";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 import { useMessagesStore } from "@/lib/stores/messages-store";
@@ -217,6 +217,26 @@ export function ChatView({ ulid }: { ulid: string }) {
       setLoadingEarlier(false);
     }
   }
+
+  // Without Reverb, `.MessageSent` never fires — poll the newest page and merge
+  // any messages we haven't seen (same dedup-by-ulid as the realtime path), so
+  // an open thread keeps updating instead of freezing after load.
+  const pollLatest = useCallback(() => {
+    api
+      .get<Paginated<ChatMessage>>(`/api/v1/conversations/${ulid}/messages`)
+      .then((res) => {
+        setMessages((prev) => {
+          const seen = new Set(prev.map((m) => m.ulid));
+          const incoming = [...res.data]
+            .reverse()
+            .filter((m) => !seen.has(m.ulid));
+          return incoming.length === 0 ? prev : [...prev, ...incoming];
+        });
+      })
+      .catch(() => {});
+  }, [ulid]);
+
+  usePollingFallback(pollLatest, { enabled: phase === "loaded", intervalMs: 12000 });
 
   // --- Realtime (presence channel conversation.{ulid}) --------------------
   const { whisper } = useEchoPresence(

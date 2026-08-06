@@ -2,12 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 
 import * as api from "@/lib/api/client";
 import type { AppNotification, RankSummary } from "@/lib/api/types";
-import { useEchoPrivate } from "@/lib/echo";
+import { useEchoPrivate, usePollingFallback } from "@/lib/echo";
 import { notificationAction, notificationHref } from "@/lib/notifications";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
 import { useGamificationStore } from "@/lib/stores/gamification-store";
@@ -73,22 +73,25 @@ export function NotificationsProvider() {
   const pushLive = useNotificationsStore((s) => s.pushLive);
   const celebrateRank = useGamificationStore((s) => s.celebrateRank);
 
-  // Sync the unread badge whenever the active profile changes.
-  useEffect(() => {
+  // Refresh the unread badge from the server.
+  const refreshUnread = useCallback(() => {
     if (!activeUlid) return;
-    let cancelled = false;
     api
       .get<{ count: number }>("/api/v1/notifications/unread-count")
-      .then((res) => {
-        if (!cancelled) setUnreadCount(res.count ?? 0);
-      })
+      .then((res) => setUnreadCount(res.count ?? 0))
       .catch(() => {
         // Non-fatal: leave the badge as-is.
       });
-    return () => {
-      cancelled = true;
-    };
   }, [activeUlid, setUnreadCount]);
+
+  // Sync the unread badge whenever the active profile changes.
+  useEffect(() => {
+    refreshUnread();
+  }, [refreshUnread]);
+
+  // When Reverb isn't configured, live pushes never arrive — poll the badge so
+  // it doesn't sit stale.
+  usePollingFallback(refreshUnread, { enabled: Boolean(activeUlid) });
 
   useEchoPrivate(
     activeUlid ? `profile.${activeUlid}` : null,

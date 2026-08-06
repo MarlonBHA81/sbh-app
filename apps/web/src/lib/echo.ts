@@ -111,6 +111,44 @@ export function createEcho(): ReverbEcho | null {
   return echoInstance;
 }
 
+/**
+ * Whether Reverb realtime is configured. When false, no live events ever
+ * arrive, so views should fall back to periodic polling (usePollingFallback).
+ */
+export function isRealtimeConfigured(): boolean {
+  return Boolean(REVERB_KEY && REVERB_HOST && REVERB_PORT);
+}
+
+/**
+ * Poll `callback` on an interval, but ONLY when realtime is not configured — so
+ * messages / notifications still refresh on a Reverb-less deployment instead of
+ * being silently frozen after the first load. Pauses while the tab is hidden.
+ * A no-op when Reverb is on (Echo drives updates) or when `enabled` is false.
+ */
+export function usePollingFallback(
+  callback: () => void,
+  {
+    intervalMs = 20000,
+    enabled = true,
+  }: { intervalMs?: number; enabled?: boolean } = {},
+): void {
+  const cb = useRef(callback);
+  useEffect(() => {
+    cb.current = callback;
+  });
+
+  useEffect(() => {
+    if (!enabled || isRealtimeConfigured()) return;
+    if (typeof window === "undefined") return;
+
+    const tick = () => {
+      if (document.visibilityState === "visible") cb.current();
+    };
+    const timer = setInterval(tick, intervalMs);
+    return () => clearInterval(timer);
+  }, [enabled, intervalMs]);
+}
+
 /** Tear down the singleton (e.g. on logout). */
 export function destroyEcho(): void {
   try {

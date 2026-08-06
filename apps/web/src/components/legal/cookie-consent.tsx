@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import * as api from "@/lib/api/client";
 import { useConsentStore } from "@/lib/stores/consent-store";
 
 /**
@@ -14,6 +15,15 @@ export function CookieConsent() {
   const choice = useConsentStore((s) => s.choice);
   const hydrated = useConsentStore((s) => s.hydrated);
   const setChoice = useConsentStore((s) => s.setChoice);
+
+  // Store the choice locally (gates cookies immediately) and, for a signed-in
+  // user, persist an auditable server-side record (POPIA). The POST is
+  // best-effort: it 401s silently for anonymous visitors, who are covered by
+  // the local choice until they authenticate.
+  const record = (value: "accepted" | "rejected") => {
+    setChoice(value);
+    api.post("/api/v1/me/consent", { choice: value }).catch(() => {});
+  };
 
   // Wait for the persisted choice to hydrate to avoid an SSR/first-paint flash.
   if (!hydrated || choice !== null) return null;
@@ -34,13 +44,13 @@ export function CookieConsent() {
         .
       </p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <Button className="h-10 flex-1" onClick={() => setChoice("accepted")}>
+        <Button className="h-10 flex-1" onClick={() => record("accepted")}>
           Accept all
         </Button>
         <Button
           variant="outline"
           className="h-10 flex-1"
-          onClick={() => setChoice("rejected")}
+          onClick={() => record("rejected")}
         >
           Reject non-essential
         </Button>
