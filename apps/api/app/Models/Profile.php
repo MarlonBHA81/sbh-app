@@ -45,6 +45,9 @@ class Profile extends Model
 
     public const KIND_BUSINESS = 'business';
 
+    /** A corporate/ESD sponsor that runs supplier-development programmes. */
+    public const KIND_CORPORATE = 'corporate';
+
     public const DM_PRIVACY_EVERYONE = 'everyone';
 
     public const DM_PRIVACY_FOLLOWERS = 'followers';
@@ -345,6 +348,11 @@ class Profile extends Model
         return $query->where('kind', self::KIND_BUSINESS);
     }
 
+    public function scopeCorporate(Builder $query): Builder
+    {
+        return $query->where('kind', self::KIND_CORPORATE);
+    }
+
     public function isPersonal(): bool
     {
         return $this->kind === self::KIND_PERSONAL;
@@ -353,6 +361,11 @@ class Profile extends Model
     public function isBusiness(): bool
     {
         return $this->kind === self::KIND_BUSINESS;
+    }
+
+    public function isCorporate(): bool
+    {
+        return $this->kind === self::KIND_CORPORATE;
     }
 
     public function isFollowedBy(?Profile $profile): bool
