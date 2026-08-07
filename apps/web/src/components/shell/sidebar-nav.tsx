@@ -2,6 +2,7 @@
 
 import {
   Briefcase,
+  Building2,
   ChartLine,
   ChevronsUpDown,
   Megaphone,
@@ -106,6 +107,25 @@ export function SidebarNav() {
           <Briefcase className="size-5" aria-hidden />
           {t("business")}
         </Link>
+        {activeProfile?.kind === "corporate" ? (
+          <Link
+            href="/corporate"
+            aria-current={
+              pathname === "/corporate" || pathname.startsWith("/corporate/")
+                ? "page"
+                : undefined
+            }
+            className={cn(
+              "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors",
+              pathname === "/corporate" || pathname.startsWith("/corporate/")
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+            )}
+          >
+            <Building2 className="size-5" aria-hidden />
+            ESD portal
+          </Link>
+        ) : null}
         {gamificationOn ? (
           <Link
             href="/leaderboard"

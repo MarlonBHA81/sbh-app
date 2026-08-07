@@ -13,12 +13,13 @@ export function initials(name: string): string {
 
 /**
  * Kind-colored ring so the active identity reads at a glance across the app:
- * teal = personal, plum = business. Used on the avatar of whichever profile
- * the user is currently acting as.
+ * teal = personal, plum = business/corporate. Used on the avatar of whichever
+ * profile the user is currently acting as.
  */
 const RING: Record<NonNullable<Profile["kind"]>, string> = {
   personal: "ring-2 ring-teal ring-offset-2 ring-offset-background",
   business: "ring-2 ring-plum ring-offset-2 ring-offset-background",
+  corporate: "ring-2 ring-plum ring-offset-2 ring-offset-background",
 };
 
 export function ProfileAvatar({
