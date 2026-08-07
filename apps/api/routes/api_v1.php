@@ -29,6 +29,10 @@ use App\Http\Controllers\Api\V1\ConnectionController;
 use App\Http\Controllers\Api\V1\ConsentController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\ConversationParticipantController;
+use App\Http\Controllers\Api\V1\Corporate\CohortController as CorporateCohortController;
+use App\Http\Controllers\Api\V1\Corporate\EnrolmentController as CorporateEnrolmentController;
+use App\Http\Controllers\Api\V1\Corporate\ProgrammeController as CorporateProgrammeController;
+use App\Http\Controllers\Api\V1\Corporate\TrackingController as CorporateTrackingController;
 use App\Http\Controllers\Api\V1\CourseController;
 use App\Http\Controllers\Api\V1\DailyController;
 use App\Http\Controllers\Api\V1\DashboardController;
@@ -175,6 +179,24 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('cohorts/{cohort}/apply', [SupplierEnrolmentController::class, 'apply']);
     Route::post('me/enrolments/{enrolment}/accept', [SupplierEnrolmentController::class, 'accept']);
     Route::post('me/enrolments/{enrolment}/withdraw', [SupplierEnrolmentController::class, 'withdraw']);
+
+    // ESD corporate self-serve portal. Every endpoint requires the active
+    // profile to be a corporate the user can manage; isolation is enforced per
+    // request in InteractsWithActiveCorporate.
+    Route::prefix('corporate')->group(function () {
+        Route::get('programmes', [CorporateProgrammeController::class, 'index']);
+        Route::post('programmes', [CorporateProgrammeController::class, 'store']);
+        Route::get('programmes/{programme}', [CorporateProgrammeController::class, 'show']);
+        Route::get('programmes/{programme}/report', [CorporateProgrammeController::class, 'report']);
+        Route::post('programmes/{programme}/cohorts', [CorporateCohortController::class, 'store']);
+        Route::get('cohorts/{cohort}', [CorporateCohortController::class, 'show']);
+        Route::post('cohorts/{cohort}/enrolments', [CorporateEnrolmentController::class, 'store']);
+        Route::post('enrolments/{enrolment}/transition', [CorporateEnrolmentController::class, 'transition']);
+        Route::post('enrolments/{enrolment}/milestones', [CorporateTrackingController::class, 'storeMilestone']);
+        Route::post('milestones/{milestone}/update', [CorporateTrackingController::class, 'updateMilestone']);
+        Route::post('enrolments/{enrolment}/disbursements', [CorporateTrackingController::class, 'storeDisbursement']);
+        Route::post('disbursements/{disbursement}/paid', [CorporateTrackingController::class, 'markDisbursementPaid']);
+    });
 
     // Bearer-token (device) management for clients that authenticate via
     // POST /auth/token. Throttled with the auth limiter: revocation is a
