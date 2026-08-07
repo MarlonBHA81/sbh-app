@@ -73,5 +73,13 @@ return [
             'default' => true,
             'group' => 'Engagement',
         ],
+        'esd' => [
+            'label' => 'Enterprise & Supplier Development',
+            'description' => 'The corporate ESD portal: programmes, cohorts, supplier '
+                .'enrolment, development tracking and reports. Operator management in '
+                .'the admin panel is unaffected.',
+            'default' => true,
+            'group' => 'Enterprise',
+        ],
     ],
 ];

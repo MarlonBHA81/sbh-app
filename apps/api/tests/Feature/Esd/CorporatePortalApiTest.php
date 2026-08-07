@@ -6,6 +6,7 @@ use App\Models\Profile;
 use App\Models\ProfileMember;
 use App\Models\Programme;
 use App\Models\ProgrammeMilestone;
+use App\Models\Setting;
 use App\Models\SupplierEnrolment;
 use App\Models\User;
 
@@ -216,6 +217,32 @@ test('supplier search rejects a non-corporate profile', function () {
     test()->actingAs($user)->withHeader('X-Profile-Id', $business->ulid)
         ->getJson('/api/v1/corporate/suppliers')
         ->assertStatus(422);
+});
+
+test('the corporate portal 404s when the esd feature is switched off', function () {
+    [$user, $corporate] = corporateOperator();
+    $programme = Programme::factory()->for($corporate, 'corporate')->create();
+
+    Setting::set('features.esd', false);
+
+    asCorporate($user, $corporate)
+        ->getJson('/api/v1/corporate/programmes')
+        ->assertNotFound();
+
+    asCorporate($user, $corporate)
+        ->getJson("/api/v1/corporate/programmes/{$programme->ulid}")
+        ->assertNotFound();
+});
+
+test('the supplier enrolment endpoints 404 when the esd feature is off', function () {
+    $user = User::factory()->create();
+    $business = Profile::factory()->business()->for($user)->create(['is_verified' => true]);
+
+    Setting::set('features.esd', false);
+
+    test()->actingAs($user)->withHeader('X-Profile-Id', $business->ulid)
+        ->getJson('/api/v1/me/enrolments')
+        ->assertNotFound();
 });
 
 test('a manager (not just the owner) can run the corporate', function () {

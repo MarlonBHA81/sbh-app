@@ -174,30 +174,34 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/verification', [VerificationController::class, 'show']);
     Route::post('me/verification', [VerificationController::class, 'store'])->middleware('throttle:uploads');
 
-    // ESD supplier enrolment: a verified business acts on invites and applies
-    // to open programme cohorts.
-    Route::get('me/enrolments', [SupplierEnrolmentController::class, 'index']);
-    Route::post('cohorts/{cohort}/apply', [SupplierEnrolmentController::class, 'apply']);
-    Route::post('me/enrolments/{enrolment}/accept', [SupplierEnrolmentController::class, 'accept']);
-    Route::post('me/enrolments/{enrolment}/withdraw', [SupplierEnrolmentController::class, 'withdraw']);
+    // ESD (Enterprise & Supplier Development) — gated by the super-admin
+    // 'esd' feature flag; the whole surface 404s when it is switched off.
+    Route::middleware('feature:esd')->group(function () {
+        // Supplier enrolment: a verified business acts on invites and applies
+        // to open programme cohorts.
+        Route::get('me/enrolments', [SupplierEnrolmentController::class, 'index']);
+        Route::post('cohorts/{cohort}/apply', [SupplierEnrolmentController::class, 'apply']);
+        Route::post('me/enrolments/{enrolment}/accept', [SupplierEnrolmentController::class, 'accept']);
+        Route::post('me/enrolments/{enrolment}/withdraw', [SupplierEnrolmentController::class, 'withdraw']);
 
-    // ESD corporate self-serve portal. Every endpoint requires the active
-    // profile to be a corporate the user can manage; isolation is enforced per
-    // request in InteractsWithActiveCorporate.
-    Route::prefix('corporate')->group(function () {
-        Route::get('suppliers', [CorporateSupplierController::class, 'index']);
-        Route::get('programmes', [CorporateProgrammeController::class, 'index']);
-        Route::post('programmes', [CorporateProgrammeController::class, 'store']);
-        Route::get('programmes/{programme}', [CorporateProgrammeController::class, 'show']);
-        Route::get('programmes/{programme}/report', [CorporateProgrammeController::class, 'report']);
-        Route::post('programmes/{programme}/cohorts', [CorporateCohortController::class, 'store']);
-        Route::get('cohorts/{cohort}', [CorporateCohortController::class, 'show']);
-        Route::post('cohorts/{cohort}/enrolments', [CorporateEnrolmentController::class, 'store']);
-        Route::post('enrolments/{enrolment}/transition', [CorporateEnrolmentController::class, 'transition']);
-        Route::post('enrolments/{enrolment}/milestones', [CorporateTrackingController::class, 'storeMilestone']);
-        Route::post('milestones/{milestone}/update', [CorporateTrackingController::class, 'updateMilestone']);
-        Route::post('enrolments/{enrolment}/disbursements', [CorporateTrackingController::class, 'storeDisbursement']);
-        Route::post('disbursements/{disbursement}/paid', [CorporateTrackingController::class, 'markDisbursementPaid']);
+        // Corporate self-serve portal. Every endpoint requires the active
+        // profile to be a corporate the user can manage; isolation is enforced
+        // per request in InteractsWithActiveCorporate.
+        Route::prefix('corporate')->group(function () {
+            Route::get('suppliers', [CorporateSupplierController::class, 'index']);
+            Route::get('programmes', [CorporateProgrammeController::class, 'index']);
+            Route::post('programmes', [CorporateProgrammeController::class, 'store']);
+            Route::get('programmes/{programme}', [CorporateProgrammeController::class, 'show']);
+            Route::get('programmes/{programme}/report', [CorporateProgrammeController::class, 'report']);
+            Route::post('programmes/{programme}/cohorts', [CorporateCohortController::class, 'store']);
+            Route::get('cohorts/{cohort}', [CorporateCohortController::class, 'show']);
+            Route::post('cohorts/{cohort}/enrolments', [CorporateEnrolmentController::class, 'store']);
+            Route::post('enrolments/{enrolment}/transition', [CorporateEnrolmentController::class, 'transition']);
+            Route::post('enrolments/{enrolment}/milestones', [CorporateTrackingController::class, 'storeMilestone']);
+            Route::post('milestones/{milestone}/update', [CorporateTrackingController::class, 'updateMilestone']);
+            Route::post('enrolments/{enrolment}/disbursements', [CorporateTrackingController::class, 'storeDisbursement']);
+            Route::post('disbursements/{disbursement}/paid', [CorporateTrackingController::class, 'markDisbursementPaid']);
+        });
     });
 
     // Bearer-token (device) management for clients that authenticate via

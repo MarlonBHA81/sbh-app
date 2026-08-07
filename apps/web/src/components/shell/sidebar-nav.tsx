@@ -35,6 +35,7 @@ export function SidebarNav() {
   const activeProfile = useAuthStore((s) => s.activeProfile);
   const isAdmin = useAuthStore((s) => Boolean(s.user?.is_admin));
   const gamificationOn = useFeature("gamification");
+  const esdOn = useFeature("esd");
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
   const unreadMessages = useMessagesStore((s) => s.unreadTotal);
   const { openComposer } = useComposer();
@@ -107,7 +108,7 @@ export function SidebarNav() {
           <Briefcase className="size-5" aria-hidden />
           {t("business")}
         </Link>
-        {activeProfile?.kind === "corporate" ? (
+        {activeProfile?.kind === "corporate" && esdOn ? (
           <Link
             href="/corporate"
             aria-current={
