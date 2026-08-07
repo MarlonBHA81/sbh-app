@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /**
@@ -51,5 +52,22 @@ class Cohort extends Model
     public function programme(): BelongsTo
     {
         return $this->belongsTo(Programme::class);
+    }
+
+    public function enrolments(): HasMany
+    {
+        return $this->hasMany(SupplierEnrolment::class);
+    }
+
+    /** Whether the cohort has a capacity and it is fully taken (open enrolments). */
+    public function isFull(): bool
+    {
+        if ($this->capacity === null) {
+            return false;
+        }
+
+        return $this->enrolments()
+            ->whereIn('status', SupplierEnrolment::OPEN_STATUSES)
+            ->count() >= $this->capacity;
     }
 }

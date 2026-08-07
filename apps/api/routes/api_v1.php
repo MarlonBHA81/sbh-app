@@ -80,6 +80,7 @@ use App\Http\Controllers\Api\V1\StoreController;
 use App\Http\Controllers\Api\V1\StoreCourseController;
 use App\Http\Controllers\Api\V1\StoreProductController;
 use App\Http\Controllers\Api\V1\StreamingWebhookController;
+use App\Http\Controllers\Api\V1\SupplierEnrolmentController;
 use App\Http\Controllers\Api\V1\TopicController;
 use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\VerificationAdminController;
@@ -167,6 +168,13 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // Business verification: submit ID/CIPC/B-BBEE docs + read review status.
     Route::get('me/verification', [VerificationController::class, 'show']);
     Route::post('me/verification', [VerificationController::class, 'store'])->middleware('throttle:uploads');
+
+    // ESD supplier enrolment: a verified business acts on invites and applies
+    // to open programme cohorts.
+    Route::get('me/enrolments', [SupplierEnrolmentController::class, 'index']);
+    Route::post('cohorts/{cohort}/apply', [SupplierEnrolmentController::class, 'apply']);
+    Route::post('me/enrolments/{enrolment}/accept', [SupplierEnrolmentController::class, 'accept']);
+    Route::post('me/enrolments/{enrolment}/withdraw', [SupplierEnrolmentController::class, 'withdraw']);
 
     // Bearer-token (device) management for clients that authenticate via
     // POST /auth/token. Throttled with the auth limiter: revocation is a
