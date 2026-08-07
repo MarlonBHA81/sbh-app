@@ -34,6 +34,14 @@ class ProfileFactory extends Factory
         ]);
     }
 
+    public function corporate(): static
+    {
+        return $this->state(fn () => [
+            'kind' => Profile::KIND_CORPORATE,
+            'name' => fake()->company(),
+        ]);
+    }
+
     public function private(): static
     {
         return $this->state(fn () => ['is_private' => true]);
