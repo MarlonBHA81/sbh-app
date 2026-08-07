@@ -7,14 +7,19 @@ use App\Models\AdSlot;
 use App\Models\BusinessCategory;
 use App\Models\Campaign;
 use App\Models\Challenge;
+use App\Models\Cohort;
 use App\Models\Comment;
 use App\Models\Conversation;
+use App\Models\Disbursement;
 use App\Models\Media;
 use App\Models\Message;
 use App\Models\Post;
 use App\Models\Profile;
+use App\Models\Programme;
+use App\Models\ProgrammeMilestone;
 use App\Models\Rank;
 use App\Models\Report;
+use App\Models\SupplierEnrolment;
 use App\Models\Topic;
 use App\Models\TopicFollow;
 use App\Models\User;
@@ -121,6 +126,7 @@ class DemoContentSeeder extends Seeder
 
         $this->createUsers();
         $this->createBusinessProfiles();
+        $this->seedEsd();
         $this->buildFollowGraph();
         $this->followTopics();
         $this->createPosts();
@@ -259,6 +265,141 @@ class DemoContentSeeder extends Seeder
             ])->save();
 
             $this->profiles[$handle] = $profile;
+        }
+    }
+
+    /**
+     * A corporate ESD sponsor with a live supplier-development programme:
+     * verified suppliers enrolled across the state machine, with milestones and
+     * planned-vs-actual disbursements so the ESD portal and reports have data.
+     */
+    private function seedEsd(): void
+    {
+        // Corporate sponsor account (owns the programme; verified by default).
+        $corpUser = User::query()->create([
+            'name' => 'Aurora Holdings',
+            'email' => 'aurora@demo.sbh',
+            'password' => Hash::make('password'),
+        ]);
+        $corpUser->forceFill(['email_verified_at' => now()])->save();
+
+        $jhb = self::CITIES['johannesburg'];
+        $corporate = $corpUser->profiles()->create([
+            'kind' => Profile::KIND_CORPORATE,
+            'handle' => 'aurora_holdings',
+            'name' => 'Aurora Holdings',
+            'bio' => 'Enterprise & supplier development for South African SMMEs. Growing the businesses in our value chain. 🌅',
+            'city' => $jhb['city'],
+            'country_code' => 'ZA',
+            'location' => $jhb['city'].', South Africa',
+        ]);
+        $corporate->forceFill(['is_verified' => true])->save();
+        $this->attachProfileImages($corporate, withCover: true);
+        $this->profiles['aurora_holdings'] = $corporate;
+
+        // Verify a handful of existing demo businesses so they can be enrolled
+        // as suppliers (and so the verification demo has approved businesses).
+        foreach (['durban_spice', 'karoo_logistics', 'ubuntu_tech', 'protea_beauty'] as $handle) {
+            $this->profiles[$handle]->forceFill(['is_verified' => true])->save();
+        }
+
+        $programme = Programme::create([
+            'profile_id' => $corporate->id,
+            'name' => 'Aurora Supplier Development Programme',
+            'description' => 'A 12-month accelerator supporting verified SMME suppliers in the Aurora value chain with grants, mentorship and market access.',
+            'type' => Programme::TYPE_SUPPLIER_DEVELOPMENT,
+            'status' => Programme::STATUS_ACTIVE,
+            'starts_at' => now()->subMonths(2)->startOfMonth(),
+            'ends_at' => now()->addMonths(10)->endOfMonth(),
+            'budget_cents' => 2_500_000_00,
+            'created_by' => $corpUser->id,
+        ]);
+
+        $cohort = Cohort::create([
+            'programme_id' => $programme->id,
+            'name' => '2026 Intake',
+            'starts_at' => now()->subMonths(2)->startOfMonth(),
+            'ends_at' => now()->addMonths(10)->endOfMonth(),
+            'capacity' => 8,
+            'status' => Cohort::STATUS_ACTIVE,
+        ]);
+
+        // supplier handle => [status, [milestone => complete?], [disbursement …]]
+        $enrolments = [
+            'durban_spice' => [
+                'status' => SupplierEnrolment::STATUS_ACTIVE,
+                'milestones' => [
+                    ['Complete financial-management workshop', true],
+                    ['Obtain tax clearance certificate', true],
+                    ['Secure first corporate purchase order', false],
+                ],
+                'disbursements' => [
+                    ['grant', 50_000_00, true, 'Working-capital grant'],
+                    ['grant', 30_000_00, false, 'Equipment co-funding (planned)'],
+                ],
+            ],
+            'karoo_logistics' => [
+                'status' => SupplierEnrolment::STATUS_COMPLETED,
+                'milestones' => [
+                    ['Fleet cold-chain certification', true],
+                    ['Onboard to corporate supplier portal', true],
+                ],
+                'disbursements' => [
+                    ['loan', 75_000_00, true, 'Vehicle-finance bridge'],
+                ],
+            ],
+            'ubuntu_tech' => [
+                'status' => SupplierEnrolment::STATUS_ACCEPTED,
+                'milestones' => [
+                    ['Draft POS integration proposal', false],
+                ],
+                'disbursements' => [
+                    ['in_kind', 15_000_00, false, 'Mentorship hours (planned)'],
+                ],
+            ],
+            'protea_beauty' => [
+                'status' => SupplierEnrolment::STATUS_INVITED,
+                'milestones' => [],
+                'disbursements' => [],
+            ],
+        ];
+
+        foreach ($enrolments as $handle => $spec) {
+            $confirmed = in_array($spec['status'], [
+                SupplierEnrolment::STATUS_ACCEPTED,
+                SupplierEnrolment::STATUS_ACTIVE,
+                SupplierEnrolment::STATUS_COMPLETED,
+            ], true);
+
+            $enrolment = SupplierEnrolment::create([
+                'cohort_id' => $cohort->id,
+                'profile_id' => $this->profiles[$handle]->id,
+                'status' => $spec['status'],
+                'enrolled_at' => $confirmed ? now()->subMonths(2) : null,
+                'created_by' => $corpUser->id,
+            ]);
+
+            foreach ($spec['milestones'] as [$title, $complete]) {
+                ProgrammeMilestone::create([
+                    'supplier_enrolment_id' => $enrolment->id,
+                    'title' => $title,
+                    'due_at' => now()->addMonth(),
+                    'status' => $complete ? ProgrammeMilestone::STATUS_COMPLETE : ProgrammeMilestone::STATUS_PENDING,
+                    'completed_at' => $complete ? now()->subWeeks(2) : null,
+                ]);
+            }
+
+            foreach ($spec['disbursements'] as [$kind, $cents, $paid, $reference]) {
+                Disbursement::create([
+                    'supplier_enrolment_id' => $enrolment->id,
+                    'amount_cents' => $cents,
+                    'currency' => 'ZAR',
+                    'kind' => $kind,
+                    'disbursed_at' => $paid ? now()->subMonth() : null,
+                    'reference' => $reference,
+                    'created_by' => $corpUser->id,
+                ]);
+            }
         }
     }
 

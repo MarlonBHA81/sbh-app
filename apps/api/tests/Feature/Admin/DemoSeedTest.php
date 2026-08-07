@@ -6,7 +6,9 @@ use App\Models\Follow;
 use App\Models\Media;
 use App\Models\Post;
 use App\Models\Profile;
+use App\Models\Programme;
 use App\Models\Report;
+use App\Models\SupplierEnrolment;
 use App\Models\User;
 use App\Services\Business\MatchmakingService;
 use Illuminate\Support\Facades\Artisan;
@@ -160,6 +162,29 @@ test('demo:seed creates business, ads, analytics and moderation data', function 
     expect(Report::query()->where('status', Report::STATUS_PENDING)->count())->toBe(2)
         ->and(Report::query()->pluck('reportable_type')->sort()->values()->all())
         ->toBe([Post::class, Profile::class]);
+});
+
+test('demo:seed creates a corporate ESD sponsor with a live programme', function () {
+    seedDemo();
+
+    $corporate = Profile::query()->where('handle', 'aurora_holdings')->firstOrFail();
+    expect($corporate->kind)->toBe(Profile::KIND_CORPORATE)
+        ->and($corporate->is_verified)->toBeTrue();
+
+    // An active programme with a cohort and enrolments across the lifecycle.
+    $programme = Programme::query()->where('profile_id', $corporate->id)->firstOrFail();
+    expect($programme->status)->toBe(Programme::STATUS_ACTIVE)
+        ->and($programme->cohorts()->count())->toBe(1);
+
+    $statuses = SupplierEnrolment::query()->forCorporate($corporate)->pluck('status')->sort()->values()->all();
+    expect($statuses)->toBe(['accepted', 'active', 'completed', 'invited']);
+
+    // Verified suppliers exist to be enrolled, milestones are partly complete,
+    // and spend is split planned vs actual.
+    expect(Profile::query()->business()->where('is_verified', true)->count())->toBeGreaterThanOrEqual(4)
+        ->and(DB::table('programme_milestones')->where('status', 'complete')->count())->toBeGreaterThanOrEqual(1)
+        ->and(DB::table('disbursements')->whereNotNull('disbursed_at')->count())->toBeGreaterThanOrEqual(1)
+        ->and(DB::table('disbursements')->whereNull('disbursed_at')->count())->toBeGreaterThanOrEqual(1);
 });
 
 test('demo:seed --fresh reseeds without duplicating demo users', function () {
