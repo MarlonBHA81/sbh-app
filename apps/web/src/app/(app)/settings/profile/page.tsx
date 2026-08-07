@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import { PushSettings } from "@/components/notifications/push-settings";
 import { BusinessTeamSettings } from "@/components/settings/business-team-settings";
+import { BusinessVerificationSettings } from "@/components/settings/business-verification-settings";
 import { MasterclassSettings } from "@/components/settings/masterclass-settings";
 import { ProfileImageUpload } from "@/components/settings/profile-image-upload";
 import { StoreSettings } from "@/components/settings/store-settings";
@@ -714,6 +715,7 @@ export default function ProfileSettingsPage() {
       {activeProfile.kind === "business" ? (
         <>
           <BusinessCategorySettings />
+          <BusinessVerificationSettings />
           <StoreSettings />
           <BusinessTeamSettings profile={activeProfile} />
         </>
