@@ -3,16 +3,16 @@
 # SBH Community — one-command production update.
 #
 # Run from the app directory on the server (the folder you cloned into):
-#   ./scripts/update-vps.sh              # pull latest + rebuild + migrate
+#   ./scripts/update-vps.sh              # pull latest main + rebuild + migrate
 #   ./scripts/update-vps.sh --reseed     # ...and reseed demo content (wipes data!)
-#   ./scripts/update-vps.sh --branch main
+#   ./scripts/update-vps.sh --branch some-branch   # deploy a different branch
 #
 # It re-applies the domain to the nginx template automatically (read from
 # APP_URL in .env.prod), so you never need the checkout/sed dance by hand.
 
 set -euo pipefail
 
-BRANCH="claude/social-engagement-pwa-5yayus"
+BRANCH="main"
 RESEED=0
 
 while [ $# -gt 0 ]; do
