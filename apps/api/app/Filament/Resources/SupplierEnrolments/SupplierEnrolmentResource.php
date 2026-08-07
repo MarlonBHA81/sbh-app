@@ -5,6 +5,8 @@ namespace App\Filament\Resources\SupplierEnrolments;
 use App\Filament\Resources\SupplierEnrolments\Pages\CreateSupplierEnrolment;
 use App\Filament\Resources\SupplierEnrolments\Pages\EditSupplierEnrolment;
 use App\Filament\Resources\SupplierEnrolments\Pages\ListSupplierEnrolments;
+use App\Filament\Resources\SupplierEnrolments\RelationManagers\DisbursementsRelationManager;
+use App\Filament\Resources\SupplierEnrolments\RelationManagers\MilestonesRelationManager;
 use App\Models\SupplierEnrolment;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
@@ -99,6 +101,14 @@ class SupplierEnrolmentResource extends Resource
             SupplierEnrolment::STATUS_COMPLETED => 'Completed',
             SupplierEnrolment::STATUS_WITHDRAWN => 'Withdrawn',
             SupplierEnrolment::STATUS_REJECTED => 'Rejected',
+        ];
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            MilestonesRelationManager::class,
+            DisbursementsRelationManager::class,
         ];
     }
 
