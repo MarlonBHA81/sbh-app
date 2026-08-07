@@ -188,6 +188,36 @@ test('a corporate cannot pull another corporate report', function () {
         ->assertNotFound();
 });
 
+test('supplier search returns only verified businesses and matches the query', function () {
+    [$user, $corporate] = corporateOperator();
+    Profile::factory()->business()->create(['is_verified' => true, 'name' => 'Acme Trading']);
+    Profile::factory()->business()->create(['is_verified' => true, 'name' => 'Beta Foods']);
+    Profile::factory()->business()->create(['is_verified' => false, 'name' => 'Acme Unverified']);
+    Profile::factory()->create(['name' => 'Acme Person']); // personal
+
+    // No query returns all verified businesses (2 of them).
+    asCorporate($user, $corporate)
+        ->getJson('/api/v1/corporate/suppliers')
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+
+    // A query narrows to matching verified businesses only.
+    asCorporate($user, $corporate)
+        ->getJson('/api/v1/corporate/suppliers?q=Acme')
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.name', 'Acme Trading');
+});
+
+test('supplier search rejects a non-corporate profile', function () {
+    $user = User::factory()->create();
+    $business = Profile::factory()->business()->for($user)->create();
+
+    test()->actingAs($user)->withHeader('X-Profile-Id', $business->ulid)
+        ->getJson('/api/v1/corporate/suppliers')
+        ->assertStatus(422);
+});
+
 test('a manager (not just the owner) can run the corporate', function () {
     [$owner, $corporate] = corporateOperator();
     $manager = User::factory()->create();

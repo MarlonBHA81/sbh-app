@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, Plus, Users } from "lucide-react";
+import { BadgeCheck, Plus, Search, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -11,7 +11,6 @@ import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -33,12 +32,14 @@ import {
   getCohort,
   inviteSupplier,
   rand,
+  searchSuppliers,
   STATUS_LABELS,
   transitionEnrolment,
   type CohortDetail,
   type DisbursementKind,
   type EnrolmentAction,
   type RosterEntry,
+  type SupplierResult,
 } from "@/lib/esd";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
@@ -208,22 +209,38 @@ function InviteDialog({
   onDone: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [supplier, setSupplier] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SupplierResult[] | null>(null);
+  const [invitingUlid, setInvitingUlid] = useState<string | null>(null);
 
-  async function submit() {
-    if (!supplier.trim()) return;
-    setBusy(true);
+  // Debounced search over verified suppliers whenever the dialog is open.
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    const handle = setTimeout(() => {
+      if (active) setResults(null);
+      searchSuppliers(query)
+        .then((res) => active && setResults(res.data))
+        .catch(() => active && setResults([]));
+    }, 250);
+    return () => {
+      active = false;
+      clearTimeout(handle);
+    };
+  }, [query, open]);
+
+  async function invite(supplier: SupplierResult) {
+    setInvitingUlid(supplier.ulid);
     try {
-      await inviteSupplier(cohortUlid, supplier.trim());
-      toast.success("Supplier invited");
-      setSupplier("");
+      await inviteSupplier(cohortUlid, supplier.ulid);
+      toast.success(`${supplier.name} invited`);
       setOpen(false);
+      setQuery("");
       onDone();
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : "Could not invite supplier");
     } finally {
-      setBusy(false);
+      setInvitingUlid(null);
     }
   }
 
@@ -239,23 +256,59 @@ function InviteDialog({
         <DialogHeader>
           <DialogTitle>Invite a verified supplier</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="supplier-id">Supplier profile ID</Label>
-          <Input
-            id="supplier-id"
-            value={supplier}
-            onChange={(e) => setSupplier(e.target.value)}
-            placeholder="01K…"
-          />
-          <p className="text-xs text-muted-foreground">
-            Paste the verified business&apos;s profile ID. Only verified suppliers can be enrolled.
-          </p>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="supplier-search" className="sr-only">
+            Search suppliers
+          </Label>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id="supplier-search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search verified suppliers by name or handle"
+              className="pl-8"
+              autoComplete="off"
+            />
+          </div>
+          <ul className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+            {results === null ? (
+              <>
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </>
+            ) : results.length === 0 ? (
+              <li className="px-1 py-6 text-center text-sm text-muted-foreground">
+                No verified suppliers found.
+              </li>
+            ) : (
+              results.map((supplier) => (
+                <li key={supplier.ulid}>
+                  <button
+                    type="button"
+                    disabled={invitingUlid !== null}
+                    onClick={() => invite(supplier)}
+                    className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent/60 disabled:opacity-60"
+                  >
+                    <span className="flex flex-col">
+                      <span className="flex items-center gap-1.5 text-sm font-medium">
+                        {supplier.name}
+                        <BadgeCheck className="size-3.5 text-primary" aria-label="Verified" />
+                      </span>
+                      <span className="text-xs text-muted-foreground">@{supplier.handle}</span>
+                    </span>
+                    <span className="text-xs text-primary">
+                      {invitingUlid === supplier.ulid ? "Inviting…" : "Invite"}
+                    </span>
+                  </button>
+                </li>
+              ))
+            )}
+          </ul>
         </div>
-        <DialogFooter>
-          <Button onClick={submit} disabled={busy || !supplier.trim()}>
-            Invite
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

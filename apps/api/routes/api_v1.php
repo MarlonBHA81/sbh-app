@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\V1\ConversationParticipantController;
 use App\Http\Controllers\Api\V1\Corporate\CohortController as CorporateCohortController;
 use App\Http\Controllers\Api\V1\Corporate\EnrolmentController as CorporateEnrolmentController;
 use App\Http\Controllers\Api\V1\Corporate\ProgrammeController as CorporateProgrammeController;
+use App\Http\Controllers\Api\V1\Corporate\SupplierController as CorporateSupplierController;
 use App\Http\Controllers\Api\V1\Corporate\TrackingController as CorporateTrackingController;
 use App\Http\Controllers\Api\V1\CourseController;
 use App\Http\Controllers\Api\V1\DailyController;
@@ -184,6 +185,7 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // profile to be a corporate the user can manage; isolation is enforced per
     // request in InteractsWithActiveCorporate.
     Route::prefix('corporate')->group(function () {
+        Route::get('suppliers', [CorporateSupplierController::class, 'index']);
         Route::get('programmes', [CorporateProgrammeController::class, 'index']);
         Route::post('programmes', [CorporateProgrammeController::class, 'store']);
         Route::get('programmes/{programme}', [CorporateProgrammeController::class, 'show']);
