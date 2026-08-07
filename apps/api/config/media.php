@@ -76,6 +76,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Business-verification documents (private disk)
+    |--------------------------------------------------------------------------
+    |
+    | ID / CIPC / B-BBEE documents a business submits to be verified. Stored on
+    | the private disk and only ever streamed to an admin reviewer. Restricted to
+    | document + image formats (no archives/executables) since a reviewer only
+    | needs to read them.
+    |
+    */
+
+    'verification_max_kb' => (int) env('MEDIA_VERIFICATION_MAX_KB', 10240),
+
+    'verification_mimes' => env(
+        'MEDIA_VERIFICATION_MIMES',
+        'pdf,png,jpg,jpeg,webp'
+    ),
+
+    /*
+    |--------------------------------------------------------------------------
     | Chunked video/audio uploads
     |--------------------------------------------------------------------------
     |

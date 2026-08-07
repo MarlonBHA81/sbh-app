@@ -82,6 +82,8 @@ use App\Http\Controllers\Api\V1\StoreProductController;
 use App\Http\Controllers\Api\V1\StreamingWebhookController;
 use App\Http\Controllers\Api\V1\TopicController;
 use App\Http\Controllers\Api\V1\UploadController;
+use App\Http\Controllers\Api\V1\VerificationAdminController;
+use App\Http\Controllers\Api\V1\VerificationController;
 use App\Http\Controllers\Api\V1\WellnessController;
 use Illuminate\Support\Facades\Route;
 
@@ -162,6 +164,10 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/consent', [ConsentController::class, 'show']);
     Route::post('me/consent', [ConsentController::class, 'store']);
 
+    // Business verification: submit ID/CIPC/B-BBEE docs + read review status.
+    Route::get('me/verification', [VerificationController::class, 'show']);
+    Route::post('me/verification', [VerificationController::class, 'store'])->middleware('throttle:uploads');
+
     // Bearer-token (device) management for clients that authenticate via
     // POST /auth/token. Throttled with the auth limiter: revocation is a
     // security action and enumeration of token ids shouldn't be cheap.
@@ -240,6 +246,9 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
         Route::get('ads/campaigns/{campaign}', [CampaignController::class, 'show']);
         Route::patch('ads/campaigns/{campaign}', [CampaignController::class, 'update']);
         Route::delete('ads/campaigns/{campaign}', [CampaignController::class, 'destroy']);
+
+        // Stream a submitted verification document to a reviewer (private disk).
+        Route::get('admin/verifications/documents/{document}/download', [VerificationAdminController::class, 'downloadDocument']);
     });
 
     // Tracking and sponsor slots stay open to every authenticated user —
