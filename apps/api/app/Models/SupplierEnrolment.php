@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 /**
@@ -98,9 +99,46 @@ class SupplierEnrolment extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(ProgrammeMilestone::class);
+    }
+
+    public function disbursements(): HasMany
+    {
+        return $this->hasMany(Disbursement::class);
+    }
+
     public function isPending(): bool
     {
         return in_array($this->status, [self::STATUS_INVITED, self::STATUS_APPLIED], true);
+    }
+
+    // --- Development rollups (foundation for ESD-4 reporting) ------------------
+
+    /**
+     * Milestone completion for this enrolment.
+     *
+     * @return array{total: int, complete: int}
+     */
+    public function milestoneProgress(): array
+    {
+        $total = $this->milestones()->count();
+        $complete = $this->milestones()->where('status', ProgrammeMilestone::STATUS_COMPLETE)->count();
+
+        return ['total' => $total, 'complete' => $complete];
+    }
+
+    /** Total spend actually paid out (disbursed_at set). */
+    public function actualDisbursedCents(): int
+    {
+        return (int) $this->disbursements()->whereNotNull('disbursed_at')->sum('amount_cents');
+    }
+
+    /** Total spend committed but not yet paid (disbursed_at null). */
+    public function plannedDisbursedCents(): int
+    {
+        return (int) $this->disbursements()->whereNull('disbursed_at')->sum('amount_cents');
     }
 
     // --- State machine --------------------------------------------------------
