@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Str;
 
 /**
@@ -79,5 +80,11 @@ class Programme extends Model
     public function cohorts(): HasMany
     {
         return $this->hasMany(Cohort::class);
+    }
+
+    /** All supplier enrolments across this programme's cohorts. */
+    public function enrolments(): HasManyThrough
+    {
+        return $this->hasManyThrough(SupplierEnrolment::class, Cohort::class);
     }
 }
