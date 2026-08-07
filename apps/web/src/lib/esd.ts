@@ -110,7 +110,18 @@ export interface Disbursement {
 
 export type EnrolmentAction = "accept" | "activate" | "complete" | "reject";
 
+export interface SupplierResult {
+  ulid: string;
+  name: string;
+  handle: string;
+}
+
 const BASE = "/api/v1/corporate";
+
+export function searchSuppliers(q: string) {
+  const query = q.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
+  return api.get<{ data: SupplierResult[] }>(`${BASE}/suppliers${query}`);
+}
 
 export function listProgrammes() {
   return api.get<{ data: ProgrammeListItem[] }>(`${BASE}/programmes`);
