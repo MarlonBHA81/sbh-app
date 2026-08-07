@@ -22,7 +22,7 @@ export interface ProfileBadge {
   icon: string | null;
 }
 
-export type ProfileKind = "personal" | "business";
+export type ProfileKind = "personal" | "business" | "corporate";
 
 /** A user's role on a (business) profile they help manage/post under (Roles P4). */
 export type ProfileRole = "owner" | "manager" | "poster";
