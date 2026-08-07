@@ -73,6 +73,12 @@ class MasterResetService
         'conversations',
         // Business.
         'business_needs',
+        // ESD (Enterprise & Supplier Development).
+        'disbursements',
+        'programme_milestones',
+        'supplier_enrolments',
+        'cohorts',
+        'programmes',
         // Ads (ad_slots are reference data and intentionally kept).
         'ad_events',
         'campaigns',
