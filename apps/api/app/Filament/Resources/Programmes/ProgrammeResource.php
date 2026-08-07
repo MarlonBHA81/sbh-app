@@ -7,7 +7,11 @@ use App\Filament\Resources\Programmes\Pages\EditProgramme;
 use App\Filament\Resources\Programmes\Pages\ListProgrammes;
 use App\Models\Profile;
 use App\Models\Programme;
+use App\Services\Esd\ProgrammeReport;
 use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -18,6 +22,8 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 /**
@@ -94,7 +100,29 @@ class ProgrammeResource extends Resource
                     Programme::STATUS_CLOSED => 'Closed',
                 ]),
             ])
+            ->recordActions([
+                ActionGroup::make([
+                    EditAction::make(),
+                    self::exportReportAction(),
+                ]),
+            ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    /** Stream the programme's supplier-level tracking + spend report as CSV. */
+    public static function exportReportAction(): Action
+    {
+        return Action::make('export_report')
+            ->label('Export report (CSV)')
+            ->icon(Heroicon::OutlinedArrowDownTray)
+            ->action(function (Programme $record): StreamedResponse {
+                $csv = ProgrammeReport::for($record)->toCsv();
+                $filename = 'programme-'.Str::slug($record->name).'-report.csv';
+
+                return response()->streamDownload(fn () => print ($csv), $filename, [
+                    'Content-Type' => 'text/csv',
+                ]);
+            });
     }
 
     public static function getPages(): array
