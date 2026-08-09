@@ -8,6 +8,7 @@ use App\Filament\Widgets\SignupsChart;
 use App\Filament\Widgets\StatsOverview;
 use App\Filament\Widgets\TopProfiles;
 use App\Filament\Widgets\XpLeaderboard;
+use Filament\Auth\MultiFactor\App\AppAuthentication;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -33,6 +34,14 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandName('SBH Community')
             ->login()
+            // Optional authenticator-app (TOTP) two-factor for admins, with
+            // recovery codes. Admins set it up from their profile; not forced,
+            // so existing logins keep working until they opt in.
+            ->multiFactorAuthentication(
+                AppAuthentication::make()
+                    ->brandName('SBH Community')
+                    ->recoverable(),
+            )
             ->colors([
                 // SBH brand: Muted Teal (#4e8a88 family from the brand manual).
                 'primary' => Color::hex('#4e8a88'),
