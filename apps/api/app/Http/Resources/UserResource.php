@@ -19,6 +19,7 @@ class UserResource extends JsonResource
             'timezone' => $this->timezone,
             'is_admin' => $this->is_admin,
             'is_super_admin' => $this->is_super_admin,
+            'two_factor_enabled' => $this->hasTwoFactorEnabled(),
             'settings' => $this->settings,
             'created_at' => $this->created_at,
         ];

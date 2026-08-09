@@ -15,6 +15,7 @@ import { BusinessVerificationSettings } from "@/components/settings/business-ver
 import { MasterclassSettings } from "@/components/settings/masterclass-settings";
 import { ProfileImageUpload } from "@/components/settings/profile-image-upload";
 import { StoreSettings } from "@/components/settings/store-settings";
+import { TwoFactorSettings } from "@/components/settings/two-factor-settings";
 import { DataPrivacySettings } from "@/components/settings/data-privacy-settings";
 import { LanguagePicker } from "@/components/settings/language-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -725,6 +726,7 @@ export default function ProfileSettingsPage() {
       <MessagingSettings />
       <PrivacySafetySettings />
       <PushSettings />
+      <TwoFactorSettings />
       <DataPrivacySettings />
     </div>
   );

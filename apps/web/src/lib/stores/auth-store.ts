@@ -30,9 +30,19 @@ export interface AuthState {
   features: FeatureFlags;
 }
 
+/** Result of a login attempt: either done, or a 2FA code is required. */
+export type LoginResult = { twoFactorRequired: boolean };
+
+export interface TwoFactorChallengeInput {
+  code?: string;
+  recovery_code?: string;
+}
+
 export interface AuthActions {
   fetchMe: () => Promise<void>;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  /** Complete a login that stopped at the TOTP challenge step. */
+  loginChallenge: (input: TwoFactorChallengeInput) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => Promise<void>;
   switchProfile: (ulid: string) => void;
@@ -126,7 +136,19 @@ export function createAuthStore(initialState: AuthState = defaultAuthState) {
     },
 
     login: async (email, password) => {
-      await api.post("/api/v1/auth/login", { email, password });
+      const res = await api.post<{ two_factor?: boolean }>(
+        "/api/v1/auth/login",
+        { email, password },
+      );
+      // Accounts with TOTP 2FA halt here; the caller must collect a code and
+      // call loginChallenge before the session is established.
+      if (res?.two_factor) return { twoFactorRequired: true };
+      await getState().fetchMe();
+      return { twoFactorRequired: false };
+    },
+
+    loginChallenge: async (input) => {
+      await api.post("/api/v1/auth/login/challenge", input);
       await getState().fetchMe();
     },
 
