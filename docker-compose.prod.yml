@@ -99,9 +99,30 @@ services:
       - certbot-www:/var/www/certbot
     entrypoint: sh -c "trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done"
 
+  # Antivirus daemon (clamd) for scanning uploads. Opt-in — start it with the
+  # `av` compose profile and flip CLAMAV_ENABLED=true in .env.prod:
+  #   docker compose --env-file .env.prod -f docker-compose.prod.yml --profile av up -d
+  # The api reaches it over the internal network at clamav:3310 and degrades
+  # gracefully if it's absent. clamd's default StreamMaxLength (25 MiB) matches
+  # CLAMAV_MAX_BYTES; to scan larger media, raise both together.
+  clamav:
+    image: clamav/clamav:1.4
+    restart: unless-stopped
+    profiles: ["av"]
+    volumes:
+      - clamav-db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      # Initial virus-definition download makes the first start slow.
+      start_period: 300s
+
 volumes:
   mysql-data:
   redis-data:
   media-storage:
   certbot-certs:
   certbot-www:
+  clamav-db:

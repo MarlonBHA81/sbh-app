@@ -2,16 +2,33 @@
 
 namespace App\Services;
 
+use App\Contracts\VirusScanner;
 use App\Models\Media;
 use App\Models\Profile;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\Laravel\Facades\Image;
 
 class MediaService
 {
+    public function __construct(private readonly VirusScanner $scanner) {}
+
+    /**
+     * Reject an uploaded file that fails a malware scan before it is stored or
+     * processed. A no-op when scanning is disabled (the Null scanner).
+     */
+    private function guardUpload(UploadedFile $file): void
+    {
+        if ($this->scanner->rejects($this->scanner->scanLocalFile($file->getRealPath()))) {
+            throw ValidationException::withMessages([
+                'file' => [__('This file failed a security scan and was not uploaded.')],
+            ]);
+        }
+    }
+
     /**
      * Process and store an uploaded image for the given profile.
      *
@@ -20,6 +37,8 @@ class MediaService
      */
     public function storeImage(Profile $profile, UploadedFile $file): Media
     {
+        $this->guardUpload($file);
+
         $encoder = new WebpEncoder(quality: config('media.webp_quality'));
 
         // orient() applies the EXIF orientation flag then drops it, so rotated
@@ -73,6 +92,8 @@ class MediaService
      */
     public function storeAvatar(Profile $profile, UploadedFile $file): string
     {
+        $this->guardUpload($file);
+
         $encoded = Image::decodePath($file->getRealPath())
             ->cover(self::AVATAR_SIZE, self::AVATAR_SIZE)
             ->encode(new WebpEncoder(quality: config('media.webp_quality')));
@@ -93,6 +114,8 @@ class MediaService
      */
     public function storeCover(Profile $profile, UploadedFile $file): string
     {
+        $this->guardUpload($file);
+
         $encoded = Image::decodePath($file->getRealPath())
             ->cover(self::COVER_WIDTH, self::COVER_HEIGHT)
             ->encode(new WebpEncoder(quality: config('media.webp_quality')));

@@ -27,6 +27,9 @@ class Media extends Model
 
     public const STATUS_FAILED = 'failed';
 
+    /** Rejected by the virus scanner; the file has been removed from storage. */
+    public const STATUS_INFECTED = 'infected';
+
     protected $table = 'media';
 
     protected $fillable = [
