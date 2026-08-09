@@ -7,6 +7,13 @@
 #   ./scripts/backup-vps.sh --db-only       # skip the (large) media archive
 #   ./scripts/backup-vps.sh --keep 30       # override retention (default 7)
 #   ./scripts/backup-vps.sh --out /mnt/vol  # write somewhere other than ./backups
+#   ./scripts/backup-vps.sh --remote DEST   # also copy this run off-box (see below)
+#
+# Off-box copy (real disaster recovery): pass --remote, or set BACKUP_REMOTE in
+# .env.prod. DEST forms:
+#   s3://bucket/prefix   (needs the aws CLI)
+#   rclone:remote:path   (needs rclone configured)
+#   anything else        (rsync target, e.g. user@host:/backups)
 #
 # Restore with scripts/restore-vps.sh — see that script before you need it.
 #
@@ -22,13 +29,15 @@ set -euo pipefail
 KEEP=7
 DB_ONLY=0
 OUT_DIR=""
+REMOTE_DEST=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --db-only) DB_ONLY=1 ;;
     --keep) KEEP="${2:?--keep needs a value}"; shift ;;
     --out) OUT_DIR="${2:?--out needs a value}"; shift ;;
-    -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --remote) REMOTE_DEST="${2:?--remote needs a value}"; shift ;;
+    -h|--help) sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
   shift
@@ -47,6 +56,9 @@ env_val() { grep -m1 "^$1=" .env.prod | cut -d= -f2- | sed -e 's/^"//' -e 's/"$/
 
 DB_NAME="$(env_val DB_DATABASE)"; DB_NAME="${DB_NAME:-sbh}"
 DB_ROOT_PASS="$(env_val DB_ROOT_PASSWORD)"
+
+# Off-box destination defaults to BACKUP_REMOTE from .env.prod when not given.
+REMOTE_DEST="${REMOTE_DEST:-$(env_val BACKUP_REMOTE)}"
 
 if [ -z "$DB_ROOT_PASS" ]; then
   echo "ERROR: DB_ROOT_PASSWORD is empty in .env.prod — cannot dump the database." >&2
@@ -111,6 +123,27 @@ prune() {
 }
 prune 'sbh-db-*.sql.gz'
 [ "$DB_ONLY" = "0" ] && prune 'sbh-media-*.tar.gz'
+
+# Off-box copy for real disaster recovery — only this run's verified files.
+if [ -n "$REMOTE_DEST" ]; then
+  echo "==> Copying this run's backups off-box to $REMOTE_DEST"
+  FILES=("$DB_FILE")
+  [ "$DB_ONLY" = "0" ] && FILES+=("$MEDIA_FILE")
+  PUSH_OK=1
+  for f in "${FILES[@]}"; do
+    case "$REMOTE_DEST" in
+      s3://*)    aws s3 cp "$f" "${REMOTE_DEST%/}/" || PUSH_OK=0 ;;
+      rclone:*)  rclone copy "$f" "${REMOTE_DEST#rclone:}" || PUSH_OK=0 ;;
+      *)         rsync -a "$f" "$REMOTE_DEST" || PUSH_OK=0 ;;
+    esac
+  done
+  if [ "$PUSH_OK" = "1" ]; then
+    echo "    off-box copy complete."
+  else
+    echo "ERROR: off-box copy failed — the local backup in $OUT_DIR is still good." >&2
+    exit 1
+  fi
+fi
 
 echo
 echo "Backup complete. Restore with:"

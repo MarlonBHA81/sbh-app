@@ -45,6 +45,7 @@ use App\Http\Controllers\Api\V1\FollowRequestController;
 use App\Http\Controllers\Api\V1\GamificationController;
 use App\Http\Controllers\Api\V1\GeoController;
 use App\Http\Controllers\Api\V1\GoalController;
+use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\LessonController;
 use App\Http\Controllers\Api\V1\LiveSessionController;
 use App\Http\Controllers\Api\V1\MasterclassController;
@@ -123,6 +124,9 @@ Route::prefix('auth')->group(function () {
 
 // Public status flags (maintenance banner, registration toggle).
 Route::get('status', StatusController::class);
+
+// Deep readiness probe (db/cache/storage/queue) — 200 healthy, 503 otherwise.
+Route::get('health', HealthController::class);
 
 // Unauthenticated read endpoints for Next.js SSR metadata / SEO. No auth or
 // active-profile resolution; privacy walls are enforced inside the controllers.
