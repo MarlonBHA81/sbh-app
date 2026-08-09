@@ -28,3 +28,8 @@ Schedule::command('shop:reconcile-orders')->everyThirtyMinutes()->withoutOverlap
 // immediately but linger in the table; drop them once they're well past use so
 // the token list a user sees stays meaningful.
 Schedule::command('sanctum:prune-expired --hours=168')->daily()->withoutOverlapping();
+
+// Deep dependency health probe: logs a warning (which observability can
+// escalate) when a dependency is down or the queue backlog / failed-job count
+// crosses its threshold.
+Schedule::command('system:health')->everyFiveMinutes()->withoutOverlapping();
