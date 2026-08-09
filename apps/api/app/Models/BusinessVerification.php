@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Contracts\CipcVerifier;
+use App\Services\Business\CipcResult;
+use App\Services\Gamification\GamificationService;
+use App\Support\Activity;
 use App\Support\Moderation;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,6 +41,9 @@ class BusinessVerification extends Model
         'status',
         'legal_name',
         'registration_number',
+        'cipc_status',
+        'cipc_checked_at',
+        'cipc_registered_name',
         'submitted_by',
         'reviewed_by',
         'reviewed_at',
@@ -47,6 +54,7 @@ class BusinessVerification extends Model
     {
         return [
             'reviewed_at' => 'datetime',
+            'cipc_checked_at' => 'datetime',
         ];
     }
 
@@ -123,5 +131,59 @@ class BusinessVerification extends Model
         ]);
 
         Moderation::log('verification.reject', $this, ['reason' => $reason], $reviewer);
+    }
+
+    // --- CIPC verification ----------------------------------------------------
+
+    /**
+     * Look up the registration number against CIPC, record the result, and —
+     * on a confirmed hit — grant the "CIPC verified" sticker (and XP). Never
+     * throws; a lookup failure is stored as an 'unavailable' result.
+     */
+    public function runCipcCheck(CipcVerifier $verifier, ?User $actor = null): CipcResult
+    {
+        $registration = trim((string) $this->registration_number);
+
+        $result = $registration === ''
+            ? CipcResult::unavailable('no_registration_number')
+            : $verifier->lookup($registration);
+
+        $this->forceFill([
+            'cipc_status' => $result->status,
+            'cipc_checked_at' => now(),
+            'cipc_registered_name' => $result->registeredName,
+        ])->save();
+
+        if ($result->isVerified()) {
+            $this->markCipcVerified($result, $actor);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Grant the profile its "CIPC verified" sticker exactly once, awarding XP
+     * and logging. Idempotent per profile — resubmissions don't re-award.
+     */
+    public function markCipcVerified(CipcResult $result, ?User $actor = null): void
+    {
+        if ($this->profile->cipc_verified_at !== null) {
+            return;
+        }
+
+        $this->profile->forceFill(['cipc_verified_at' => now()])->save();
+
+        if (config('services.cipc.award_xp')) {
+            app(GamificationService::class)->award(
+                $this->profile,
+                GamificationService::BUSINESS_CIPC_VERIFIED,
+                $this,
+            );
+        }
+
+        Activity::log('verification.cipc_verified', $this, [
+            'profile_id' => $this->profile_id,
+            'registered_name' => $result->registeredName,
+        ], $actor);
     }
 }

@@ -32,6 +32,7 @@ class ProfileResource extends JsonResource
             'avatar_url' => $blocked ? null : $this->avatarUrl(),
             'is_private' => $blocked ? true : $this->is_private,
             'is_verified' => $this->is_verified,
+            'cipc_verified' => $this->cipc_verified_at !== null,
             'relationship' => $relationship,
             'is_muted' => $viewer !== null
                 && in_array($this->id, app(SafetyService::class)->mutedProfileIds($viewer), true),

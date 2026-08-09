@@ -82,4 +82,21 @@ return [
         'fail_closed' => env('CLAMAV_FAIL_CLOSED', false),
     ],
 
+    // CIPC (Companies and Intellectual Property Commission) registration lookup.
+    // Confirms a business's registration number and, on a hit, awards XP and a
+    // "CIPC verified" sticker. Disabled by default → the Null verifier, so no
+    // sticker is ever granted without a real, configured provider.
+    //   driver=http: calls base_url with a Bearer token (adapt to your provider
+    //   or aggregator); driver=stub: verifies any well-formed SA reg number
+    //   (dev/demo only).
+    'cipc' => [
+        'enabled' => env('CIPC_ENABLED', false),
+        'driver' => env('CIPC_DRIVER', 'stub'),
+        'base_url' => env('CIPC_BASE_URL'),
+        'token' => env('CIPC_TOKEN'),
+        'timeout' => (int) env('CIPC_TIMEOUT', 15),
+        // Award XP on a successful CIPC verification.
+        'award_xp' => env('CIPC_AWARD_XP', true),
+    ],
+
 ];

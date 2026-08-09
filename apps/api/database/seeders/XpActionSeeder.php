@@ -13,6 +13,7 @@ class XpActionSeeder extends Seeder
         $actions = [
             // Contribution outweighs popularity (V1): being helpful and
             // answering pay the most; gaining a follower pays less than helping.
+            [G::BUSINESS_CIPC_VERIFIED, 'Business confirmed on CIPC', 50, null],
             [G::HELPFUL_RECEIVED, 'A comment was marked helpful', 20, null],
             [G::DAILY_ACTION_COMPLETED, 'Completed the daily challenge', 15, 1],
             [G::GOAL_COMPLETED, 'Reached a goal you set', 15, 5],

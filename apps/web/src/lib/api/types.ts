@@ -73,6 +73,8 @@ export interface Profile {
   my_role?: ProfileRole | null;
   is_private: boolean;
   is_verified: boolean;
+  /** Business's CIPC registration confirmed — shows a "CIPC verified" sticker. */
+  cipc_verified?: boolean;
   followers_count: number;
   following_count: number;
   posts_count: number;

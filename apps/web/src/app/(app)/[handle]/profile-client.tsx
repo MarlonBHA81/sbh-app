@@ -6,6 +6,7 @@ import {
   FileText,
   Flag,
   Globe,
+  Landmark,
   Lock,
   MapPin,
   MessageCircle,
@@ -614,6 +615,16 @@ export function ProfileClient({ handle }: { handle: string }) {
                 className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sage"
               >
                 <BadgeCheck className="size-3 text-white" strokeWidth={3} aria-hidden />
+              </span>
+            ) : null}
+            {profile.cipc_verified ? (
+              <span
+                aria-label="CIPC verified"
+                title="CIPC verified"
+                role="img"
+                className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal"
+              >
+                <Landmark className="size-3 text-white" strokeWidth={2.5} aria-hidden />
               </span>
             ) : null}
           </h2>

@@ -47,6 +47,8 @@ class GamificationService
 
     public const LESSON_COMPLETED = 'lesson_completed';
 
+    public const BUSINESS_CIPC_VERIFIED = 'business_cipc_verified';
+
     /**
      * Award XP to $profile for $actionKey, optionally bound to a subject.
      *

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Contracts\CipcVerifier;
 use App\Contracts\VirusScanner;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessVerification;
@@ -20,7 +21,10 @@ use Illuminate\Validation\ValidationException;
  */
 class VerificationController extends Controller
 {
-    public function __construct(private readonly VirusScanner $scanner) {}
+    public function __construct(
+        private readonly VirusScanner $scanner,
+        private readonly CipcVerifier $cipc,
+    ) {}
 
     /** The active business profile's latest verification (null if none). */
     public function show(Request $request): JsonResponse
@@ -90,6 +94,11 @@ class VerificationController extends Controller
 
         Activity::log('verification.submitted', $verification, ['profile_id' => $profile->id]);
 
+        // Best-effort automated CIPC registration check. Never blocks the
+        // submission (the verifier is null-safe); on a confirmed hit it grants
+        // the profile its "CIPC verified" sticker straight away.
+        $verification->runCipcCheck($this->cipc, $request->user());
+
         return response()->json(['data' => $this->present($verification->load('documents'))], 201);
     }
 
@@ -121,6 +130,8 @@ class VerificationController extends Controller
             'ulid' => $verification->ulid,
             'status' => $verification->status,
             'legal_name' => $verification->legal_name,
+            'cipc_status' => $verification->cipc_status,
+            'cipc_verified' => $verification->profile->cipc_verified_at !== null,
             'decision_note' => $verification->decision_note,
             'submitted_at' => $verification->created_at?->toIso8601String(),
             'reviewed_at' => $verification->reviewed_at?->toIso8601String(),
