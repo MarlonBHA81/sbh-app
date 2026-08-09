@@ -5,7 +5,7 @@ import { CircleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -53,11 +53,19 @@ function safeNext(): string {
 export default function LoginPage() {
   const t = useTranslations("auth");
   const login = useAuthStore((s) => s.login);
+  const loginChallenge = useAuthStore((s) => s.loginChallenge);
   const router = useRouter();
   const [banned, setBanned] = useState<{
     message: string;
     reason?: string;
   } | null>(null);
+  // Two-factor challenge: once the password step succeeds for a 2FA account,
+  // we swap the form for a code prompt.
+  const [twoFactor, setTwoFactor] = useState(false);
+  const [useRecovery, setUseRecovery] = useState(false);
+  const [code, setCode] = useState("");
+  const [challengeError, setChallengeError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -68,7 +76,11 @@ export default function LoginPage() {
     setBanned(null);
     form.clearErrors("root");
     try {
-      await login(values.email, values.password);
+      const { twoFactorRequired } = await login(values.email, values.password);
+      if (twoFactorRequired) {
+        setTwoFactor(true);
+        return;
+      }
       router.replace(safeNext());
     } catch (error) {
       if (error instanceof ApiError && error.status === 403) {
@@ -85,6 +97,83 @@ export default function LoginPage() {
         form.setError("root", { message: errorMessage(error) });
       }
     }
+  }
+
+  async function onSubmitChallenge(event: FormEvent) {
+    event.preventDefault();
+    if (verifying) return;
+    setChallengeError(null);
+    setVerifying(true);
+    try {
+      await loginChallenge(
+        useRecovery ? { recovery_code: code } : { code },
+      );
+      router.replace(safeNext());
+    } catch (error) {
+      setChallengeError(
+        error instanceof ApiError
+          ? error.message
+          : "Couldn't verify that code. Please try again.",
+      );
+    } finally {
+      setVerifying(false);
+    }
+  }
+
+  if (twoFactor) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Two-factor authentication</CardTitle>
+          <CardDescription>
+            {useRecovery
+              ? "Enter one of your saved recovery codes."
+              : "Enter the 6-digit code from your authenticator app."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {challengeError ? (
+            <Alert variant="destructive">
+              <CircleAlert />
+              <AlertTitle>{t("signInFailed")}</AlertTitle>
+              <AlertDescription>{challengeError}</AlertDescription>
+            </Alert>
+          ) : null}
+          <form onSubmit={onSubmitChallenge} className="flex flex-col gap-4">
+            <Input
+              autoFocus
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="h-11"
+              inputMode={useRecovery ? "text" : "numeric"}
+              autoComplete="one-time-code"
+              placeholder={useRecovery ? "XXXXX-XXXXX" : "123456"}
+              aria-label={useRecovery ? "Recovery code" : "Authentication code"}
+            />
+            <Button
+              type="submit"
+              className="h-11 w-full"
+              disabled={verifying || code.trim() === ""}
+            >
+              {verifying ? t("signingIn") : t("signIn")}
+            </Button>
+          </form>
+          <button
+            type="button"
+            className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+            onClick={() => {
+              setUseRecovery((v) => !v);
+              setCode("");
+              setChallengeError(null);
+            }}
+          >
+            {useRecovery
+              ? "Use your authenticator app instead"
+              : "Can't access your app? Use a recovery code"}
+          </button>
+        </CardContent>
+      </Card>
+    );
   }
 
   const rootError = form.formState.errors.root?.message;

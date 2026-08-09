@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\V1\Auth\PasswordResetController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
 use App\Http\Controllers\Api\V1\Auth\SocialAuthController;
 use App\Http\Controllers\Api\V1\Auth\TokenController;
+use App\Http\Controllers\Api\V1\Auth\TwoFactorController;
 use App\Http\Controllers\Api\V1\BlockController;
 use App\Http\Controllers\Api\V1\BriefController;
 use App\Http\Controllers\Api\V1\BugReportController;
@@ -102,6 +103,9 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     Route::post('register', RegisterController::class)->middleware('throttle:auth');
     Route::post('login', [LoginController::class, 'login'])->middleware('throttle:auth');
+    // Second step for accounts with TOTP 2FA: verify a code (or recovery code)
+    // against the pending session established by /auth/login.
+    Route::post('login/challenge', [LoginController::class, 'challenge'])->middleware(['web', 'throttle:auth']);
     Route::post('logout', [LoginController::class, 'logout'])->middleware('auth:sanctum');
     Route::post('token', TokenController::class)->middleware('throttle:auth');
 
@@ -169,6 +173,14 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     // Server-side cookie/privacy consent record (POPIA).
     Route::get('me/consent', [ConsentController::class, 'show']);
     Route::post('me/consent', [ConsentController::class, 'store']);
+
+    // Member TOTP two-factor auth: enrol → confirm → manage. Sensitive
+    // mutations are throttled with the auth limiter (identity re-proof).
+    Route::get('me/2fa', [TwoFactorController::class, 'status']);
+    Route::post('me/2fa/enroll', [TwoFactorController::class, 'enroll'])->middleware('throttle:auth');
+    Route::post('me/2fa/confirm', [TwoFactorController::class, 'confirm'])->middleware('throttle:auth');
+    Route::post('me/2fa/recovery-codes', [TwoFactorController::class, 'recoveryCodes'])->middleware('throttle:auth');
+    Route::delete('me/2fa', [TwoFactorController::class, 'disable'])->middleware('throttle:auth');
 
     // Business verification: submit ID/CIPC/B-BBEE docs + read review status.
     Route::get('me/verification', [VerificationController::class, 'show']);

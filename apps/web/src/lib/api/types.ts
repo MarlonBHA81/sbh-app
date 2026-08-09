@@ -8,6 +8,8 @@ export interface User {
   is_super_admin?: boolean;
   /** Whether the account has a password (false for social-only accounts). */
   has_password?: boolean;
+  /** Whether member TOTP two-factor auth is enabled on the account. */
+  two_factor_enabled?: boolean;
   settings: Record<string, unknown> | null;
 }
 

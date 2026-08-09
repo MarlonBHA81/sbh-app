@@ -46,6 +46,8 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -62,7 +64,20 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'is_super_admin' => 'boolean',
             'banned_at' => 'datetime',
             'settings' => 'array',
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Whether member TOTP two-factor is fully set up. A secret alone is not
+     * enough — it must be confirmed (the user proved they can generate a valid
+     * code) before it gates login. Distinct from the Filament admin MFA.
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_secret !== null && $this->two_factor_confirmed_at !== null;
     }
 
     public function profiles(): HasMany
