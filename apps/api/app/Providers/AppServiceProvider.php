@@ -2,12 +2,16 @@
 
 namespace App\Providers;
 
+use App\Contracts\CipcVerifier;
 use App\Contracts\IssueTracker;
 use App\Contracts\VirusScanner;
 use App\Services\Ai\AiGateway;
 use App\Services\Ai\Drivers\AnthropicAiDriver;
 use App\Services\Ai\Drivers\NullAiDriver;
 use App\Services\Ai\Drivers\OpenAiDriver;
+use App\Services\Business\HttpCipcVerifier;
+use App\Services\Business\NullCipcVerifier;
+use App\Services\Business\StubCipcVerifier;
 use App\Services\Observability\GithubIssueTracker;
 use App\Services\Observability\NullIssueTracker;
 use App\Services\Payments\NullPaymentDriver;
@@ -62,6 +66,24 @@ class AppServiceProvider extends ServiceProvider
                 timeout: (int) config('services.clamav.timeout'),
                 maxBytes: (int) config('services.clamav.max_bytes'),
             );
+        });
+
+        // CIPC company-registration verifier — Null when disabled (never grants
+        // a sticker without a real provider), a stub for dev/demo, or the HTTP
+        // driver for a configured provider. Resolved from config at run time.
+        $this->app->bind(CipcVerifier::class, function () {
+            if (! config('services.cipc.enabled')) {
+                return new NullCipcVerifier;
+            }
+
+            return match (config('services.cipc.driver')) {
+                'http' => new HttpCipcVerifier(
+                    baseUrl: (string) config('services.cipc.base_url'),
+                    token: config('services.cipc.token'),
+                    timeout: (int) config('services.cipc.timeout'),
+                ),
+                default => new StubCipcVerifier,
+            };
         });
 
         // Payment gateway (Shop P2) — resolved from config at resolution time so

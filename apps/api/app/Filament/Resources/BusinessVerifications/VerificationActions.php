@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\BusinessVerifications;
 
+use App\Contracts\CipcVerifier;
 use App\Models\BusinessVerification;
 use App\Models\User;
+use App\Services\Business\CipcResult;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -24,9 +26,39 @@ class VerificationActions
     {
         return [
             self::startReview(),
+            self::checkCipc(),
             self::approve(),
             self::reject(),
         ];
+    }
+
+    /**
+     * Run (or re-run) the automated CIPC registration lookup. On a confirmed
+     * hit the profile gets its "CIPC verified" sticker (and XP); the result is
+     * recorded on the submission either way.
+     */
+    public static function checkCipc(): Action
+    {
+        return Action::make('check_cipc')
+            ->label('Check CIPC')
+            ->icon(Heroicon::OutlinedBuildingOffice2)
+            ->color('info')
+            ->visible(fn (BusinessVerification $record) => filled($record->registration_number))
+            ->action(function (BusinessVerification $record): void {
+                $result = $record->runCipcCheck(app(CipcVerifier::class), self::reviewer());
+
+                match ($result->status) {
+                    CipcResult::VERIFIED => Notification::make()
+                        ->title('CIPC verified')
+                        ->body($result->registeredName ?? '')
+                        ->success()->send(),
+                    CipcResult::NOT_FOUND => Notification::make()
+                        ->title('Not found on CIPC')->warning()->send(),
+                    default => Notification::make()
+                        ->title('CIPC lookup unavailable')
+                        ->body('Check the CIPC integration settings.')->danger()->send(),
+                };
+            });
     }
 
     public static function startReview(): Action

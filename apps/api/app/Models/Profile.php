@@ -102,6 +102,7 @@ class Profile extends Model
             'social_links' => 'array',
             'is_private' => 'boolean',
             'is_verified' => 'boolean',
+            'cipc_verified_at' => 'datetime',
             'is_mentor' => 'boolean',
             'is_facilitator' => 'boolean',
             'share_location' => 'boolean',
