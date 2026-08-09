@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Contracts\VirusScanner;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessVerification;
 use App\Models\Profile;
@@ -19,6 +20,8 @@ use Illuminate\Validation\ValidationException;
  */
 class VerificationController extends Controller
 {
+    public function __construct(private readonly VirusScanner $scanner) {}
+
     /** The active business profile's latest verification (null if none). */
     public function show(Request $request): JsonResponse
     {
@@ -92,6 +95,12 @@ class VerificationController extends Controller
 
     private function storeDocument(BusinessVerification $verification, UploadedFile $file, string $type): void
     {
+        if ($this->scanner->rejects($this->scanner->scanLocalFile($file->getRealPath()))) {
+            throw ValidationException::withMessages([
+                'documents' => [__('One of the documents failed a security scan.')],
+            ]);
+        }
+
         $disk = config('media.private_disk');
         $path = $file->store('verifications/'.$verification->ulid, $disk);
 

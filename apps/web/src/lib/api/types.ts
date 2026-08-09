@@ -152,7 +152,7 @@ export type PostVisibility = "public" | "followers";
 export type PostStatus = "draft" | "scheduled" | "published";
 
 /** Processing lifecycle for chunk-uploaded media (video/audio). */
-export type MediaStatus = "processing" | "ready" | "failed";
+export type MediaStatus = "processing" | "ready" | "failed" | "infected";
 export type MediaType = "image" | "video" | "audio";
 
 export interface Media {

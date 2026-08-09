@@ -66,4 +66,20 @@ return [
         'repo' => env('GITHUB_REPO'),
     ],
 
+    // ClamAV antivirus (clamd) — scans uploads over the INSTREAM TCP protocol.
+    // Disabled by default so local/tests and any deploy without a clamd sidecar
+    // keep working; enable it (and run the `av` compose profile) in production.
+    'clamav' => [
+        'enabled' => env('CLAMAV_ENABLED', false),
+        'host' => env('CLAMAV_HOST', 'clamav'),
+        'port' => (int) env('CLAMAV_PORT', 3310),
+        'timeout' => (int) env('CLAMAV_TIMEOUT', 30),
+        // Files larger than this are skipped (clamd's StreamMaxLength must be at
+        // least this big). Default 26 MB ~ clamd's 25 MB default plus headroom.
+        'max_bytes' => (int) env('CLAMAV_MAX_BYTES', 26214400),
+        // When the scanner is enabled but can't produce a verdict: false lets
+        // the upload through (logged); true rejects it.
+        'fail_closed' => env('CLAMAV_FAIL_CLOSED', false),
+    ],
+
 ];

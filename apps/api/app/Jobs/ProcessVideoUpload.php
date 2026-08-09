@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Contracts\VirusScanner;
+use App\Jobs\Concerns\ScansUploadedMedia;
 use App\Models\Media;
 use App\Services\MediaService;
 use App\Support\MediaBinaries;
@@ -23,15 +25,20 @@ use Throwable;
  */
 class ProcessVideoUpload implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, ScansUploadedMedia;
 
     public function __construct(public Media $media) {}
 
-    public function handle(MediaService $mediaService): void
+    public function handle(MediaService $mediaService, VirusScanner $scanner): void
     {
         $media = $this->media->fresh();
 
         if (! $media || $media->status !== Media::STATUS_PROCESSING) {
+            return;
+        }
+
+        // Scan before doing any work: a hit removes the file and stops here.
+        if ($this->quarantineIfInfected($media, $scanner)) {
             return;
         }
 

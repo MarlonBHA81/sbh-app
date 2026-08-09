@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\IssueTracker;
+use App\Contracts\VirusScanner;
 use App\Services\Ai\AiGateway;
 use App\Services\Ai\Drivers\AnthropicAiDriver;
 use App\Services\Ai\Drivers\NullAiDriver;
@@ -14,6 +15,8 @@ use App\Services\Payments\PayFastDriver;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Posts\PostTypeRegistry;
 use App\Services\SafetyService;
+use App\Services\Security\ClamAvScanner;
+use App\Services\Security\NullVirusScanner;
 use App\Services\Streaming\MuxStreamDriver;
 use App\Services\Streaming\NullStreamDriver;
 use App\Services\Streaming\StreamProvider;
@@ -43,6 +46,22 @@ class AppServiceProvider extends ServiceProvider
                 'openai' => new OpenAiDriver(config('ai.openai', [])),
                 default => new NullAiDriver,
             };
+        });
+
+        // Virus scanner — ClamAV when enabled, otherwise a no-op scanner so the
+        // upload pipeline never hard-depends on a running clamd. Resolved from
+        // config at resolution time.
+        $this->app->bind(VirusScanner::class, function () {
+            if (! config('services.clamav.enabled')) {
+                return new NullVirusScanner;
+            }
+
+            return new ClamAvScanner(
+                host: (string) config('services.clamav.host'),
+                port: (int) config('services.clamav.port'),
+                timeout: (int) config('services.clamav.timeout'),
+                maxBytes: (int) config('services.clamav.max_bytes'),
+            );
         });
 
         // Payment gateway (Shop P2) — resolved from config at resolution time so

@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Contracts\VirusScanner;
+use App\Jobs\Concerns\ScansUploadedMedia;
 use App\Models\Media;
 use App\Support\MediaBinaries;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,15 +18,19 @@ use Throwable;
  */
 class ProcessAudioUpload implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, ScansUploadedMedia;
 
     public function __construct(public Media $media) {}
 
-    public function handle(): void
+    public function handle(VirusScanner $scanner): void
     {
         $media = $this->media->fresh();
 
         if (! $media || $media->status !== Media::STATUS_PROCESSING) {
+            return;
+        }
+
+        if ($this->quarantineIfInfected($media, $scanner)) {
             return;
         }
 
