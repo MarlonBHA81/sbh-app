@@ -75,6 +75,10 @@ export interface Profile {
   is_verified: boolean;
   /** Business's CIPC registration confirmed — shows a "CIPC verified" sticker. */
   cipc_verified?: boolean;
+  /** SA CIPC registration number (e.g. 2019/123456/07); business profiles only. */
+  registration_number?: string | null;
+  /** The company name CIPC has on record for the registration number. */
+  cipc_registered_name?: string | null;
   followers_count: number;
   following_count: number;
   posts_count: number;

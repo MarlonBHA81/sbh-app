@@ -29,6 +29,9 @@ test('me can be updated with locale, timezone and settings', function () {
 });
 
 test('a business profile can be created', function () {
+    config()->set('services.cipc.enabled', true);
+    config()->set('services.cipc.driver', 'stub');
+
     $user = userWithProfile();
 
     $this->actingAs($user)
@@ -36,6 +39,7 @@ test('a business profile can be created', function () {
             'name' => 'Braai Spot',
             'category' => 'restaurant',
             'website' => 'https://braaispot.example.com',
+            'registration_number' => '2019/123456/07',
         ])
         ->assertCreated()
         ->assertJsonPath('data.kind', 'business')

@@ -61,6 +61,30 @@ return [
             'default' => true,
             'group' => 'Commerce & learning',
         ],
+        'community' => [
+            'label' => 'Community (mentors, Q&A, forums)',
+            'description' => 'Mentor matching, the Q&A/questions feed and discussion forums.',
+            'default' => true,
+            'group' => 'Engagement',
+        ],
+        'ads' => [
+            'label' => 'Promoted posts',
+            'description' => 'Sponsored slots and promoted-post campaigns on Home & feeds.',
+            'default' => true,
+            'group' => 'Home & content',
+        ],
+        'directory' => [
+            'label' => 'Business directory',
+            'description' => 'The searchable member business directory.',
+            'default' => true,
+            'group' => 'Home & content',
+        ],
+        'business_tools' => [
+            'label' => 'Business tools & insights',
+            'description' => 'The creator insights/analytics dashboard.',
+            'default' => true,
+            'group' => 'Home & content',
+        ],
         'gamification' => [
             'label' => 'Gamification',
             'description' => 'XP, ranks, badges, streaks and leaderboards.',

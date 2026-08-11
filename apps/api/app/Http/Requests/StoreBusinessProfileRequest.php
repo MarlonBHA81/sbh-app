@@ -32,6 +32,7 @@ class StoreBusinessProfileRequest extends FormRequest
                 Rule::notIn(Handles::RESERVED),
                 Rule::unique('profiles', 'handle'),
             ],
+            'registration_number' => ['required', 'string', 'regex:/^\d{4}\/\d{6}\/\d{2}$/'],
             'bio' => ['sometimes', 'nullable', 'string', 'max:1000'],
             'category' => ['sometimes', 'nullable', 'string', 'max:100'],
             'website' => ['sometimes', 'nullable', 'url', 'max:255'],
