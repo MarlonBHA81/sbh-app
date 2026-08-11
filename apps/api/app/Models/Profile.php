@@ -76,6 +76,8 @@ class Profile extends Model
         'avatar_path',
         'cover_path',
         'category',
+        'registration_number',
+        'cipc_registered_name',
         'journey_stage',
         'is_mentor',
         'is_facilitator',

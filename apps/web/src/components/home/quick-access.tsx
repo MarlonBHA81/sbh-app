@@ -80,6 +80,7 @@ const TILES: Tile[] = [
     href: "/learn",
     icon: GraduationCap,
     gradient: "from-sage to-teal",
+    feature: "courses",
   },
   {
     labelKey: "coach",
@@ -107,36 +108,42 @@ const TILES: Tile[] = [
     href: "/mentors",
     icon: UsersRound,
     gradient: "from-plum to-slate",
+    feature: "community",
   },
   {
     labelKey: "questions",
     href: "/questions",
     icon: HelpCircle,
     gradient: "from-sage to-plum",
+    feature: "community",
   },
   {
     labelKey: "forums",
     href: "/discover",
     icon: MessagesSquare,
     gradient: "from-teal to-teal-tint",
+    feature: "community",
   },
   {
     labelKey: "directory",
     href: "/business",
     icon: Store,
     gradient: "from-plum to-plum-tint",
+    feature: "directory",
   },
   {
     labelKey: "tools",
     href: "/insights",
     icon: Wrench,
     gradient: "from-sage to-sage-tint",
+    feature: "business_tools",
   },
   {
     labelKey: "promotedPosts",
     href: "/ads",
     icon: Megaphone,
     gradient: "from-slate to-slate-tint",
+    feature: "ads",
   },
 ];
 

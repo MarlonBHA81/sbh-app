@@ -14,12 +14,23 @@
 
 return [
 
-    'number' => env('APP_VERSION', '1.1.0'),
+    'number' => env('APP_VERSION', '1.2.0'),
 
-    'released' => '2026-08-09',
+    'released' => '2026-08-11',
 
     // Newest first. Each entry: version, date (Y-m-d), title, list of changes.
     'releases' => [
+        [
+            'version' => '1.2.0',
+            'date' => '2026-08-11',
+            'title' => 'Personal/business onboarding + CIPC-verified businesses',
+            'changes' => [
+                'Signup now clearly sets up your personal profile; a first-login prompt invites you to open a business profile.',
+                'Business profiles are hard-gated on CIPC: creation requires a registration number that CIPC confirms, and the legal name is taken from CIPC.',
+                'The onboarding checklist is profile-aware — personal profiles no longer show business-only steps.',
+                'New feature flags to hide Home tiles: community (mentors/Q&A/forums), promoted posts, business directory, and business tools.',
+            ],
+        ],
         [
             'version' => '1.1.0',
             'date' => '2026-08-09',

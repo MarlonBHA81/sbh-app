@@ -303,14 +303,19 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
         Route::get('admin/verifications/documents/{document}/download', [VerificationAdminController::class, 'downloadDocument']);
     });
 
-    // Tracking and sponsor slots stay open to every authenticated user —
-    // impressions and clicks come from the whole audience, not just admins.
+    // Tracking stays open to every authenticated user — impressions and clicks
+    // come from the whole audience, not just admins, and must always work.
     Route::post('ads/track', [AdTrackController::class, 'store'])->middleware('throttle:120,1');
-    Route::get('ads/slots/{placement}', [AdSlotController::class, 'show']);
 
-    // Creator analytics dashboard.
-    Route::get('analytics/overview', [AnalyticsController::class, 'overview']);
-    Route::get('analytics/posts', [AnalyticsController::class, 'posts']);
+    // Member-facing sponsor slot display — gated by the 'ads' (promoted posts) flag.
+    Route::get('ads/slots/{placement}', [AdSlotController::class, 'show'])->middleware('feature:ads');
+
+    // Creator analytics dashboard (the "Business Tools" / insights tile) —
+    // gated by the 'business_tools' feature flag.
+    Route::middleware('feature:business_tools')->group(function () {
+        Route::get('analytics/overview', [AnalyticsController::class, 'overview']);
+        Route::get('analytics/posts', [AnalyticsController::class, 'posts']);
+    });
 
     // Gamification: XP, ranks and leaderboards.
     Route::middleware('feature:gamification')->group(function () {
@@ -330,7 +335,8 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/connections', [ConnectionController::class, 'today']);
 
     // Mentor matching (V2 · CONNECT) — opted-in mentors ranked by relevance.
-    Route::get('mentors', [MentorController::class, 'index']);
+    // Gated by the 'community' flag (mentors, Q&A, forums).
+    Route::get('mentors', [MentorController::class, 'index'])->middleware('feature:community');
 
     // Daily challenge + streak (V1 · PROGRESS).
     Route::get('me/daily', [DailyController::class, 'today']);
@@ -458,7 +464,8 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::post('topics/{slug}/follow', [TopicController::class, 'follow']);
     Route::delete('topics/{slug}/follow', [TopicController::class, 'unfollow']);
 
-    Route::get('feeds/questions', [FeedController::class, 'questions']);
+    // Q&A feed — gated by the 'community' flag (mentors, Q&A, forums).
+    Route::get('feeds/questions', [FeedController::class, 'questions'])->middleware('feature:community');
     Route::get('feeds/wins', [FeedController::class, 'wins']);
     Route::get('feeds/following', [FeedController::class, 'following']);
     Route::get('feeds/for-you', [FeedController::class, 'forYou']);
@@ -538,7 +545,8 @@ Route::middleware(['auth:sanctum', 'not_banned', 'profile.active'])->group(funct
     Route::get('me/unread-messages-count', [ConversationController::class, 'unreadCount']);
 
     // Business directory, needs, matchmaking and events.
-    Route::get('business/directory', [BusinessDirectoryController::class, 'index']);
+    // The directory listing/search is gated by the 'directory' flag.
+    Route::get('business/directory', [BusinessDirectoryController::class, 'index'])->middleware('feature:directory');
     Route::get('business/matches', [BusinessMatchController::class, 'index']);
     Route::get('business/events', [BusinessEventController::class, 'index']);
 

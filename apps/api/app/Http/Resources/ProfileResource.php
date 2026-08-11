@@ -55,6 +55,8 @@ class ProfileResource extends JsonResource
             'bio' => $this->bio,
             'cover_url' => $this->coverUrl(),
             'category' => $this->category,
+            'registration_number' => $this->registration_number,
+            'cipc_registered_name' => $this->cipc_registered_name,
             'journey_stage' => $this->journey_stage,
             'is_mentor' => (bool) $this->is_mentor,
             'is_facilitator' => (bool) $this->is_facilitator,

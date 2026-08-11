@@ -68,7 +68,7 @@ function ProfilePreview({
   colorKey: string;
 }) {
   const color = brandColorByKey(colorKey);
-  const display = name.trim() || "Your business";
+  const display = name.trim() || "Your profile";
   const stageLabel = journeyLabel(stage);
   return (
     <div className="overflow-hidden rounded-(--radius-card) border border-warmgray bg-card shadow-card">
@@ -256,10 +256,10 @@ export default function RegisterPage() {
               <ArrowLeft className="size-4" aria-hidden />
             </button>
           ) : null}
-          <CardTitle>Build your profile</CardTitle>
+          <CardTitle>Set up your profile</CardTitle>
         </div>
         <CardDescription>
-          Step {step} of {totalSteps} · set it up before you sign up
+          Step {step} of {totalSteps} · your personal profile
         </CardDescription>
         <div className="mt-1 flex gap-1.5" aria-hidden>
           {Array.from({ length: totalSteps }).map((_, i) => (
@@ -273,6 +273,10 @@ export default function RegisterPage() {
             />
           ))}
         </div>
+        <p className="mt-2 text-[13px] text-text-secondary">
+          This is your personal profile. You can add a business profile once
+          you&apos;re signed in.
+        </p>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
@@ -288,7 +292,7 @@ export default function RegisterPage() {
         {step === 1 ? (
           <div className="flex flex-col gap-3">
             <p className="text-sm font-medium text-text-primary">
-              What kind of business are you?
+              What&apos;s your industry?
             </p>
             <div className="grid grid-cols-2 gap-2">
               {BUSINESS_CATEGORIES.map((cat) => {
@@ -370,13 +374,13 @@ export default function RegisterPage() {
               htmlFor="signup-name"
               className="text-sm font-medium text-text-primary"
             >
-              Name your business
+              What should we call you?
             </label>
             <Input
               id="signup-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Thabo's Coffee Roastery"
+              placeholder="e.g. Thabo Mokoena"
               className="h-11"
               autoFocus
             />
@@ -432,7 +436,7 @@ export default function RegisterPage() {
         {step === 5 ? (
           <div className="flex flex-col gap-4">
             <p className="text-sm text-text-secondary">
-              Looks great. Create your login to save{" "}
+              Create your account to save{" "}
               <span className="font-medium text-text-primary">
                 {name.trim() || "your profile"}
               </span>

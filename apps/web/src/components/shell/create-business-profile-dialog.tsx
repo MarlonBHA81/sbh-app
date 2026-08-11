@@ -43,6 +43,9 @@ const schema = z.object({
     message: "3–30 characters: lowercase letters, numbers and underscores only",
   }),
   category: z.string().min(1, "Pick a category"),
+  registration_number: z
+    .string()
+    .min(1, "Enter your CIPC registration number"),
 });
 
 type Values = z.infer<typeof schema>;
@@ -58,14 +61,18 @@ export function CreateBusinessProfileDialog({
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", handle: "", category: "" },
+    defaultValues: { name: "", handle: "", category: "", registration_number: "" },
   });
 
   async function onSubmit(values: Values) {
     form.clearErrors("root");
     try {
       const profile = await createBusinessProfile(values);
-      toast.success(`Created and switched to ${profile.name}`);
+      toast.success(
+        profile.cipc_verified
+          ? `${profile.name} is CIPC verified — switched to it`
+          : `Created and switched to ${profile.name}`,
+      );
       form.reset();
       onOpenChange(false);
     } catch (error) {
@@ -159,6 +166,26 @@ export function CreateBusinessProfileDialog({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="registration_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>CIPC registration number</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="2019/123456/07"
+                      className="h-11"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    We verify your business against CIPC.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

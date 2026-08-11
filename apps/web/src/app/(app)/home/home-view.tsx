@@ -5,6 +5,7 @@ import { useEffect } from "react";
 
 import { useComposer } from "@/components/composer/composer-provider";
 import { StreakChip } from "@/components/gamification/streak-chip";
+import { BusinessProfilePrompt } from "@/components/home/business-profile-prompt";
 import { ComposerBar } from "@/components/home/composer-bar";
 import { ConnectionsCard } from "@/components/home/connections-card";
 import { DailyBriefCard } from "@/components/home/daily-brief-card";
@@ -101,6 +102,7 @@ export function HomeView() {
       </section>
 
       <OnboardingChecklist />
+      <BusinessProfilePrompt />
       <QuickAccess />
       <section className="flex flex-col gap-3">
         <SectionHeader title={t("recentActivity")} />

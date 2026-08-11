@@ -59,16 +59,21 @@ test('registration works when registration is open', function () {
 });
 
 test('ProfileService reads max_business_profiles from settings', function () {
+    config()->set('services.cipc.enabled', true);
+    config()->set('services.cipc.driver', 'stub');
+
     Setting::set('max_business_profiles', 1);
 
     $user = userWithProfile();
 
     $this->actingAs($user)->postJson('/api/v1/me/profiles', [
         'name' => 'First Biz',
+        'registration_number' => '2019/123456/07',
     ])->assertCreated();
 
     // The second business profile exceeds the configured max of 1.
     $this->actingAs($user)->postJson('/api/v1/me/profiles', [
         'name' => 'Second Biz',
+        'registration_number' => '2019/123456/07',
     ])->assertUnprocessable();
 });

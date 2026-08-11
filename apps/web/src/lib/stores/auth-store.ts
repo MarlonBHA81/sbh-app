@@ -19,6 +19,8 @@ export interface CreateBusinessProfileInput {
   name: string;
   handle: string;
   category: string;
+  /** SA CIPC registration number (required); verified server-side. */
+  registration_number: string;
 }
 
 export interface AuthState {
