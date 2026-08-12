@@ -14,12 +14,20 @@
 
 return [
 
-    'number' => env('APP_VERSION', '1.2.0'),
+    'number' => env('APP_VERSION', '1.2.1'),
 
     'released' => '2026-08-11',
 
     // Newest first. Each entry: version, date (Y-m-d), title, list of changes.
     'releases' => [
+        [
+            'version' => '1.2.1',
+            'date' => '2026-08-11',
+            'title' => 'Official CIPC API driver',
+            'changes' => [
+                'CIPC verification can now call the official CIPC "Public Data - Commercial" API (apim.cipc.co.za) via CIPC_DRIVER=cipc — POST /information with the enterprise number, using an APIM subscription key plus a static or client-credentials OAuth token.',
+            ],
+        ],
         [
             'version' => '1.2.0',
             'date' => '2026-08-11',
