@@ -9,6 +9,7 @@ use App\Services\Ai\AiGateway;
 use App\Services\Ai\Drivers\AnthropicAiDriver;
 use App\Services\Ai\Drivers\NullAiDriver;
 use App\Services\Ai\Drivers\OpenAiDriver;
+use App\Services\Business\CipcApiVerifier;
 use App\Services\Business\HttpCipcVerifier;
 use App\Services\Business\NullCipcVerifier;
 use App\Services\Business\StubCipcVerifier;
@@ -77,6 +78,7 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return match (config('services.cipc.driver')) {
+                'cipc' => new CipcApiVerifier((array) config('services.cipc')),
                 'http' => new HttpCipcVerifier(
                     baseUrl: (string) config('services.cipc.base_url'),
                     token: config('services.cipc.token'),

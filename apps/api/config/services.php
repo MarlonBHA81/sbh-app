@@ -91,10 +91,20 @@ return [
     //   (dev/demo only).
     'cipc' => [
         'enabled' => env('CIPC_ENABLED', false),
+        // stub (dev), http (generic aggregator), or cipc (the official CIPC
+        // "CIPC Public Data - Commercial" API at apim.cipc.co.za).
         'driver' => env('CIPC_DRIVER', 'stub'),
-        'base_url' => env('CIPC_BASE_URL'),
-        'token' => env('CIPC_TOKEN'),
+        'base_url' => env('CIPC_BASE_URL', 'https://apim.cipc.co.za/companies-api/v1'),
         'timeout' => (int) env('CIPC_TIMEOUT', 15),
+        // Azure APIM product subscription key (Ocp-Apim-Subscription-Key header).
+        'subscription_key' => env('CIPC_SUBSCRIPTION_KEY'),
+        // A static OAuth Bearer token, OR leave blank and set the token_url +
+        // client credentials below to fetch one via the client-credentials grant.
+        'token' => env('CIPC_TOKEN'),
+        'token_url' => env('CIPC_TOKEN_URL'),
+        'client_id' => env('CIPC_CLIENT_ID'),
+        'client_secret' => env('CIPC_CLIENT_SECRET'),
+        'scope' => env('CIPC_SCOPE'),
         // Award XP on a successful CIPC verification.
         'award_xp' => env('CIPC_AWARD_XP', true),
     ],
