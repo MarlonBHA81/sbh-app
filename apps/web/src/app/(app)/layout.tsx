@@ -16,6 +16,7 @@ import { GuestShell } from "@/components/shell/guest-shell";
 import { MaintenanceBanner } from "@/components/shell/maintenance-banner";
 import { SidebarNav } from "@/components/shell/sidebar-nav";
 import { TopBar } from "@/components/shell/top-bar";
+import { BugReportFab } from "@/components/support/bug-report-fab";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isPublicRoute } from "@/lib/public-routes";
 import { useAuthStore } from "@/lib/stores/auth-store-provider";
@@ -99,6 +100,7 @@ export default function AppLayout({
           </aside>
           <BottomNav />
           <ComposerFab />
+          <BugReportFab />
           <SearchDialog />
         </div>
       </PromoteProvider>

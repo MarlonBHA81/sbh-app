@@ -14,12 +14,20 @@
 
 return [
 
-    'number' => env('APP_VERSION', '1.2.1'),
+    'number' => env('APP_VERSION', '1.2.2'),
 
     'released' => '2026-08-11',
 
     // Newest first. Each entry: version, date (Y-m-d), title, list of changes.
     'releases' => [
+        [
+            'version' => '1.2.2',
+            'date' => '2026-08-11',
+            'title' => 'Floating bug-report button',
+            'changes' => [
+                'A persistent bug icon in the app now lets members report a problem from any screen (opens the existing report dialog, which captures page context automatically).',
+            ],
+        ],
         [
             'version' => '1.2.1',
             'date' => '2026-08-11',
